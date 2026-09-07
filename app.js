@@ -2,6 +2,8 @@ import { $, escapeHTML as e, external, readStorage, saveStorage, showToast, star
 import { flattenCategories, normalizeUrl, selectGroups, validateNavigation, validatePageContent } from './navigation-data.js';
 import './radio.js';
 import './start-menu.js';
+import './window-manager.js';
+import { showRetroAd } from './retro-ad.js';
 let categories = [], content, settings = {}, view = 'all', page = 1, loaded = false, revision = null, loading = false;
 const saved = readStorage('web-surfer-favorites', []);
 let favorites = Array.isArray(saved) ? [...new Set(saved.map(normalizeUrl).filter(Boolean))] : [];
@@ -106,6 +108,13 @@ function mikuStage() {
 }
 function renderContent() {
   const all = new Map(flattenCategories(categories).flatMap(c=>c.sites).map(s=>[s.id,s]));
+  const hotWindow = $('#hot-links')?.closest('.window');
+  if (hotWindow && !$('#uc-news')) {
+    hotWindow.insertAdjacentHTML('beforebegin', `<section class="window uc-news" id="uc-news"><div class="titlebar"><h2>▣ UC资讯</h2><span class="yellow">旧闻</span></div><div class="uc-news-note">复古网传 · 纯属恶搞，请勿当真</div><ul class="uc-news-list"><li><b>今天是马化腾生日，转发获得 5 Q 币！</b><small>据说转发给 10 位好友后，QQ 秀会自动变亮。</small></li><li><b>紧急通知：今晚 12 点关闭 QQ，头像会变成灰色！</b><small>不信你就试试，反正明天还能重新登录。</small></li><li><b>手机按“*#06#”能召唤隐藏彩蛋？</b><small>老网友表示：先记下 IMEI，再去喝杯水。</small></li><li><b>转发这条消息，明天上网速度提升 98%！</b><small>来自某位“内部工作人员”的可靠消息。</small></li></ul></section>`);
+    const style = document.createElement('style');
+    style.textContent = '.uc-news{order:-1}.uc-news-note{padding:7px 9px;background:#fff1a8;color:#8b2f00;border-bottom:1px dotted #999;font:10px monospace;text-align:center}.uc-news-list{margin:0;padding:4px 9px 5px;list-style:none;background:#fffbe4}.uc-news-list li{padding:8px 0;border-bottom:1px dotted #bbb;line-height:1.4}.uc-news-list li:last-child{border-bottom:0}.uc-news-list b{display:block;color:#9b1c00;font-size:12px}.uc-news-list small{display:block;margin-top:3px;color:#777;font-size:10px}';
+    document.head.append(style);
+  }
   $('#hot-title').textContent = content.hot.title;
   $('#hot-links').innerHTML = content.hot.siteIds.map(id=>all.get(id)).filter(Boolean).map(s=>`<li>${external(s)}</li>`).join('') || '<li>暂无推荐</li>';
   $('#featured-title').textContent = content.featured.title;
@@ -135,7 +144,7 @@ async function load() {
     categories = validateNavigation(data.navigation).categories;
     content = validatePageContent(data.content,categories); settings = data.settings || {}; loaded = true; revision = data.revision;
     if (!['all','favorites',...flattenCategories(categories).map(c=>c.id)].includes(view)) view = 'all';
-    render(); renderContent();
+    render(); renderContent(); showRetroAd(settings.ad);
   } catch(error) { if(!loaded) $('#link-groups').innerHTML = `<div class="empty"><strong>连接未完成</strong>${e(error.message)}<br><button data-action="retry">重新加载</button></div>`; else showToast('目录更新失败，请稍后刷新重试'); } finally { loading = false; }
 }
 document.addEventListener('click', event => {

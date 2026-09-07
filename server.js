@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { validateAd } from './retro-ad.js';
 import { readFile, writeFile, mkdir, rename, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -10,7 +11,7 @@ const scrypt = promisify(scryptCallback);
 const root = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
 const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', announcement: '欢迎回来！这里总有一个值得收藏的好网站。' };
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
-const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
+const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 function normalizeAdminPath(value='/admin') {
   const raw=String(value||'/admin').trim();
@@ -31,7 +32,8 @@ export function validateStore(data) {
     if(item.hidden !== undefined && typeof item.hidden !== 'boolean') throw new Error('网站显示状态无效');
   }
   for (const c of flattenCategories(data.navigation.categories)) if(c.name.length>80) throw new Error('分类名称过长');
-  return {navigation:data.navigation,content:data.content,settings:{tagline:data.settings.tagline,announcement:data.settings.announcement}};
+  const ad = validateAd(data.settings.ad);
+  return {navigation:data.navigation,content:data.content,settings:{tagline:data.settings.tagline,announcement:data.settings.announcement,ad}};
 }
 export async function createApp({dataDir = path.join(root,'data'), secureCookie = false, adminEnabled = true, adminPath = '/admin'} = {}) {
   adminEnabled=adminEnabled === true;

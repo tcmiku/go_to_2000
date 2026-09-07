@@ -151,3 +151,25 @@
   .site-link a{font-size:.875rem}
   .site-link p{font-size:.8125rem}
 }
+.window-glyphs button{display:grid;place-items:center;width:20px;height:19px;padding:0;border:2px solid;border-color:#fff #555 #555 #fff;background:#c0c0c0;color:#111;font:bold 16px monospace}.window-glyphs button:active{border-color:#555 #fff #fff #555;box-shadow:none}.browser-window[hidden]{display:none!important}.window-maximized{position:fixed;inset:4px 4px 45px;max-width:none;margin:0;z-index:10;overflow:auto}.window-maximized .portal-grid{min-height:calc(100dvh - 250px)}
+.desktop-surface{position:fixed;inset:0 0 42px;background:#00676d url('/assets/icons/win98-wallpaper.svg') center / cover no-repeat;z-index:5;padding:16px 8px;overflow:auto}
+.desktop-icon{width:80px;display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;color:#fff;font:12px Tahoma,"SimSun",sans-serif;text-align:center}
+.desktop-icon img{display:block;width:32px;height:32px;image-rendering:pixelated}
+.desktop-icon span{padding:1px 3px;background:transparent;text-shadow:1px 1px #004040}
+.retro-ad{position:fixed;right:16px;bottom:54px;width:310px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 72px);overflow:auto;z-index:45;box-shadow:4px 4px #000}
+.retro-ad>.titlebar{position:sticky;top:0;z-index:1;background:linear-gradient(90deg,#800080,#000080);font-size:12px}
+.retro-ad-countdown{margin-left:auto;color:#ffff00;font:bold 11px 'Courier New',monospace;white-space:nowrap}
+.retro-ad .caption-button{flex-shrink:0;width:26px;height:24px}
+.retro-ad-body{text-align:center;padding:10px;background:#ffffbd;border:3px ridge #ff6933}
+.retro-ad-ribbon{background:#d60000;color:#fff600;font:bold 14px 'Courier New',monospace;padding:5px;letter-spacing:1px}
+.retro-ad h2{font-size:22px;color:#c40000;margin:12px 0;overflow-wrap:anywhere;animation:ad-pulse 2.8s ease-in-out infinite}
+.retro-ad img{width:100%;max-height:130px;object-fit:contain;border:2px inset #fff;background:#00004d;animation:ad-pulse 3.6s ease-in-out infinite}
+.retro-ad-copy{font-size:14px;line-height:1.6;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.retro-ad a{max-width:100%;white-space:normal}
+.retro-ad-playground{position:relative;height:38px;margin:12px 0 3px}
+.retro-ad-runner{position:absolute;left:0;top:0;font-size:12px;padding:5px 8px}
+.retro-ad small{display:block;font-size:11px;line-height:1.5;color:#555}
+.retro-ad-optout{display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px dashed #777;margin-top:12px;padding-top:9px;font-size:12px;cursor:pointer}
+.retro-ad-storage{font-size:12px;color:#a00000;margin:6px 0 0}.retro-ad-storage:empty{display:none}
+@keyframes ad-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media(prefers-reduced-motion:reduce){.retro-ad h2,.retro-ad img{animation:none}}

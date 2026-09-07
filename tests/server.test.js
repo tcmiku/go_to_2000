@@ -22,6 +22,17 @@ async function instance(t,options={}){
   }};
 }
 const credentials={username:'site-owner',password:'test-only-password-2026'};
+test('advertisement config persists and unsafe URLs are rejected',async t=>{
+  const app=await instance(t);await setup(app);
+  const current=(await app.req('/api/admin/data')).data;
+  current.settings.ad={enabled:true,title:'测试广告',text:'测试正文',image:'/assets/art/retro-web-hero-v1.png',url:'https://example.com',button:'查看'};
+  const saved=await app.req('/api/admin/data','PUT',current);assert.equal(saved.status,200);
+  await app.restart();assert.deepEqual((await app.req('/api/public')).data.settings.ad,current.settings.ad);
+  assert.deepEqual(JSON.parse(await readFile(path.join(app.dir,'store.json'),'utf8')).settings.ad,current.settings.ad);
+  for(const url of ['javascript:alert(1)','data:text/html,test'])assert.throws(()=>validateStore({...current,settings:{...current.settings,ad:{...current.settings.ad,url}}}));
+  assert.throws(()=>validateStore({...current,settings:{...current.settings,ad:{...current.settings.ad,image:'https://example.com/image.png'}}}));
+  for(const route of ['/retro-ad.js','/window-manager.js']){const res=await fetch(app.base+route);assert.equal(res.status,200);assert.match(res.headers.get('content-type'),/javascript/);}
+});
 async function setup(app){assert.equal((await app.req('/api/setup','POST',credentials)).status,200);}
 
 test('public directory works before setup; authentication protects every write and private file',async t=>{

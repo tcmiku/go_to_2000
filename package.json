@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch --watch-preserve-output server.js",
-    "dev:admin": "ADMIN_ENABLED=1 node --watch --watch-preserve-output server.js",
+    "dev:admin": "node scripts/admin-server.mjs --watch",
     "start": "node server.js",
-    "start:admin": "ADMIN_ENABLED=1 node server.js",
+    "start:admin": "node scripts/admin-server.mjs",
     "check:data": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.js",
     "check": "node --check app.js && node --check admin.js && node --check ui.js && node --check radio.js && node --check start-menu.js && node --check minesweeper.js && node --check snake.js && node --check management-data.js && node --check navigation-data.js && node --check server.js && npm run check:data && npm test"
