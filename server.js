@@ -72,6 +72,11 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
     store={navigation:await readJSON('navigation.json'),content:await readJSON('page-content.json'),settings:defaultSettings,revision:1,updatedAt:new Date().toISOString()};
     validateStore(store);await atomic('store.json',store);
   }
+  let visits={total:0,date:'',today:0};
+  try {visits=await readJSON('.private/visits.json');if(!Number.isSafeInteger(visits.total)||visits.total<0||!Number.isSafeInteger(visits.today)||visits.today<0||typeof visits.date!=='string')throw new Error('访问统计数据无效');} catch(error) {if(error.code!=='ENOENT')throw error;}
+  const visitDate=()=>new Date(Date.now()+8*60*60*1000).toISOString().slice(0,10);
+  const visitorIds=new Set(visits.visitorIds||[]);
+  const visitSummary=()=>({total:visits.total,today:visits.date===visitDate()?visits.today:0,visitors:visitorIds.size});
   let submissions=[];
   try {submissions=normalizeSubmissions(await readJSON('.private/submissions.json'));} catch(error) {if(error.code!=='ENOENT')throw error;}
   let account=null;
@@ -101,6 +106,18 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(!String(req.headers['content-type']||'').startsWith('application/json'))throw httpError(415,'请使用 JSON 请求');
       }
       if(route==='/api/public' && req.method==='GET')return json(res,200,publicData());
+      if(route==='/api/visits'&&req.method==='GET')return json(res,200,visitSummary());
+      if(route==='/api/visits'&&req.method==='POST'){
+        const result=await locked(async()=>{
+          const cookie=(req.headers.cookie||'').split(';').map(value=>value.trim()).find(value=>value.startsWith('surfer_visitor='))?.slice(15);
+          const visitorId=visitorIds.has(cookie)?cookie:randomBytes(24).toString('hex');
+          const nextIds=new Set(visitorIds);nextIds.add(visitorId);
+          const date=visitDate(),next={total:visits.total+1,date,today:(visits.date===date?visits.today:0)+1,visitorIds:[...nextIds]};
+          await atomic('.private/visits.json',next);visits=next;visitorIds.add(visitorId);
+          res.setHeader('Set-Cookie',`surfer_visitor=${visitorId}; HttpOnly; SameSite=Lax; Path=/; Max-Age=34560000${secureCookie?'; Secure':''}`);
+          return visitSummary();
+        });return json(res,200,result);
+      }
       if(route==='/api/radio' && req.method==='GET')return json(res,200,{tracks:await getRadioTracks()});
       if(route==='/api/submissions' && req.method==='POST'){
         const input=await body(req),key=req.socket.remoteAddress||'unknown',now=Date.now();

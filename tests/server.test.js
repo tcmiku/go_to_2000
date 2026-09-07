@@ -22,6 +22,34 @@ async function instance(t,options={}){
   }};
 }
 const credentials={username:'site-owner',password:'test-only-password-2026'};
+test('visit totals persist, count concurrent visits and keep reads uncounted',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  assert.deepEqual((await app.req('/api/visits')).data,{total:0,today:0,visitors:0});
+  const results=await Promise.all(Array.from({length:5},()=>app.req('/api/visits','POST',{})));
+  assert.ok(results.every(result=>result.status===200));
+  assert.deepEqual((await app.req('/api/visits')).data,{total:5,today:5,visitors:5});
+  assert.equal((await app.req('/api/visits','POST',{}, {Origin:'https://evil.example'})).status,403);
+  await app.restart();
+  assert.deepEqual((await app.req('/api/visits')).data,{total:5,today:5,visitors:5});
+  const stored=JSON.parse(await readFile(path.join(app.dir,'.private/visits.json'),'utf8'));
+  await writeFile(path.join(app.dir,'.private/visits.json'),JSON.stringify({...stored,date:'2000-01-01'}));
+  await app.restart();assert.deepEqual((await app.req('/api/visits')).data,{total:5,today:0,visitors:5});
+  assert.deepEqual((await app.req('/api/visits','POST',{})).data,{total:6,today:1,visitors:5});
+});
+test('visitor cookies deduplicate refreshes and survive server restarts',async t=>{
+  const app=await instance(t);
+  const first=await app.req('/api/visits','POST',{});
+  assert.equal(first.data.visitors,1);
+  assert.match(first.headers.get('set-cookie'),/HttpOnly/);
+  const cookie=app.cookie;
+  assert.equal((await app.req('/api/visits','POST',{})).data.visitors,1);
+  await app.restart();
+  assert.equal((await app.req('/api/visits','POST',{})).data.visitors,1);
+  assert.equal((await app.req('/api/visits','POST',{}, {Cookie:''})).data.visitors,2);
+  const returning=await app.req('/api/visits','POST',{}, {Cookie:cookie});
+  assert.equal(returning.data.visitors,2);assert.equal(returning.data.total,5);
+  assert.equal(returning.data.visitorIds,undefined);
+});
 test('advertisement config persists and unsafe URLs are rejected',async t=>{
   const app=await instance(t);await setup(app);
   const current=(await app.req('/api/admin/data')).data;

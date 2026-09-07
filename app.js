@@ -5,6 +5,20 @@ import './start-menu.js';
 import './window-manager.js';
 import { showRetroAd } from './retro-ad.js';
 let categories = [], content, settings = {}, view = 'all', page = 1, loaded = false, revision = null, loading = false;
+const visitPanel=document.createElement('section');
+visitPanel.className='window visit-window';
+visitPanel.innerHTML='<div class="titlebar muted"><h2>▥ 冲浪足迹</h2><span>VISITORS</span></div><div class="visit-body"><span>累计访问</span><strong id="visit-total">—</strong><div class="visit-today">累计访客 <b id="visit-visitors">—</b> 人</div><div class="visit-today">今日访问 <b id="visit-today">—</b> 次</div><small id="visit-note" role="status">正在读取访问统计…</small></div>';
+$('#friend-links').closest('.web-ring').after(visitPanel);
+async function recordVisit(){
+  try{
+    const stats=await api('/api/visits',{method:'POST',body:'{}'});
+    $('#visit-total').textContent=Number(stats.total).toLocaleString('zh-CN');
+    $('#visit-today').textContent=Number(stats.today).toLocaleString('zh-CN');
+    $('#visit-visitors').textContent=Number(stats.visitors).toLocaleString('zh-CN');
+    $('#visit-note').textContent='访客按浏览器去重 · 清除 Cookie 或换设备会重新计数';
+  }catch{$('#visit-note').textContent='统计暂时不可用，请稍后刷新';}
+}
+recordVisit();
 const saved = readStorage('web-surfer-favorites', []);
 let favorites = Array.isArray(saved) ? [...new Set(saved.map(normalizeUrl).filter(Boolean))] : [];
 const collapsedSaved = readStorage('web-surfer-collapsed-categories', []);
