@@ -191,7 +191,7 @@ test('password change invalidates previous sessions, logout revokes the session,
 
 test('both entry points and their public modules are served with correct content types',async t=>{
   const app=await instance(t);
-  for(const route of ['/','/admin','/admin/','/styles.css','/admin.css','/app.js','/admin.js','/ui.js','/radio.js','/navigation-data.js','/assets/layers/hero/globe.png']){
+  for(const route of ['/','/cd-wall.html','/cd-wall.css','/cd-wall.js','/admin','/admin/','/styles.css','/admin.css','/app.js','/admin.js','/ui.js','/radio.js','/navigation-data.js','/assets/layers/hero/globe.png']){
     const result=await fetch(app.base+route);assert.equal(result.status,200,route);assert.ok(result.headers.get('content-type'));assert.ok(!result.headers.get('content-security-policy').includes("script-src 'self' 'unsafe-inline'"));
   }
 });
