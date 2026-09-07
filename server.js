@@ -13,6 +13,23 @@ const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', an
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
 const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 const httpError = (status,message) => Object.assign(new Error(message),{status});
+const submissionStatuses = new Set(['pending','accepted','rejected']);
+function cleanText(value,max,label,{required=false}={}) {
+  if (typeof value!=='string') throw httpError(400,`${label}格式无效`);
+  const text=value.trim();
+  if (required&&!text) throw httpError(400,`请填写${label}`);
+  if (text.length>max) throw httpError(400,`${label}过长`);
+  return text;
+}
+function cleanWebUrl(value) {
+  const text=cleanText(value,4000,'网站地址',{required:true});
+  try {const url=new URL(text);if(!['http:','https:'].includes(url.protocol))throw new Error();return url.href;} catch {throw httpError(400,'网站地址必须是完整的 http:// 或 https:// 地址');}
+}
+function normalizeSubmissions(value) {
+  if(!Array.isArray(value))throw new Error('投稿数据格式无效');
+  for(const item of value)if(!item||typeof item.id!=='string'||!submissionStatuses.has(item.status)||typeof item.createdAt!=='string')throw new Error('投稿数据格式无效');
+  return value;
+}
 function normalizeAdminPath(value='/admin') {
   const raw=String(value||'/admin').trim();
   const pathValue=raw.startsWith('/')?raw:`/${raw}`;
@@ -55,9 +72,11 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
     store={navigation:await readJSON('navigation.json'),content:await readJSON('page-content.json'),settings:defaultSettings,revision:1,updatedAt:new Date().toISOString()};
     validateStore(store);await atomic('store.json',store);
   }
+  let submissions=[];
+  try {submissions=normalizeSubmissions(await readJSON('.private/submissions.json'));} catch(error) {if(error.code!=='ENOENT')throw error;}
   let account=null;
   try {account=await readJSON('.private/account.json');} catch(error) {if(error.code!=='ENOENT')throw error;}
-  const sessions=new Map(),attempts=new Map();
+  const sessions=new Map(),attempts=new Map(),submissionAttempts=new Map();
   let queue=Promise.resolve();
   function locked(fn){const next=queue.then(fn);queue=next.catch(()=>{});return next;}
   function session(req){const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('surfer_session='))?.slice(15);const value=sessions.get(token);const now=Date.now();if(value && value.expires>now && value.absoluteExpires>now){value.expires=Math.min(now+30*60*1000,value.absoluteExpires);return{...value,token};}if(token)sessions.delete(token);return null;}
@@ -83,6 +102,20 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       }
       if(route==='/api/public' && req.method==='GET')return json(res,200,publicData());
       if(route==='/api/radio' && req.method==='GET')return json(res,200,{tracks:await getRadioTracks()});
+      if(route==='/api/submissions' && req.method==='POST'){
+        const input=await body(req),key=req.socket.remoteAddress||'unknown',now=Date.now();
+        if(!input||typeof input!=='object'||Array.isArray(input))throw httpError(400,'投稿数据格式无效');
+        const recent=(submissionAttempts.get(key)||[]).filter(time=>time>now-60*60*1000);
+        if(recent.length>=5)throw httpError(429,'投稿太频繁，请稍后再试');
+        if(input.company) return json(res,200,{ok:true});
+        const submission={id:`submission-${randomBytes(12).toString('hex')}`,name:cleanText(input.name,150,'网站名称',{required:true}),url:cleanWebUrl(input.url),description:cleanText(input.description||'',2000,'网站简介'),categoryId:cleanText(input.categoryId||'',200,'建议分类'),contact:cleanText(input.contact||'',200,'联系方式'),status:'pending',createdAt:new Date(now).toISOString()};
+        await locked(async()=>{
+          if(submissions.filter(item=>item.status==='pending').length>=1000)throw httpError(503,'待处理投稿已满，请稍后再试');
+          if(submissions.some(item=>item.status==='pending'&&item.url===submission.url))throw httpError(409,'这个网站已经在等待审核');
+          submissions=[submission,...submissions];await atomic('.private/submissions.json',submissions);
+        });
+        recent.push(now);submissionAttempts.set(key,recent);return json(res,201,{ok:true,id:submission.id});
+      }
       if(route==='/api/auth' && req.method==='GET'){const current=session(req);return json(res,200,{setupRequired:!account,authenticated:!!current,username:current?.username});}
       if((route==='/api/setup' || route==='/api/login') && req.method==='POST'){
         const credentials=await body(req);
@@ -109,6 +142,33 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(route==='/api/logout'&&req.method==='POST'){const current=session(req);if(current)sessions.delete(current.token);res.setHeader('Set-Cookie','surfer_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');return json(res,200,{ok:true});}
       if(route.startsWith('/api/admin')){
         const current=session(req);if(!current)throw httpError(401,'请登录站长后台');
+        if(route==='/api/admin/submissions'&&req.method==='GET')return json(res,200,{items:submissions});
+        const submissionMatch=route.match(/^\/api\/admin\/submissions\/([^/]+)$/);
+        if(submissionMatch&&req.method==='PATCH'){
+          const id=submissionMatch[1],input=await body(req);
+          if(!input||typeof input!=='object'||Array.isArray(input))throw httpError(400,'处理数据格式无效');
+          const saved=await locked(async()=>{
+            const index=submissions.findIndex(item=>item.id===id);if(index<0)throw httpError(404,'投稿不存在');
+            const item=submissions[index];if(item.status!=='pending')throw httpError(409,'这条投稿已经处理');
+            if(input.action==='accept'){
+              const categoryId=cleanText(input.categoryId||'',200,'收录分类',{required:true});
+              const category=flattenCategories(store.navigation.categories).find(value=>value.id===categoryId);if(!category)throw httpError(400,'收录分类不存在');
+              if(flattenCategories(store.navigation.categories).flatMap(value=>value.sites).some(site=>site.url===item.url))throw httpError(409,'目录中已经存在这个网站');
+              const siteId=`site-${randomBytes(12).toString('hex')}`,next=structuredClone(store),destination=flattenCategories(next.navigation.categories).find(value=>value.id===categoryId);
+              destination.sites.push({id:siteId,name:item.name,url:item.url,description:item.description,isNew:true,hidden:false});
+              let valid;try{valid=validateStore(next);}catch(error){throw httpError(400,error.message);}
+              const nextStore={...valid,revision:store.revision+1,updatedAt:new Date().toISOString()};
+              await atomic('.private/previous-store.json',store);await atomic('store.json',nextStore);store=nextStore;
+              submissions[index]={...item,status:'accepted',categoryId,siteId,reviewedAt:new Date().toISOString()};
+            }else if(input.action==='reject')submissions[index]={...item,status:'rejected',reviewedAt:new Date().toISOString()};
+            else throw httpError(400,'不支持的处理操作');
+            await atomic('.private/submissions.json',submissions);return submissions[index];
+          });return json(res,200,{item:saved});
+        }
+        if(submissionMatch&&req.method==='DELETE'){
+          await locked(async()=>{const index=submissions.findIndex(item=>item.id===submissionMatch[1]);if(index<0)throw httpError(404,'投稿不存在');submissions.splice(index,1);await atomic('.private/submissions.json',submissions);});
+          return json(res,200,{ok:true});
+        }
         if(route==='/api/admin/data'&&req.method==='GET')return json(res,200,store);
         if(route==='/api/admin/data'&&req.method==='PUT'){
           const input=await body(req);

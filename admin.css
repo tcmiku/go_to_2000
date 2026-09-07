@@ -4,3 +4,4 @@
 .auth-art{display:block;flex:0 0 104px;width:104px;height:104px;object-fit:contain;image-rendering:auto}
 .auth-heading:has(.auth-art){gap:14px;padding:24px 23px 16px}
 @media(max-width:700px){.auth-art{flex-basis:82px;width:82px;height:82px}.auth-heading:has(.auth-art){gap:12px;padding:20px 17px 16px}.auth-heading:has(.auth-art) h2{font-size:1.3rem}}
+.submission-table table{min-width:960px}.submission-table select{min-width:150px;padding:6px;font-size:.75rem}.submission-description{max-width:300px;line-height:1.55;white-space:pre-wrap}.submission-contact,.submission-date{display:block;margin-top:6px;color:#777;font-size:.6875rem}.submission-status{display:inline-block;border:1px solid #aaa;padding:3px 6px;font-size:.6875rem;white-space:nowrap}.submission-status.pending{background:#fff1a8;color:#784d00}.submission-status.accepted{background:#def2dc;color:#226a34}.submission-status.rejected{background:#eee;color:#777}

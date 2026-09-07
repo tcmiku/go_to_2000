@@ -1,4 +1,4 @@
-import { $, escapeHTML as e, external, readStorage, saveStorage, showToast, startClock, preserveFocus } from './ui.js';
+import { $, escapeHTML as e, external, readStorage, saveStorage, showToast, startClock, preserveFocus, api } from './ui.js';
 import { flattenCategories, normalizeUrl, selectGroups, validateNavigation, validatePageContent } from './navigation-data.js';
 import './radio.js';
 import './start-menu.js';
@@ -52,6 +52,9 @@ function renderTree() {
   picker.innerHTML = `<option value="all">全部网站 (${categories.reduce((sum,c)=>sum+count(c),0)})</option><option value="favorites">我的收藏 (${favorites.length})</option>` + categories.map(c => `<optgroup label="${e(c.name)}"><option value="${e(c.id)}">${e(c.name)} · 全部 (${count(c)})</option>${(c.children || []).map(child=>`<option value="${e(child.id)}">└ ${e(child.name)} (${child.sites.length})</option>`).join('')}</optgroup>`).join('');
   picker.value = view; picker.disabled = false;
   $('#category-total').textContent = `${categories.length} 个目录 / ${flattenCategories(categories).length - categories.length} 个子分类`;
+}
+function renderSubmissionCategories() {
+  $('#submission-category').innerHTML='<option value="">由站长决定</option>'+flattenCategories(categories).map(c=>`<option value="${e(c.id)}">${c.parentId?'　└ ':''}${e(c.name)}</option>`).join('');
 }
 function render(historyMode = 'replace') {
   const restoreFocus = preserveFocus();
@@ -144,7 +147,7 @@ async function load() {
     categories = validateNavigation(data.navigation).categories;
     content = validatePageContent(data.content,categories); settings = data.settings || {}; loaded = true; revision = data.revision;
     if (!['all','favorites',...flattenCategories(categories).map(c=>c.id)].includes(view)) view = 'all';
-    render(); renderContent(); showRetroAd(settings.ad);
+    render(); renderContent(); renderSubmissionCategories(); showRetroAd(settings.ad);
   } catch(error) { if(!loaded) $('#link-groups').innerHTML = `<div class="empty"><strong>连接未完成</strong>${e(error.message)}<br><button data-action="retry">重新加载</button></div>`; else showToast('目录更新失败，请稍后刷新重试'); } finally { loading = false; }
 }
 document.addEventListener('click', event => {
@@ -187,6 +190,14 @@ $('#search-form').onsubmit=event=>{event.preventDefault();if(composing)return;pa
 $('#pagination').addEventListener('change',event=>{if(event.target.id==='page-jump'){page=Number(event.target.value);render('push');$('#directory').scrollIntoView({block:'start'});}});
 $('#random-button').onclick=()=>{const pool=[...new Map(flattenCategories(categories).flatMap(c=>c.sites).map(s=>[normalizeUrl(s.url),s])).values()];if(pool.length)window.open(pool[Math.floor(Math.random()*pool.length)].url,'_blank','noopener,noreferrer');else showToast('暂无可漫游的网站');};
 $('#about-button').onclick=()=>$('#about-dialog').showModal();
+$('#submission-open').onclick=()=>{$('#submission-error').textContent='';$('#submission-dialog').showModal();$('#submission-form input[name="name"]').focus();};
+$('#submission-cancel').onclick=()=>$('#submission-dialog').close();
+$('#submission-form').onsubmit=async event=>{
+  event.preventDefault();const form=event.currentTarget,button=$('#submission-submit');$('#submission-error').textContent='';button.disabled=true;button.textContent='正在发送…';
+  try{const input=Object.fromEntries(new FormData(form));await api('/api/submissions',{method:'POST',body:JSON.stringify(input)});form.reset();$('#submission-dialog').close();showToast('投稿已送达站长后台，感谢分享！');}
+  catch(error){$('#submission-error').textContent=error.message;}
+  finally{button.disabled=false;button.textContent='发送投稿';}
+};
 $('#expand-directory').onclick=()=>{const on=document.body.classList.toggle('expanded');$('#expand-directory').setAttribute('aria-pressed',String(on));};
 window.addEventListener('focus',()=>{if(loaded)load();});
 window.addEventListener('popstate',()=>{restoreLocation();if(loaded)render('none');});

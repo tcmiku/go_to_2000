@@ -113,6 +113,41 @@ test('invalid URLs, references, categories and cross-origin requests never chang
   assert.deepEqual((await app.req('/api/admin/data')).data,data);
 });
 
+test('website submissions stay private, persist, and can be accepted into the directory',async t=>{
+  const app=await instance(t);
+  const submitted=await app.req('/api/submissions','POST',{name:'新发现',url:'https://submitted.example.com/path',description:'值得收藏的网站',categoryId:'books',contact:'visitor@example.com'});
+  assert.equal(submitted.status,201);assert.match(submitted.data.id,/^submission-/);
+  assert.equal((await app.req('/api/admin/submissions')).status,401);
+  await setup(app);
+  let listing=await app.req('/api/admin/submissions');assert.equal(listing.status,200);assert.equal(listing.data.items.length,1);
+  const item=listing.data.items[0];assert.equal(item.status,'pending');assert.equal(item.contact,'visitor@example.com');
+  const accepted=await app.req(`/api/admin/submissions/${item.id}`,'PATCH',{action:'accept',categoryId:'books'});
+  assert.equal(accepted.status,200);assert.equal(accepted.data.item.status,'accepted');
+  const publicData=(await app.req('/api/public')).data;
+  const added=publicData.navigation.categories[0].children[0].sites.find(site=>site.url==='https://submitted.example.com/path');
+  assert.equal(added.name,'新发现');assert.equal(added.description,'值得收藏的网站');assert.equal(added.isNew,true);
+  assert.equal((await app.req(`/api/admin/submissions/${item.id}`,'PATCH',{action:'accept',categoryId:'books'})).status,409);
+  await app.restart();await app.req('/api/login','POST',credentials);
+  listing=await app.req('/api/admin/submissions');assert.equal(listing.data.items[0].status,'accepted');
+  assert.ok(JSON.parse(await readFile(path.join(app.dir,'.private/submissions.json'),'utf8'))[0].reviewedAt);
+});
+
+test('submissions validate input, limit abuse, and support reject and delete',async t=>{
+  const app=await instance(t);
+  assert.equal((await app.req('/api/submissions','POST',null)).status,400);
+  assert.equal((await app.req('/api/submissions','POST',{name:'坏链接',url:'javascript:alert(1)',description:'x'})).status,400);
+  assert.equal((await app.req('/api/submissions','POST',{name:'',url:'https://empty.example.com',description:'x'})).status,400);
+  assert.equal((await app.req('/api/submissions','POST',{name:'机器人',url:'https://bot.example.com',description:'x',company:'spam'})).status,200);
+  for(let i=0;i<5;i++)assert.equal((await app.req('/api/submissions','POST',{name:`网站 ${i}`,url:`https://submission-${i}.example.com`,description:'介绍'})).status,201);
+  assert.equal((await app.req('/api/submissions','POST',{name:'第六个',url:'https://sixth.example.com',description:'介绍'})).status,429);
+  await setup(app);let listing=(await app.req('/api/admin/submissions')).data.items;assert.equal(listing.length,5);
+  const id=listing[0].id;assert.equal((await app.req(`/api/admin/submissions/${id}`,'PATCH',null)).status,400);
+  assert.equal((await app.req(`/api/admin/submissions/${id}`,'PATCH',{action:'reject'})).status,200);
+  assert.equal((await app.req('/api/admin/submissions')).data.items.find(item=>item.id===id).status,'rejected');
+  assert.equal((await app.req(`/api/admin/submissions/${id}`,'DELETE',{})).status,200);
+  assert.equal((await app.req('/api/admin/submissions')).data.items.some(item=>item.id===id),false);
+});
+
 test('password change invalidates previous sessions, logout revokes the session, failed logins are limited',async t=>{
   const app=await instance(t);await setup(app);const oldCookie=app.cookie;
   assert.equal((await app.req('/api/admin/password','POST',{current:'incorrect',password:'new-password-123'})).status,400);
