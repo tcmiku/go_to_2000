@@ -1,0 +1,18 @@
+import {$} from './ui.js';
+
+export function mountSnakeGame(menu){
+  const item=document.createElement('button');item.type='button';item.role='menuitem';item.dataset.startAction='snake';item.innerHTML='<span aria-hidden="true">▦</span>贪吃蛇';menu.append(item);
+  const dialog=document.createElement('dialog');dialog.id='snake-dialog';dialog.className='window snake-window';dialog.setAttribute('aria-labelledby','snake-title');dialog.innerHTML='<div class="titlebar"><h2 id="snake-title">▦ 贪吃蛇</h2><button class="caption-button" type="button" id="snake-close" aria-label="关闭贪吃蛇">×</button></div><div class="snake-menu"><span>方向键 / WASD 移动</span><output id="snake-score">得分：0</output></div><div id="snake-board" class="snake-board" role="grid" aria-label="贪吃蛇棋盘"></div><p id="snake-status" class="snake-status" role="status">点击开始，吃到红点得分。</p><div class="snake-actions"><button id="snake-start" type="button">开始</button><button id="snake-pause" type="button">暂停</button></div>';
+  document.body.append(dialog);
+  const board=dialog.querySelector('#snake-board'),scoreEl=dialog.querySelector('#snake-score'),status=dialog.querySelector('#snake-status');
+  const cols=16,rows=12;let snake,food,direction,nextDirection,running=false,paused=false,timer,score=0;
+  const cell=(x,y)=>y*cols+x;
+  function reset(){snake=[{x:4,y:6},{x:3,y:6},{x:2,y:6}];food={x:11,y:6};direction={x:1,y:0};nextDirection=direction;score=0;running=false;paused=false;draw();}
+  function draw(){const cells=Array.from({length:cols*rows},(_,i)=>`<span class="snake-cell" role="gridcell" aria-label="${i%cols+1}列，第${Math.floor(i/cols)+1}行"></span>`);snake.forEach((part,index)=>{cells[cell(part.x,part.y)]=`<span class="snake-cell snake-body${index===0?' snake-head':''}" role="gridcell" aria-label="蛇${index===0?'头':'身'}"></span>`;});cells[cell(food.x,food.y)]='<span class="snake-cell snake-food" role="gridcell" aria-label="食物">●</span>';board.innerHTML=cells.join('');scoreEl.textContent=`得分：${score}`;}
+  function finish(message){running=false;clearInterval(timer);status.textContent=message;draw();}
+  function step(){if(!running||paused)return;direction=nextDirection;const head=snake[0],next={x:head.x+direction.x,y:head.y+direction.y};if(next.x<0||next.x>=cols||next.y<0||next.y>=rows||snake.some(part=>part.x===next.x&&part.y===next.y)){finish('游戏结束，点击“开始”再来一局。');return;}snake.unshift(next);if(next.x===food.x&&next.y===food.y){score+=10;let candidate;do{candidate={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snake.some(part=>part.x===candidate.x&&part.y===candidate.y));food=candidate;}else snake.pop();draw();}
+  function start(){if(!running){reset();running=true;status.textContent='游戏中，吃掉红点！';}paused=false;clearInterval(timer);timer=setInterval(step,140);draw();}
+  function pause(){if(!running)return;paused=!paused;status.textContent=paused?'已暂停，点击继续。':'游戏中，吃掉红点！';}
+  item.addEventListener('click',()=>{dialog.showModal();start();});dialog.querySelector('#snake-start').addEventListener('click',start);dialog.querySelector('#snake-pause').addEventListener('click',pause);dialog.querySelector('#snake-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{clearInterval(timer);running=false;});dialog.addEventListener('keydown',event=>{const key=event.key.toLowerCase(),moves={arrowup:{x:0,y:-1},w:{x:0,y:-1},arrowdown:{x:0,y:1},s:{x:0,y:1},arrowleft:{x:-1,y:0},a:{x:-1,y:0},arrowright:{x:1,y:0},d:{x:1,y:0}};const move=moves[key];if(move&&!(move.x===-direction.x&&move.y===-direction.y)){event.preventDefault();nextDirection=move;}if(key===' '){event.preventDefault();pause();}});reset();
+  return item;
+}

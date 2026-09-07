@@ -1,0 +1,20 @@
+{
+  "hot": {
+    "title": "热门必备",
+    "siteIds": ["qinight-653", "qinight-672", "qinight-398", "qinight-644", "qinight-559"]
+  },
+  "featured": {
+    "title": "本月精选",
+    "items": [
+      { "name": "初音未来 - 初音ミク", "description": "经典作品合集", "url": "https://www.piapro.net/", "artPath": "assets/layers/featured/01-miku.png" },
+      { "name": "Miku Expo", "description": "全球巡演回顾", "url": "https://mikuexpo.com/", "artPath": "assets/layers/featured/02-expo.png" },
+      { "name": "紫罗兰永恒花园", "description": "重温那份感动", "url": "https://tv.violet-evergarden.jp/", "artPath": "assets/layers/featured/03-garden.png" },
+      { "name": "星之卡比 探索发现", "description": "Switch 中文版", "url": "https://www.nintendo.com/", "artPath": "assets/layers/featured/04-game.png" },
+      { "name": "赛博朋克 2077", "description": "夜之城，出发", "url": "https://www.cyberpunk.net/", "artPath": "assets/layers/featured/05-night.png" }
+    ]
+  },
+  "friends": [
+    { "name": "柒夜导航 · 数据来源", "url": "https://nav.qinight.com/" },
+    { "name": "Neocities 个人网站社区", "url": "https://neocities.org/" }
+  ]
+}

@@ -1,0 +1,3238 @@
+{
+  "navigation": {
+    "version": 1,
+    "source": {
+      "name": "柒夜导航 - 黑科技网站资源集",
+      "url": "https://nav.qinight.com/",
+      "importedAt": "2026-09-04T07:23:23.411Z",
+      "notice": "公告： 2026.5.3 更新，添加新网站，更新失效站点，持续维护，欢迎收藏！🎉 » 关注留言"
+    },
+    "categories": [
+      {
+        "id": "cat-f67793b4-9657-464d-8c0e-7ff40cb26c66",
+        "sites": [
+          {
+            "id": "site-3c49fb9a-1427-461e-860c-5d02784a72a3",
+            "name": "永耀晶塔",
+            "url": "https://game.tcmiku.cc.cd/",
+            "description": "肉鸽塔防摸鱼游戏",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-8fd2ea0b-def8-49f1-a65d-eecf1aeee134",
+            "name": "ASMR仓库",
+            "url": "https://asmr-300.com/works",
+            "description": "伟大无需多言",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-881059e1-cc05-462a-8014-4fd4da1a2e6e",
+            "name": "acg喵导航",
+            "url": "https://www.miaoaaa.com/",
+            "description": "ACG导航站，好用！",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-28618415-2bb6-4169-9565-2ccf09a53981",
+            "name": "宝可梦肉鸽",
+            "url": "https://pokerogue.122399.xyz/",
+            "description": "宝可梦肉鸽上班摸鱼必备",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-8054e65a-f9e3-4979-b20f-7e0372dd90dd",
+            "name": "厂长影视",
+            "url": "https://www.4kcz.com/",
+            "description": "高清电影播放网站，真的很高清",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-98fdbd7a-14c1-4665-a7e6-ffdb907d20a3",
+            "name": "开发人员速查表",
+            "url": "https://wangchujiang.com/reference/",
+            "description": "快速查询各语言语法，适用于脑子一抽时",
+            "isNew": true,
+            "hidden": false
+          },
+          {
+            "id": "site-7db96b1c-26f8-4e79-a888-1b82b740f440",
+            "name": "DNSHE",
+            "url": "https://my.dnshe.com/",
+            "description": "该网站提供免费域名哦",
+            "isNew": true,
+            "hidden": false
+          }
+        ],
+        "children": [],
+        "name": "站长的神秘推荐"
+      },
+      {
+        "id": "category-59",
+        "name": "热门必备",
+        "sites": [
+          {
+            "id": "qinight-653",
+            "name": "CraftAI数据分析师",
+            "url": "https://datamind.swguancha.com/index.html?utm_source=qinight",
+            "description": "数据分析师——不仅会算表，帮你找数据、做判断、出方案"
+          },
+          {
+            "id": "qinight-672",
+            "name": "星火AI",
+            "url": "https://xinghuo.xfyun.cn/desk/?ch=xfxh-aigjtf27",
+            "description": "国内可用免费AI工具，对标ChatGPT"
+          },
+          {
+            "id": "qinight-398",
+            "name": "豆包免费AI助手",
+            "url": "https://doubao.paluai.com/?code=dh61",
+            "description": "最好用的全能AI助手"
+          },
+          {
+            "id": "qinight-644",
+            "name": "LibTV",
+            "url": "https://libtv.cgref.cn/s/xpn8352ezw",
+            "description": "专业AI视频创作工具，支持Seedance 2.0"
+          },
+          {
+            "id": "qinight-559",
+            "name": "AI工具大全",
+            "url": "https://www.gaoding.com/utms/826e8873ef5b41289dab4bb92b68204d",
+            "description": "在线AI工具+海量模版素材"
+          },
+          {
+            "id": "qinight-441",
+            "name": "精选资源分享",
+            "url": "https://pan.quark.cn/s/3666fd527b13",
+            "description": "精选软件壁纸打包下载"
+          },
+          {
+            "id": "qinight-363",
+            "name": "NO视频",
+            "url": "https://www.novipnoad.xyz/",
+            "description": "免费高清影视剧"
+          },
+          {
+            "id": "qinight-364",
+            "name": "次元城动画",
+            "url": "https://www.cycani.org",
+            "description": "高清新番动漫"
+          },
+          {
+            "id": "qinight-369",
+            "name": "一起听歌吧",
+            "url": "https://music.alang.run/",
+            "description": "在线听歌房"
+          },
+          {
+            "id": "qinight-370",
+            "name": "今日热榜",
+            "url": "https://tophub.today/",
+            "description": "一站看完全网热榜消息"
+          },
+          {
+            "id": "qinight-371",
+            "name": "Poki在线小游戏",
+            "url": "https://poki.com/zh",
+            "description": "上千款免费小游戏"
+          },
+          {
+            "id": "qinight-390",
+            "name": "千帆搜索",
+            "url": "https://pan.qianfan.app/",
+            "description": "聚合网盘搜索引擎"
+          },
+          {
+            "id": "qinight-391",
+            "name": "飞库文学网",
+            "url": "https://www.feiku6.com/",
+            "description": "精品电子书"
+          },
+          {
+            "id": "qinight-404",
+            "name": "拾光壁纸",
+            "url": "https://snake.timeline.ink/home",
+            "description": "24个高清壁纸图库"
+          },
+          {
+            "id": "qinight-436",
+            "name": "数码荔枝软件商店",
+            "url": "https://lizhi.shop/?cid=2yj7gln9",
+            "description": "最新鲜优秀的正版软件平台"
+          },
+          {
+            "id": "qinight-450",
+            "name": "正版 Windows",
+            "url": "https://lizhi.shop/products/windows-10?cid=2yj7gln9",
+            "description": "正版 Win10 家庭版/专业版"
+          },
+          {
+            "id": "qinight-598",
+            "name": "TRAE-AI编程助手",
+            "url": "https://www.trae.cn/sem/?utm_source=advertising&utm_medium=qinight_ug_cpa&utm_term=hw_trae_qinight",
+            "description": "新用户注册赠4500积分"
+          },
+          {
+            "id": "qinight-624",
+            "name": "iSlide AIPPT-免费体验",
+            "url": "https://www.islide.cc/landing?utm=cg&cgv=l3mnzp7ko1",
+            "description": "输入主题，一键生成PPT"
+          },
+          {
+            "id": "qinight-633",
+            "name": "SpeedAI科研小助手",
+            "url": "https://speedai.com/?utm=cg&cgv=8qmno56k29",
+            "description": "AIGC检测、降重降AI工具"
+          },
+          {
+            "id": "qinight-643",
+            "name": "LiblibAI-哩布哩布AI",
+            "url": "https://liblib.cgref.cn/s/j7n6q5yk1g",
+            "description": "中国领先的AI创作平台"
+          },
+          {
+            "id": "qinight-647",
+            "name": "Seko短剧创作平台",
+            "url": "https://seko.cgref.cn/s/rpe3ldje05",
+            "description": "AI短剧创作工具"
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "category-21",
+        "name": "实用工具",
+        "sites": [
+          {
+            "id": "qinight-617",
+            "name": "全能AI工具箱",
+            "url": "https://www.gaoding.com/utms/ec4ee3bb95cb4a1d8c08ba9cb4392cf0",
+            "description": "在线全能AI工具大全"
+          },
+          {
+            "id": "qinight-6",
+            "name": "在线PS",
+            "url": "https://www.gaoding.com/utms/bd63a6b8f6674b03b4badfab890c9054",
+            "description": "网页版免费 Photoshop"
+          },
+          {
+            "id": "qinight-2",
+            "name": "PDF24 Tools",
+            "url": "https://tools.pdf24.org/zh/",
+            "description": "完全免费的PDF工具箱"
+          },
+          {
+            "id": "qinight-3",
+            "name": "免费在线AI抠图",
+            "url": "https://www.koukoutu.com/removebgtool/all?v=xhpt.AI",
+            "description": "AI智能抠图/替换图片背景"
+          },
+          {
+            "id": "qinight-1",
+            "name": "OCR图片文字识别",
+            "url": "https://web.baimiaoapp.com/",
+            "description": "在线OCR文字识别"
+          },
+          {
+            "id": "qinight-4",
+            "name": "waifu2x",
+            "url": "http://waifu2x.udp.jp/",
+            "description": "图片无损放大"
+          },
+          {
+            "id": "qinight-5",
+            "name": "DeepL翻译",
+            "url": "https://www.deepl.com/translator",
+            "description": "最强在线翻译工具"
+          },
+          {
+            "id": "qinight-7",
+            "name": "TinyPNG",
+            "url": "https://tinypng.com/",
+            "description": "图片压缩利器"
+          },
+          {
+            "id": "qinight-8",
+            "name": "GIF 编辑器",
+            "url": "https://ezgif.com/",
+            "description": "全能GIF编辑制作工具"
+          },
+          {
+            "id": "qinight-10",
+            "name": "草料二维码",
+            "url": "https://cli.im/",
+            "description": "二维码制作解析工具"
+          },
+          {
+            "id": "qinight-11",
+            "name": "Aconvert",
+            "url": "https://www.aconvert.com/cn/",
+            "description": "免费文件格式转换工具"
+          },
+          {
+            "id": "qinight-13",
+            "name": "VirusTotal",
+            "url": "https://www.virustotal.com/",
+            "description": "多引擎在线查毒"
+          },
+          {
+            "id": "qinight-14",
+            "name": "视频图片解析下载",
+            "url": "https://weibo.iiilab.com/",
+            "description": "视频解析下载"
+          },
+          {
+            "id": "qinight-16",
+            "name": "贝贝BiliBili",
+            "url": "https://xbeibeix.com/api/bilibili/",
+            "description": "B站视频下载"
+          },
+          {
+            "id": "qinight-19",
+            "name": "虫部落快搜",
+            "url": "https://search.chongbuluo.com/",
+            "description": "超强的聚合搜索网站"
+          },
+          {
+            "id": "qinight-21",
+            "name": "帮小忙",
+            "url": "https://tool.browser.qq.com",
+            "description": "腾讯在线工具箱平台"
+          },
+          {
+            "id": "qinight-22",
+            "name": "果汁工具",
+            "url": "http://guozhivip.com/tool/",
+            "description": "日常生活工具集合"
+          },
+          {
+            "id": "qinight-23",
+            "name": "IT Tools",
+            "url": "https://it-tools.tech/",
+            "description": "程序员专用工具大全"
+          },
+          {
+            "id": "qinight-24",
+            "name": "易笺阅读器",
+            "url": "https://reader.yijian.app/",
+            "description": "高颜值在线TXT阅读器"
+          },
+          {
+            "id": "qinight-25",
+            "name": "ProcessOn",
+            "url": "https://www.processon.com",
+            "description": "在线作图/思维导图"
+          },
+          {
+            "id": "qinight-27",
+            "name": "ePub 繁简转换",
+            "url": "https://v.magiconch.com/epub-transform.html",
+            "description": "电子书繁简互转"
+          },
+          {
+            "id": "qinight-28",
+            "name": "一起听歌吧",
+            "url": "https://music.alang.run",
+            "description": "在线听歌房"
+          },
+          {
+            "id": "qinight-29",
+            "name": "Wormhole",
+            "url": "https://wormhole.app/",
+            "description": "在线文件分享工具"
+          },
+          {
+            "id": "qinight-275",
+            "name": "微博切九图",
+            "url": "https://v.magiconch.com/sns-image",
+            "description": "一图切多图工具"
+          },
+          {
+            "id": "qinight-326",
+            "name": "在线图片处理",
+            "url": "https://imagestool.com/zh_CN/",
+            "description": "免费/无需上传文件"
+          },
+          {
+            "id": "qinight-342",
+            "name": "TTSMaker",
+            "url": "https://ttsmaker.cn/",
+            "description": "在线免费文本转语音"
+          },
+          {
+            "id": "qinight-347",
+            "name": "翻页时钟",
+            "url": "https://flipclocker.com/",
+            "description": "网页版翻页时钟"
+          },
+          {
+            "id": "qinight-361",
+            "name": "Lingva 翻译",
+            "url": "https://lingva.ml/",
+            "description": "谷歌翻译第三方网页"
+          },
+          {
+            "id": "qinight-376",
+            "name": "优品PPT",
+            "url": "https://www.ypppt.com/",
+            "description": "免费PPT模板下载"
+          },
+          {
+            "id": "qinight-381",
+            "name": "Moakt Email",
+            "url": "https://www.moakt.com/zh",
+            "description": "临时邮箱"
+          },
+          {
+            "id": "qinight-388",
+            "name": "ARC图像处理工具",
+            "url": "https://arc.tencent.com/zh/ai-demos/faceRestoration",
+            "description": "图片修复/放大/抠图"
+          },
+          {
+            "id": "qinight-448",
+            "name": "路过图床",
+            "url": "https://imgse.com/",
+            "description": "免费图片外链"
+          },
+          {
+            "id": "qinight-449",
+            "name": "Watermark Remover",
+            "url": "https://www.watermarkremover.io/zh",
+            "description": "图片去水印"
+          },
+          {
+            "id": "qinight-453",
+            "name": "AHA Music",
+            "url": "https://aha-music.com/",
+            "description": "在线听歌识曲工具"
+          },
+          {
+            "id": "qinight-458",
+            "name": "AnyBT",
+            "url": "https://anybt.eth.limo/",
+            "description": "磁力种子搜索网站"
+          },
+          {
+            "id": "qinight-466",
+            "name": "简历下载",
+            "url": "https://jianlixiazai.cn/",
+            "description": "简历模板免费下载"
+          },
+          {
+            "id": "qinight-470",
+            "name": "Online MP3 Cutter",
+            "url": "https://mp3cut.net/cn/",
+            "description": "在线音频剪辑器"
+          },
+          {
+            "id": "qinight-481",
+            "name": "在线屏幕录制",
+            "url": "https://toolwa.com/record/",
+            "description": "在线录屏/录像/录音"
+          },
+          {
+            "id": "qinight-485",
+            "name": "Device Shots",
+            "url": "https://deviceshots.com/",
+            "description": "带壳图片/模型生成器"
+          },
+          {
+            "id": "qinight-495",
+            "name": "思奥FM",
+            "url": "https://sao.fm/",
+            "description": "网络收音机"
+          },
+          {
+            "id": "qinight-516",
+            "name": "在线音乐播放器",
+            "url": "https://m.uzz.me/",
+            "description": "免费在线音乐播放器"
+          },
+          {
+            "id": "qinight-536",
+            "name": "QiReader",
+            "url": "https://www.qireader.com/",
+            "description": "在线RSS阅读器"
+          },
+          {
+            "id": "qinight-547",
+            "name": "央视频",
+            "url": "https://www.yangshipin.cn/tv/home",
+            "description": "CCTV官方直播平台"
+          },
+          {
+            "id": "qinight-569",
+            "name": "快捷键备忘录",
+            "url": "https://hotkeycheatsheet.com/zh",
+            "description": "软件快捷键速查"
+          },
+          {
+            "id": "qinight-574",
+            "name": "转换PDF",
+            "url": "https://convertpdf.com/zh",
+            "description": "在线PDF格式转换器"
+          },
+          {
+            "id": "qinight-602",
+            "name": "AI智能消除神器",
+            "url": "https://s.gd-share.cn/4oO9",
+            "description": "一键去除图片多余元素"
+          },
+          {
+            "id": "qinight-611",
+            "name": "AI文案生成",
+            "url": "https://s.gd-share.cn/4nRt",
+            "description": "AI文案生成器，让创作更轻松"
+          },
+          {
+            "id": "qinight-620",
+            "name": "白描PDF识别",
+            "url": "https://pdf.baimiaoapp.com/landing/afsh6gl9p9",
+            "description": "高精度PDF在线转Word"
+          },
+          {
+            "id": "qinight-626",
+            "name": "云听",
+            "url": "https://www.radio.cn/pc-portal/erji/radioStation.html",
+            "description": "在线电台直播"
+          },
+          {
+            "id": "qinight-631",
+            "name": "睡眠计算器",
+            "url": "https://sleepcalculator.com/",
+            "description": "计算你的最佳睡眠时间"
+          },
+          {
+            "id": "qinight-635",
+            "name": "纸由我",
+            "url": "https://paperme.toolooz.com/",
+            "description": "自定义打印纸生成器"
+          },
+          {
+            "id": "qinight-638",
+            "name": "哔哩哔哩音频解析",
+            "url": "https://www.pixcat.cn/lab/biliaudio.php",
+            "description": "B站音频解析下载"
+          },
+          {
+            "id": "qinight-640",
+            "name": "VERT格式转换器",
+            "url": "https://vert.sh/",
+            "description": "万能文件格式转换工具"
+          },
+          {
+            "id": "qinight-645",
+            "name": "拼豆图案生成器",
+            "url": "https://perlerbeads.net/zh",
+            "description": "免费在线拼豆图纸生成器"
+          },
+          {
+            "id": "qinight-654",
+            "name": "tools.video",
+            "url": "https://tools.video/zh-CN",
+            "description": "全能视频/音频处理工具"
+          },
+          {
+            "id": "qinight-657",
+            "name": "TXT 转 EPUB",
+            "url": "https://txt2eb.toolooz.com/zh",
+            "description": "在线TXT转EPUB工具"
+          },
+          {
+            "id": "qinight-660",
+            "name": "实用工具大全",
+            "url": "https://pudone.com/",
+            "description": "200+免费在线工具合集"
+          },
+          {
+            "id": "qinight-665",
+            "name": "中央气象台",
+            "url": "https://www.nmc.cn/",
+            "description": "官方天气信息查询平台"
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "category-65",
+        "name": "科技酷站",
+        "sites": [
+          {
+            "id": "qinight-406",
+            "name": "ChatGPT 体验",
+            "url": "https://xinghuo.xfyun.cn/desk/?ch=xfxh-aigjtf27?v=2",
+            "description": "免费 ChatGPT 体验"
+          },
+          {
+            "id": "qinight-579",
+            "name": "AI数字人视频生成",
+            "url": "https://www.youyan3d.com/login/?utm_source=zhanwaidaoliu&utm_campaign=zwj&utm_content=qinight&from=qinight",
+            "description": "一站式AI视频创作，1200+免费3D数字人"
+          },
+          {
+            "id": "qinight-354",
+            "name": "九歌",
+            "url": "http://jiuge.thunlp.org/",
+            "description": "人工智能诗歌写作系统"
+          },
+          {
+            "id": "qinight-393",
+            "name": "动画巡礼地图",
+            "url": "https://anitabi.cn/",
+            "description": "动画取景坐标截图网页地图"
+          },
+          {
+            "id": "qinight-401",
+            "name": "AI工具集导航",
+            "url": "https://ai-bot.cn",
+            "description": "国内外AI工具集合"
+          },
+          {
+            "id": "qinight-414",
+            "name": "AiShort",
+            "url": "https://www.aishort.top/",
+            "description": "AI智能体与提示词平台"
+          },
+          {
+            "id": "qinight-417",
+            "name": "SDXL Turbo",
+            "url": "https://sdxlturbo.ai/",
+            "description": "实时 AI 绘画生成"
+          },
+          {
+            "id": "qinight-418",
+            "name": "Perplexity AI: Ask Anything",
+            "url": "https://www.perplexity.ai/",
+            "description": "AI 问答网站"
+          },
+          {
+            "id": "qinight-434",
+            "name": "Poe",
+            "url": "https://poe.com/",
+            "description": "多模型AI智能机器人"
+          },
+          {
+            "id": "qinight-454",
+            "name": "QRBTF",
+            "url": "https://qrbtf.com/",
+            "description": "让你的二维码与众不同"
+          },
+          {
+            "id": "qinight-471",
+            "name": "What's the link?",
+            "url": "https://whatslink.info/",
+            "description": "磁力链接内容预览"
+          },
+          {
+            "id": "qinight-506",
+            "name": "秘塔AI搜索",
+            "url": "https://metaso.cn/",
+            "description": "没有广告，直达结果"
+          },
+          {
+            "id": "qinight-513",
+            "name": "StickerBaker",
+            "url": "https://stickerbaker.com/",
+            "description": "AI生成卡通贴纸"
+          },
+          {
+            "id": "qinight-532",
+            "name": "大盘云图",
+            "url": "https://dapanyuntu.com/",
+            "description": "大盘走势，尽在掌握！"
+          },
+          {
+            "id": "qinight-551",
+            "name": "AI在线工具箱",
+            "url": "https://www.gaoding.com/utms/e54dcd62f2844f12a8f6e7fa3ca9a59c",
+            "description": "AI绘画/设计/生成工具"
+          },
+          {
+            "id": "qinight-553",
+            "name": "爆款 AI 玩法",
+            "url": "https://s.gd-share.cn/4se7",
+            "description": "一键AI创意生图，玩转爆款流量"
+          },
+          {
+            "id": "qinight-561",
+            "name": "美璟世界",
+            "url": "https://www.mzgf.com/world",
+            "description": "360°超清全球VR美景"
+          },
+          {
+            "id": "qinight-591",
+            "name": "搜索123",
+            "url": "https://sousuo123.com/",
+            "description": "一站式AI聚合搜索引擎"
+          },
+          {
+            "id": "qinight-597",
+            "name": "DeepSeek",
+            "url": "https://www.deepseek.com/",
+            "description": "探索未至之境"
+          },
+          {
+            "id": "qinight-607",
+            "name": "Excalidraw 无限白板",
+            "url": "https://excalidraw.com/",
+            "description": "无限画布白板导图工具"
+          },
+          {
+            "id": "qinight-618",
+            "name": "码上飞",
+            "url": "https://www.codeflying.net/?utm=cg&cgv=y59nglgkr2",
+            "description": "AI生成小程序/APP/H5应用"
+          },
+          {
+            "id": "qinight-619",
+            "name": "Muset",
+            "url": "https://www.muset.ai/?s=qinight",
+            "description": "创作者专属AI工作区"
+          },
+          {
+            "id": "qinight-621",
+            "name": "AI专属法律顾问",
+            "url": "https://ai.iterms.com/chat?utm_source=aitool&utm_medium=25&utm_campaign=new_user",
+            "description": "法律人的AI智能工作台"
+          },
+          {
+            "id": "qinight-646",
+            "name": "updream",
+            "url": "https://updream.cgref.cn/s/20epz3okw1",
+            "description": "一站式AI长视频创作助手"
+          },
+          {
+            "id": "qinight-658",
+            "name": "朱雀AI检测助手",
+            "url": "https://matrix.tencent.com/ai-detect/",
+            "description": "免费在线AI检测助手"
+          },
+          {
+            "id": "qinight-661",
+            "name": "蛙蛙写作",
+            "url": "https://wawawriter.cgref.cn/s/rpex724k90",
+            "description": "超级AI智能写作助手"
+          },
+          {
+            "id": "qinight-662",
+            "name": "Loomy",
+            "url": "https://loomy.cgref.cn/s/qyk4v5pk87",
+            "description": "你的全能AI工作搭子"
+          },
+          {
+            "id": "qinight-663",
+            "name": "讯飞绘文",
+            "url": "https://turbodesk.cgref.cn/s/50k9v5ong6",
+            "description": "智能图文创作，全平台一键发布"
+          },
+          {
+            "id": "qinight-664",
+            "name": "蛙蛙漫剧",
+            "url": "https://wawawriter.cgref.cn/wamanju",
+            "description": "小说、剧本到视频一条龙漫剧创作"
+          },
+          {
+            "id": "qinight-667",
+            "name": "今晚看什么",
+            "url": "https://imdb.qiaomu.ai/",
+            "description": "AI高分电影推荐"
+          },
+          {
+            "id": "qinight-669",
+            "name": "WolframAlpha",
+            "url": "https://www.wolframalpha.com/",
+            "description": "在线智能计算与知识引擎"
+          },
+          {
+            "id": "qinight-671",
+            "name": "AiPy本地智能体",
+            "url": "https://aipyaipy.cgref.cn/s/3mnz970eo1",
+            "description": "超级AI牛马智能体工厂"
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "category-22",
+        "name": "资源搜索",
+        "sites": [],
+        "children": [
+          {
+            "id": "category-34",
+            "name": "学术搜索",
+            "sites": [
+              {
+                "id": "qinight-31",
+                "name": "Google 学术搜索",
+                "url": "https://scholar.google.com/",
+                "description": "不解释"
+              },
+              {
+                "id": "qinight-32",
+                "name": "百度学术",
+                "url": "https://xueshu.baidu.com/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-33",
+                "name": "虫部落学术搜索",
+                "url": "https://scholar.chongbuluo.com/",
+                "description": "超强聚合资料搜索网站"
+              },
+              {
+                "id": "qinight-36",
+                "name": "世界和地区统计资料",
+                "url": "https://cn.knoema.com/atlas",
+                "description": "世界各国统计资料数据"
+              },
+              {
+                "id": "qinight-37",
+                "name": "Open Access Library",
+                "url": "https://www.oalib.com/",
+                "description": "免费学术论文搜索下载"
+              },
+              {
+                "id": "qinight-38",
+                "name": "Sci-Hub",
+                "url": "https://sci-hub.st/",
+                "description": "全球最大的免费论文库"
+              },
+              {
+                "id": "qinight-325",
+                "name": "Library Genesis+",
+                "url": "https://libgen.bz/",
+                "description": "全球免费书籍期刊下载"
+              },
+              {
+                "id": "qinight-594",
+                "name": "Project Gutenberg",
+                "url": "https://www.gutenberg.org/",
+                "description": "全球免费书籍资料库"
+              }
+            ]
+          },
+          {
+            "id": "category-35",
+            "name": "网盘搜索",
+            "sites": [
+              {
+                "id": "qinight-40",
+                "name": "千帆搜索",
+                "url": "https://pan.qianfan.app",
+                "description": "百度/阿里/蓝奏/天翼/夸克/迅雷网盘"
+              },
+              {
+                "id": "qinight-42",
+                "name": "猫狸盘搜",
+                "url": "https://www.alipansou.com/",
+                "description": "百度/阿里/夸克/天翼云盘"
+              },
+              {
+                "id": "qinight-44",
+                "name": "学霸盘",
+                "url": "https://www.xuebapan.com/",
+                "description": "百度网盘"
+              },
+              {
+                "id": "qinight-48",
+                "name": "UP云搜",
+                "url": "https://www.upyunso.com/",
+                "description": "阿里云盘"
+              },
+              {
+                "id": "qinight-498",
+                "name": "SearchSearchGo",
+                "url": "https://ssgo.app/",
+                "description": "阿里云盘"
+              },
+              {
+                "id": "qinight-500",
+                "name": "秒搜",
+                "url": "https://miaosou.fun/",
+                "description": "百度/阿里/夸克/迅雷网盘"
+              },
+              {
+                "id": "qinight-601",
+                "name": "懒盘搜索",
+                "url": "https://www.lzpanx.com/",
+                "description": "百度/阿里/夸克/迅雷/UC网盘"
+              },
+              {
+                "id": "qinight-625",
+                "name": "夸夸盘搜",
+                "url": "https://www.kuakuaso.com",
+                "description": "百度/阿里/天翼/夸克/迅雷网盘"
+              }
+            ]
+          },
+          {
+            "id": "category-36",
+            "name": "以图搜图",
+            "sites": [
+              {
+                "id": "qinight-53",
+                "name": "Yandex.Images",
+                "url": "https://yandex.ru/images/",
+                "description": "搜图王者，效果惊艳！"
+              },
+              {
+                "id": "qinight-50",
+                "name": "Google 图片",
+                "url": "https://www.google.com/imghp",
+                "description": "效果可以"
+              },
+              {
+                "id": "qinight-51",
+                "name": "百度识图",
+                "url": "https://image.baidu.com/?fr=shitu",
+                "description": "可以用"
+              },
+              {
+                "id": "qinight-55",
+                "name": "SauceNAO",
+                "url": "https://saucenao.com/",
+                "description": "搜索插画作品效果极好"
+              },
+              {
+                "id": "qinight-56",
+                "name": "Anime Scene Search Engine",
+                "url": "https://trace.moe/",
+                "description": "动漫截图识别找原作"
+              },
+              {
+                "id": "qinight-57",
+                "name": "必应可视化搜索",
+                "url": "https://cn.bing.com/visualsearch",
+                "description": "生活物品场景识别搜索"
+              }
+            ]
+          },
+          {
+            "id": "category-37",
+            "name": "电子书搜索",
+            "sites": [
+              {
+                "id": "qinight-359",
+                "name": "安娜的档案",
+                "url": "https://zh.annas-archive.li/",
+                "description": "影子图书馆搜索引擎"
+              },
+              {
+                "id": "qinight-58",
+                "name": "苦瓜书盘",
+                "url": "https://kgbook.com/",
+                "description": "资源多/免登录"
+              },
+              {
+                "id": "qinight-59",
+                "name": "鸠摩搜书",
+                "url": "https://www.jiumodiary.com/",
+                "description": "聚合文档搜索引擎"
+              },
+              {
+                "id": "qinight-63",
+                "name": "微信读书",
+                "url": "https://weread.qq.com/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-64",
+                "name": "书格",
+                "url": "https://new.shuge.org/",
+                "description": "在线古籍图书馆"
+              },
+              {
+                "id": "qinight-65",
+                "name": "SoBooks",
+                "url": "https://sobooks.cc/",
+                "description": "资源多/格式全/需扫码"
+              },
+              {
+                "id": "qinight-66",
+                "name": "电子书聚合搜索",
+                "url": "https://www.giffox.com/",
+                "description": "最佳图书聚合搜索网站"
+              },
+              {
+                "id": "qinight-67",
+                "name": "资源帝电子书导航",
+                "url": "https://shu.ziyuandi.cn/",
+                "description": "不错的导航网站"
+              },
+              {
+                "id": "qinight-69",
+                "name": "图灵社区",
+                "url": "https://www.ituring.com.cn/book?tab=free",
+                "description": "计算机书籍在线阅读"
+              },
+              {
+                "id": "qinight-70",
+                "name": "古籍館",
+                "url": "https://www.gujiguan.com/",
+                "description": "古文献典籍资源库"
+              },
+              {
+                "id": "qinight-71",
+                "name": "计算机免费书籍",
+                "url": "https://www.jb51.net/books/",
+                "description": "免登录"
+              },
+              {
+                "id": "qinight-72",
+                "name": "好讀",
+                "url": "http://www.haodoo.net/",
+                "description": "繁体书籍免费阅读下载"
+              },
+              {
+                "id": "qinight-73",
+                "name": "搬书匠",
+                "url": "http://www.banshujiang.cn/",
+                "description": "计算机书籍"
+              },
+              {
+                "id": "qinight-334",
+                "name": "免费小说网",
+                "url": "http://www.freexiaoshuo.com/",
+                "description": "TXT小说下载"
+              },
+              {
+                "id": "qinight-378",
+                "name": "Liber3",
+                "url": "https://liber3.eth.limo/",
+                "description": "电子书下载"
+              },
+              {
+                "id": "qinight-400",
+                "name": "FreeMbook Search",
+                "url": "https://freembook.com/",
+                "description": "电子书搜索"
+              },
+              {
+                "id": "qinight-431",
+                "name": "聚合书库",
+                "url": "https://mianfei22.com/",
+                "description": "免费小说阅读网"
+              },
+              {
+                "id": "qinight-459",
+                "name": "owllook",
+                "url": "https://owlook.com.cn/",
+                "description": "网络小说搜索引擎"
+              },
+              {
+                "id": "qinight-472",
+                "name": "识典古籍",
+                "url": "https://www.shidianguji.com/",
+                "description": "古籍在线阅读平台"
+              },
+              {
+                "id": "qinight-479",
+                "name": "起点图",
+                "url": "https://www.qidiantu.com/",
+                "description": "起点小说数据"
+              },
+              {
+                "id": "qinight-510",
+                "name": "24h搜书网",
+                "url": "https://24hbook.store/",
+                "description": "电子书下载+在线阅读"
+              },
+              {
+                "id": "qinight-552",
+                "name": "PDF之家",
+                "url": "https://pdfzj.com/",
+                "description": "PDF资源分享"
+              },
+              {
+                "id": "qinight-556",
+                "name": "恩京的书房",
+                "url": "https://www.enjing.net/",
+                "description": "电子书下载"
+              },
+              {
+                "id": "qinight-557",
+                "name": "读书小站",
+                "url": "https://ibooks.org.cn/",
+                "description": "电子书下载"
+              },
+              {
+                "id": "qinight-565",
+                "name": "SaltyLeo 的书架",
+                "url": "https://book.tstrs.me/",
+                "description": "电子书聚合搜索"
+              },
+              {
+                "id": "qinight-615",
+                "name": "电子书导航",
+                "url": "https://szsyw.cn/book",
+                "description": "电子书网站导航"
+              }
+            ]
+          },
+          {
+            "id": "category-38",
+            "name": "壁纸美图",
+            "sites": [
+              {
+                "id": "qinight-440",
+                "name": "高清壁纸资源",
+                "url": "https://pan.quark.cn/s/a12637f69f89",
+                "description": "精选壁纸美图打包"
+              },
+              {
+                "id": "qinight-74",
+                "name": "Awesome Wallpapers",
+                "url": "https://wallhaven.cc/",
+                "description": "强烈推荐"
+              },
+              {
+                "id": "qinight-75",
+                "name": "哲风壁纸",
+                "url": "https://haowallpaper.com/",
+                "description": "免费4K高清壁纸"
+              },
+              {
+                "id": "qinight-76",
+                "name": "Wallpaper Cave",
+                "url": "https://wallpapercave.com/",
+                "description": "类型非常有趣"
+              },
+              {
+                "id": "qinight-77",
+                "name": "动漫图片和壁纸",
+                "url": "https://anime-pictures.net/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-78",
+                "name": "backiee",
+                "url": "https://backiee.com/",
+                "description": "支持全平台客户端"
+              },
+              {
+                "id": "qinight-79",
+                "name": "Simple Desktops",
+                "url": "http://simpledesktops.com/",
+                "description": "极简风格插画"
+              },
+              {
+                "id": "qinight-80",
+                "name": "konachan Anime Wallpapers",
+                "url": "https://konachan.net/post",
+                "description": "插画/二次元作品"
+              },
+              {
+                "id": "qinight-81",
+                "name": "Alpha Coders",
+                "url": "https://alphacoders.com/",
+                "description": "各种类型资源极多"
+              },
+              {
+                "id": "qinight-83",
+                "name": "WallpapersCraft",
+                "url": "https://wallpaperscraft.com/",
+                "description": "类型多/功能实用"
+              },
+              {
+                "id": "qinight-84",
+                "name": "故宫壁纸",
+                "url": "https://www.dpm.org.cn/lights/royal.html",
+                "description": "故宫博物院官方"
+              },
+              {
+                "id": "qinight-85",
+                "name": "Images | ESO",
+                "url": "https://www.eso.org/public/images",
+                "description": "宇宙/天文爱好者必备"
+              },
+              {
+                "id": "qinight-86",
+                "name": "WallpaperHub",
+                "url": "https://wallpaperhub.app/",
+                "description": "高质量壁纸平台"
+              },
+              {
+                "id": "qinight-88",
+                "name": "美图集",
+                "url": "https://photo.ihansen.org/",
+                "description": "高质量图片免费下载"
+              },
+              {
+                "id": "qinight-91",
+                "name": "Wallspic",
+                "url": "https://wallspic.com/cn",
+                "description": "高质量壁纸下载"
+              },
+              {
+                "id": "qinight-94",
+                "name": "3G壁纸",
+                "url": "https://www.3gbizhi.com/",
+                "description": "手机壁纸大全"
+              },
+              {
+                "id": "qinight-95",
+                "name": "必应壁纸",
+                "url": "https://bing.ee123.net/",
+                "description": "每日一图"
+              },
+              {
+                "id": "qinight-348",
+                "name": "拾光壁纸",
+                "url": "https://snake.timeline.ink/",
+                "description": "24个高清壁纸图库"
+              },
+              {
+                "id": "qinight-487",
+                "name": "PixivNow",
+                "url": "https://pixiv.js.org/",
+                "description": "Pixiv图片浏览下载"
+              },
+              {
+                "id": "qinight-519",
+                "name": "惜染图库",
+                "url": "https://hefollo.com/",
+                "description": "高清壁纸图片库"
+              },
+              {
+                "id": "qinight-610",
+                "name": "动漫、游戏壁纸",
+                "url": "https://www.2dwallpapers.com/",
+                "description": "高清动漫和游戏壁纸"
+              },
+              {
+                "id": "qinight-613",
+                "name": "宝藏图库",
+                "url": "https://www.baozangtuku.com/",
+                "description": "高清壁纸下载"
+              },
+              {
+                "id": "qinight-642",
+                "name": "Cosine Gallery",
+                "url": "https://pic.cosine.ren/",
+                "description": "精选ACG好图壁纸集"
+              }
+            ]
+          },
+          {
+            "id": "category-39",
+            "name": "素材资源",
+            "sites": [
+              {
+                "id": "qinight-102",
+                "name": "稿定设计",
+                "url": "https://www.gaoding.com/utms/0f38bff2d8e1471ca97d507619d13a9c",
+                "description": "在线设计工具/海量素材"
+              },
+              {
+                "id": "qinight-98",
+                "name": "免费图片 Pixabay",
+                "url": "https://pixabay.com/zh/",
+                "description": "免费正版高清图片库"
+              },
+              {
+                "id": "qinight-99",
+                "name": "Unsplash",
+                "url": "https://unsplash.com/",
+                "description": "免费素材照片"
+              },
+              {
+                "id": "qinight-100",
+                "name": "Pexels 图片素材",
+                "url": "https://www.pexels.com/zh-cn/",
+                "description": "免费图片素材"
+              },
+              {
+                "id": "qinight-101",
+                "name": "Pexels 视频素材",
+                "url": "https://www.pexels.com/zh-cn/videos/",
+                "description": "免费视频素材"
+              },
+              {
+                "id": "qinight-103",
+                "name": "The Stocks 2",
+                "url": "http://thestocks.im/",
+                "description": "最佳免费素材聚合搜索"
+              },
+              {
+                "id": "qinight-104",
+                "name": "搜图神器",
+                "url": "https://www.logosc.cn/so/",
+                "description": "免费版权图片一键搜索"
+              },
+              {
+                "id": "qinight-105",
+                "name": "iconfont 矢量图标库",
+                "url": "https://www.iconfont.cn/",
+                "description": "阿里巴巴矢量图标库"
+              },
+              {
+                "id": "qinight-106",
+                "name": "免费图标素材",
+                "url": "https://igoutu.cn/",
+                "description": "免费图标/剪贴画/音乐"
+              },
+              {
+                "id": "qinight-108",
+                "name": "GIPHY",
+                "url": "https://giphy.com/",
+                "description": "动图搜索&制作"
+              },
+              {
+                "id": "qinight-445",
+                "name": "100font",
+                "url": "https://www.100font.com/",
+                "description": "免费字体下载"
+              },
+              {
+                "id": "qinight-446",
+                "name": "mfsc123",
+                "url": "https://www.mfsc123.com/",
+                "description": "免费图片/视频/音频搜索"
+              },
+              {
+                "id": "qinight-447",
+                "name": "Haikei",
+                "url": "https://app.haikei.app/",
+                "description": "配图背景生成器"
+              },
+              {
+                "id": "qinight-463",
+                "name": "淘声网",
+                "url": "https://www.tosound.com/",
+                "description": "免费音效素材资源"
+              },
+              {
+                "id": "qinight-474",
+                "name": "Yesicon",
+                "url": "https://yesicon.app/",
+                "description": "免费矢量图标库"
+              },
+              {
+                "id": "qinight-484",
+                "name": "Cool Backgrounds",
+                "url": "https://coolbackgrounds.io/",
+                "description": "渐变背景生成器"
+              },
+              {
+                "id": "qinight-517",
+                "name": "Hippopx",
+                "url": "https://www.hippopx.com/",
+                "description": "免费图片素材库"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "category-23",
+        "name": "动漫影视",
+        "sites": [],
+        "children": [
+          {
+            "id": "category-40",
+            "name": "在线动漫",
+            "sites": [
+              {
+                "id": "qinight-109",
+                "name": "哔哩哔哩",
+                "url": "https://www.bilibili.com/",
+                "description": "(゜-゜)つロ 干杯~"
+              },
+              {
+                "id": "qinight-110",
+                "name": "AGE动漫",
+                "url": "https://www.agedm.io/",
+                "description": "在线/客户端"
+              },
+              {
+                "id": "qinight-111",
+                "name": "AniCh 动漫弹幕APP",
+                "url": "https://pan.quark.cn/s/5f082676950a",
+                "description": "最佳全平台动漫弹幕APP"
+              },
+              {
+                "id": "qinight-112",
+                "name": "Anime1.me",
+                "url": "https://anime1.me/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-113",
+                "name": "樱之空动漫",
+                "url": "https://skr.skr1.cc:666/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-114",
+                "name": "稀饭动漫",
+                "url": "https://dm.xifanacg.com/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-115",
+                "name": "次元城动画",
+                "url": "https://www.cycani.org/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-116",
+                "name": "Hazx 动漫新番表",
+                "url": "https://hmacg.cn/bangumi/",
+                "description": "H萌动漫新番追番表"
+              },
+              {
+                "id": "qinight-117",
+                "name": "YuC's AnimeList",
+                "url": "https://yuc.wiki/",
+                "description": "动漫新番表/放送平台"
+              },
+              {
+                "id": "qinight-119",
+                "name": "猫耳FM",
+                "url": "https://www.missevan.com/",
+                "description": "来自二次元的声音"
+              },
+              {
+                "id": "qinight-351",
+                "name": "异世界动漫",
+                "url": "https://www.dmmiku.com/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-508",
+                "name": "Dialogue.moe",
+                "url": "https://dialogue.moe/",
+                "description": "用台词搜动漫"
+              },
+              {
+                "id": "qinight-515",
+                "name": "airAnime",
+                "url": "https://air.tls.moe/",
+                "description": "动画/漫画聚合搜索网站"
+              },
+              {
+                "id": "qinight-528",
+                "name": "月之祠",
+                "url": "https://www.moonci.com/",
+                "description": "在线高清动漫"
+              },
+              {
+                "id": "qinight-529",
+                "name": "girigiri爱动漫",
+                "url": "https://ani.girigirilove.com/",
+                "description": "免费高清动漫"
+              },
+              {
+                "id": "qinight-531",
+                "name": "新番列表",
+                "url": "https://www.miluxing.com/",
+                "description": "新番资料库"
+              },
+              {
+                "id": "qinight-535",
+                "name": "Bangumi 番组计划",
+                "url": "https://bangumi.tv/",
+                "description": "大千世界，志趣相投"
+              },
+              {
+                "id": "qinight-609",
+                "name": "热门动画排行榜",
+                "url": "https://hot-anime.techartlife.com/",
+                "description": "30年动漫数据统计打卡"
+              }
+            ]
+          },
+          {
+            "id": "category-41",
+            "name": "影视追剧",
+            "sites": [
+              {
+                "id": "qinight-121",
+                "name": "NO视频",
+                "url": "https://www.novipnoad.xyz",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-128",
+                "name": "注视影视",
+                "url": "https://gaze.red/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-122",
+                "name": "茶杯狐 Cupfox",
+                "url": "https://cupfox.app/",
+                "description": "影视片单推荐"
+              },
+              {
+                "id": "qinight-123",
+                "name": "央视片库",
+                "url": "https://tv.cctv.com/yxg",
+                "description": "央视电视剧/动画片/纪录片"
+              },
+              {
+                "id": "qinight-125",
+                "name": "哔哩哔哩纪录片",
+                "url": "https://www.bilibili.com/documentary/",
+                "description": "B站纪录片专题"
+              },
+              {
+                "id": "qinight-126",
+                "name": "人人影视下载分享站",
+                "url": "https://yyets.click/home",
+                "description": "电驴/磁力/网盘下载"
+              },
+              {
+                "id": "qinight-129",
+                "name": "厂长资源",
+                "url": "https://www.czzyvideo.com/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-130",
+                "name": "电影狗",
+                "url": "https://www.dyg2024.com/",
+                "description": "聚合影视搜索引擎"
+              },
+              {
+                "id": "qinight-131",
+                "name": "搜片.com",
+                "url": "https://soupian.pro/",
+                "description": "聚合影视搜索引擎"
+              },
+              {
+                "id": "qinight-132",
+                "name": "热播之家",
+                "url": "https://www.rebozj.pro/",
+                "description": "在线观看/网盘下载"
+              },
+              {
+                "id": "qinight-134",
+                "name": "电影天堂",
+                "url": "https://www.dy2018.com/",
+                "description": "磁力下载"
+              },
+              {
+                "id": "qinight-135",
+                "name": "爱看机器人",
+                "url": "https://v.ikanbot.com/",
+                "description": "在线观看"
+              },
+              {
+                "id": "qinight-136",
+                "name": "SubHD 字幕平台",
+                "url": "https://subhd.tv/",
+                "description": "字幕下载"
+              },
+              {
+                "id": "qinight-137",
+                "name": "字幕库",
+                "url": "https://zimuku.org/",
+                "description": "字幕下载"
+              },
+              {
+                "id": "qinight-138",
+                "name": "射手网",
+                "url": "https://assrt.net/",
+                "description": "字幕下载"
+              },
+              {
+                "id": "qinight-545",
+                "name": "字幕工具箱",
+                "url": "https://zm.i8k.tv/",
+                "description": "在线字幕处理工具"
+              },
+              {
+                "id": "qinight-639",
+                "name": "瓣影寻踪",
+                "url": "https://douban-scout.kfstorm.com/",
+                "description": "豆瓣电影佳片筛选"
+              }
+            ]
+          },
+          {
+            "id": "category-42",
+            "name": "漫画阅读",
+            "sites": [
+              {
+                "id": "qinight-139",
+                "name": "Kox.moe",
+                "url": "https://kox.moe/",
+                "description": "EPUB/MOBI漫画下载"
+              },
+              {
+                "id": "qinight-141",
+                "name": "Komiic漫画",
+                "url": "https://komiic.cc/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-142",
+                "name": "动漫屋",
+                "url": "https://www.dm5.com/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-143",
+                "name": "yymanhua",
+                "url": "https://www.yymanhua.com/",
+                "description": "在线漫画阅读第一站"
+              },
+              {
+                "id": "qinight-144",
+                "name": "90漫画网",
+                "url": "https://www.90mh.cc/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-145",
+                "name": "包子漫画",
+                "url": "https://www.baozimh.com",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-146",
+                "name": "漫画狗",
+                "url": "https://dogemanga.com/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-147",
+                "name": "漫画 – 次元狗",
+                "url": "https://www.acgndog.com/category/rec-comic",
+                "description": "漫画下载"
+              },
+              {
+                "id": "qinight-148",
+                "name": "xmanhua",
+                "url": "https://www.xmanhua.com/",
+                "description": "在线漫画阅读"
+              },
+              {
+                "id": "qinight-149",
+                "name": "mangabz",
+                "url": "https://mangabz.com/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-151",
+                "name": "MYCOMIC",
+                "url": "https://mycomic.com/cn",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-152",
+                "name": "漫画柜",
+                "url": "https://www.manhuagui.com/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-153",
+                "name": "拷贝漫画",
+                "url": "https://www.mangacopy.com/",
+                "description": "在线阅读"
+              },
+              {
+                "id": "qinight-154",
+                "name": "搜漫",
+                "url": "https://www.soman.com/",
+                "description": "一站式漫画搜索引擎"
+              },
+              {
+                "id": "qinight-155",
+                "name": "MangaDex",
+                "url": "https://mangadex.org/",
+                "description": "全球性漫画分享站"
+              },
+              {
+                "id": "qinight-374",
+                "name": "ComicWalker",
+                "url": "https://comic-walker.com/",
+                "description": "生肉漫画"
+              },
+              {
+                "id": "qinight-473",
+                "name": "ComicRead PWA",
+                "url": "https://comic-read.pages.dev/",
+                "description": "在线版漫画阅读器"
+              }
+            ]
+          },
+          {
+            "id": "category-43",
+            "name": "动漫下载",
+            "sites": [
+              {
+                "id": "qinight-156",
+                "name": "爱恋动漫BT下载",
+                "url": "https://www.kisssub.org/",
+                "description": "磁力/BT下载"
+              },
+              {
+                "id": "qinight-157",
+                "name": "动漫花园资源网",
+                "url": "https://share.dmhy.org/",
+                "description": "最佳动漫资源分享平台"
+              },
+              {
+                "id": "qinight-158",
+                "name": "VCB-Studio",
+                "url": "https://vcb-s.com/",
+                "description": "高质量BD压制组"
+              },
+              {
+                "id": "qinight-159",
+                "name": "蜜柑计划",
+                "url": "https://mikanime.tv/",
+                "description": "新一代的动漫下载站"
+              },
+              {
+                "id": "qinight-160",
+                "name": "ACG.RIP",
+                "url": "https://acg.rip/",
+                "description": "种子下载"
+              },
+              {
+                "id": "qinight-161",
+                "name": "诸神字幕组",
+                "url": "https://subs.kamigami.org/",
+                "description": "最佳中日双语字幕资源"
+              },
+              {
+                "id": "qinight-163",
+                "name": "萌番组",
+                "url": "https://bangumi.moe/",
+                "description": "磁力/种子下载"
+              },
+              {
+                "id": "qinight-164",
+                "name": "Animex动漫社",
+                "url": "http://www.animetox.com/",
+                "description": "动漫资源站"
+              },
+              {
+                "id": "qinight-165",
+                "name": "次元狗",
+                "url": "https://www.acgndog.com/",
+                "description": "动漫资源站"
+              },
+              {
+                "id": "qinight-166",
+                "name": "末日动漫资源库",
+                "url": "https://share.acgnx.se/",
+                "description": "磁力/种子下载"
+              },
+              {
+                "id": "qinight-412",
+                "name": "动漫国字幕组",
+                "url": "https://dmguo.org/",
+                "description": "种子/字幕下载"
+              },
+              {
+                "id": "qinight-429",
+                "name": "AnimeThemes",
+                "url": "https://animethemes.moe/",
+                "description": "高清OP/ED播放下载"
+              },
+              {
+                "id": "qinight-563",
+                "name": "Anime Garden",
+                "url": "https://garden.breadio.wiki/",
+                "description": "动漫花园第三方镜像"
+              }
+            ]
+          },
+          {
+            "id": "category-56",
+            "name": "看轻小说",
+            "sites": [
+              {
+                "id": "qinight-261",
+                "name": "轻之国度",
+                "url": "https://www.lightnovel.fun/",
+                "description": "国内最大轻小说论坛"
+              },
+              {
+                "id": "qinight-262",
+                "name": "轻小说文库",
+                "url": "https://www.wenku8.net/index.php",
+                "description": "在线阅读/TXT下载"
+              },
+              {
+                "id": "qinight-263",
+                "name": "哔哩轻小说",
+                "url": "https://www.linovelib.com",
+                "description": "在线阅读/TXT下载"
+              },
+              {
+                "id": "qinight-265",
+                "name": "魔笔小说",
+                "url": "https://www.mobinovels.com",
+                "description": "EPUB/MOBI下载"
+              },
+              {
+                "id": "qinight-266",
+                "name": "成为小说家吧",
+                "url": "https://syosetu.com/",
+                "description": "Web版小说连载网站"
+              },
+              {
+                "id": "qinight-267",
+                "name": "轻小说 - Animex",
+                "url": "http://www.animetox.com/category/source/lightnovel",
+                "description": "EPUB/TXT下载"
+              },
+              {
+                "id": "qinight-268",
+                "name": "轻小说 - 次元狗",
+                "url": "https://www.acgndog.com/category/qingxiaoshuo",
+                "description": "EPUB/TXT下载"
+              },
+              {
+                "id": "qinight-270",
+                "name": "开源阅读",
+                "url": "https://gedoor.github.io/",
+                "description": "自定义书源小说阅读器"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "category-24",
+        "name": "软件资源",
+        "sites": [],
+        "children": [
+          {
+            "id": "category-44",
+            "name": "软件下载",
+            "sites": [
+              {
+                "id": "qinight-167",
+                "name": "腾讯软件中心",
+                "url": "https://pc.qq.com/",
+                "description": "比较靠谱的软件下载平台"
+              },
+              {
+                "id": "qinight-168",
+                "name": "果核剥壳",
+                "url": "https://www.ghxi.com/",
+                "description": "修改版软件分享"
+              },
+              {
+                "id": "qinight-169",
+                "name": "大眼仔旭",
+                "url": "http://www.dayanzai.me/",
+                "description": "汉化软件分享"
+              },
+              {
+                "id": "qinight-170",
+                "name": "AlternativeTo",
+                "url": "https://alternativeto.net/",
+                "description": "同类可替代软件搜索"
+              },
+              {
+                "id": "qinight-171",
+                "name": "SourceForge",
+                "url": "https://sourceforge.net/",
+                "description": "全球最大的开源软件库"
+              },
+              {
+                "id": "qinight-172",
+                "name": "MSDN, 我告诉你",
+                "url": "https://msdn.itellyou.cn/",
+                "description": "微软原版软件系统"
+              },
+              {
+                "id": "qinight-173",
+                "name": "Uptodown",
+                "url": "https://cn.uptodown.com/",
+                "description": "Win/Mac/安卓软件下载"
+              },
+              {
+                "id": "qinight-174",
+                "name": "APKMirror",
+                "url": "https://www.apkmirror.com/",
+                "description": "免费安全的APK下载平台"
+              },
+              {
+                "id": "qinight-175",
+                "name": "Chrome插件英雄榜",
+                "url": "https://zhaoolee.gitbooks.io/chrome/content/",
+                "description": "Chrome扩展推荐"
+              },
+              {
+                "id": "qinight-176",
+                "name": "Windows Apps That Amaze Us",
+                "url": "https://amazing-apps.gitbook.io/windows-apps-that-amaze-us/zh-cn",
+                "description": "超赞的Windows软件"
+              },
+              {
+                "id": "qinight-177",
+                "name": "程序员效率工具汇总",
+                "url": "https://www.kancloud.cn/maozhenggang/monkey-cheats#/catalog",
+                "description": "程序员工具推荐"
+              },
+              {
+                "id": "qinight-335",
+                "name": "F-Droid",
+                "url": "https://f-droid.org/",
+                "description": "免费开源安卓软件库"
+              }
+            ]
+          },
+          {
+            "id": "category-45",
+            "name": "扩展安装",
+            "sites": [
+              {
+                "id": "qinight-178",
+                "name": "极简插件",
+                "url": "https://chrome.zzzmh.cn/",
+                "description": "Chrome/Edge 扩展下载"
+              },
+              {
+                "id": "qinight-180",
+                "name": "Greasy Fork",
+                "url": "https://greasyfork.org/zh-CN",
+                "description": "最佳油猴脚本搜索网站"
+              },
+              {
+                "id": "qinight-181",
+                "name": "Crx搜搜",
+                "url": "https://www.crxsoso.com/",
+                "description": "Chrome/Edge/Firefox 扩展"
+              }
+            ]
+          },
+          {
+            "id": "category-46",
+            "name": "装机必备",
+            "sites": [
+              {
+                "id": "qinight-182",
+                "name": "Chrome",
+                "url": "https://www.google.com/chrome/",
+                "description": "全球第一"
+              },
+              {
+                "id": "qinight-183",
+                "name": "Edge",
+                "url": "https://www.microsoft.com/zh-cn/edge",
+                "description": "内置很多小功能"
+              },
+              {
+                "id": "qinight-184",
+                "name": "Firefox",
+                "url": "https://www.mozilla.org/zh-CN/firefox/new/",
+                "description": "认准国际版"
+              },
+              {
+                "id": "qinight-185",
+                "name": "Bandizip",
+                "url": "http://cn.bandisoft.com/bandizip/",
+                "description": "压缩/解压工具"
+              },
+              {
+                "id": "qinight-186",
+                "name": "7-Zip",
+                "url": "https://www.7-zip.org/",
+                "description": "开源免费的解压缩软件"
+              },
+              {
+                "id": "qinight-187",
+                "name": "Honeyview 图像查看器",
+                "url": "http://cn.bandisoft.com/honeyview/",
+                "description": "轻量快速的看图软件"
+              },
+              {
+                "id": "qinight-188",
+                "name": "Potplayer",
+                "url": "https://potplayer.daum.net/",
+                "description": "最佳视频播放器"
+              },
+              {
+                "id": "qinight-189",
+                "name": "Sumatra PDF",
+                "url": "https://www.sumatrapdfreader.org/free-pdf-reader",
+                "description": "最轻量的PDF阅读器"
+              },
+              {
+                "id": "qinight-190",
+                "name": "qBittorrent",
+                "url": "https://www.qbittorrent.org/",
+                "description": "纯粹专业的BT下载软件"
+              },
+              {
+                "id": "qinight-191",
+                "name": "IDM",
+                "url": "https://www.internetdownloadmanager.com/",
+                "description": "网络多线程下载神器"
+              },
+              {
+                "id": "qinight-192",
+                "name": "Everything",
+                "url": "https://www.voidtools.com/zh-cn/",
+                "description": "最快的文件名搜索软件"
+              },
+              {
+                "id": "qinight-193",
+                "name": "AnyTXT 搜索器",
+                "url": "https://anytxt.net/",
+                "description": "文件内容搜索利器"
+              },
+              {
+                "id": "qinight-194",
+                "name": "Ditto clipboard manager",
+                "url": "https://ditto-cp.sourceforge.io/",
+                "description": "历史剪贴板"
+              },
+              {
+                "id": "qinight-195",
+                "name": "Advanced Renamer",
+                "url": "https://www.advancedrenamer.com/",
+                "description": "批量重命名"
+              },
+              {
+                "id": "qinight-196",
+                "name": "火绒安全",
+                "url": "https://www.huorong.cn/",
+                "description": "安静舒服占用低"
+              },
+              {
+                "id": "qinight-197",
+                "name": "Geek Uninstaller",
+                "url": "https://geekuninstaller.com/",
+                "description": "免费软件彻底卸载工具"
+              },
+              {
+                "id": "qinight-198",
+                "name": "DiskGenius",
+                "url": "https://www.diskgenius.cn/",
+                "description": "专业磁盘管理&文件恢复"
+              },
+              {
+                "id": "qinight-199",
+                "name": "Notion",
+                "url": "https://www.notion.so/zh-cn",
+                "description": "全能笔记软件"
+              },
+              {
+                "id": "qinight-200",
+                "name": "Snipaste",
+                "url": "https://zh.snipaste.com/",
+                "description": "截图 + 贴图"
+              },
+              {
+                "id": "qinight-201",
+                "name": "ScreenToGif",
+                "url": "https://www.screentogif.com/",
+                "description": "动图录制编辑器"
+              },
+              {
+                "id": "qinight-202",
+                "name": "Rufus",
+                "url": "https://rufus.ie/zh/",
+                "description": "轻松创建USB启动盘"
+              },
+              {
+                "id": "qinight-203",
+                "name": "Dism++",
+                "url": "https://github.com/Chuyu-Team/Dism-Multi-language",
+                "description": "最强Win优化设置工具"
+              },
+              {
+                "id": "qinight-272",
+                "name": "QuickLook",
+                "url": "https://apps.microsoft.com/store/detail/quicklook/9NV4BS3L1H4S",
+                "description": "空格键快速预览文件内容"
+              },
+              {
+                "id": "qinight-273",
+                "name": "Notepads",
+                "url": "https://www.notepadsapp.com",
+                "description": "好用的记事本替代软件"
+              }
+            ]
+          },
+          {
+            "id": "category-47",
+            "name": "软件博客",
+            "sites": [
+              {
+                "id": "qinight-271",
+                "name": "数码荔枝 x 软件商店",
+                "url": "https://lizhi.shop/index.php?cid=2yj7gln9",
+                "description": "最新鲜优秀的正版软件"
+              },
+              {
+                "id": "qinight-204",
+                "name": "异次元软件世界",
+                "url": "https://www.iplaysoft.com/",
+                "description": "软件改变生活"
+              },
+              {
+                "id": "qinight-205",
+                "name": "小众软件",
+                "url": "https://www.appinn.com/",
+                "description": "小巧/实用/有趣的软件"
+              },
+              {
+                "id": "qinight-206",
+                "name": "少数派",
+                "url": "https://sspai.com/",
+                "description": "高质量应用推荐媒体"
+              },
+              {
+                "id": "qinight-207",
+                "name": "奔跑中的奶酪",
+                "url": "https://www.runningcheese.com/",
+                "description": "高效工具方法论"
+              },
+              {
+                "id": "qinight-208",
+                "name": "反斗软件",
+                "url": "http://www.apprcn.com/",
+                "description": "新奇/免费软件分享"
+              },
+              {
+                "id": "qinight-423",
+                "name": "Topbook",
+                "url": "https://topbook.cc/",
+                "description": "高效生活视频书"
+              }
+            ]
+          },
+          {
+            "id": "category-58",
+            "name": "正版软件",
+            "sites": [
+              {
+                "id": "qinight-308",
+                "name": "Office 365 拼车",
+                "url": "https://lizhi.shop/products/microsoft-365?cid=2yj7gln9",
+                "description": "1T OneDrive 真香"
+              },
+              {
+                "id": "qinight-322",
+                "name": "正版 Windows",
+                "url": "https://store.lizhi.io/site/products/id/642?cid=2yj7gln9",
+                "description": "正版 Win11 家庭版/专业版"
+              },
+              {
+                "id": "qinight-307",
+                "name": "IDM",
+                "url": "https://lizhi.shop/site/products/id/325?cid=2yj7gln9",
+                "description": "最佳高速下载软件"
+              },
+              {
+                "id": "qinight-309",
+                "name": "Fences",
+                "url": "https://lizhi.shop/site/products/id/39?cid=2yj7gln9",
+                "description": "栅栏式桌面图标整理工具"
+              },
+              {
+                "id": "qinight-310",
+                "name": "Typora",
+                "url": "https://lizhi.shop/site/products/id/520?cid=2yj7gln9",
+                "description": "一流的 Markdown 编辑器"
+              },
+              {
+                "id": "qinight-311",
+                "name": "AdGuard",
+                "url": "https://lizhi.shop/site/products/id/31?cid=2yj7gln9",
+                "description": "多平台广告拦截工具"
+              },
+              {
+                "id": "qinight-312",
+                "name": "白描",
+                "url": "https://lizhi.shop/site/products/id/36?cid=2yj7gln9",
+                "description": "跨平台OCR识别软件"
+              },
+              {
+                "id": "qinight-313",
+                "name": "Uninstall Tool",
+                "url": "https://lizhi.shop/site/products/id/63?cid=2yj7gln9",
+                "description": "专业软件卸载工具"
+              },
+              {
+                "id": "qinight-314",
+                "name": "Bandizip",
+                "url": "https://lizhi.shop/site/products/id/307?cid=2yj7gln9",
+                "description": "巨好用的压缩解压软件"
+              },
+              {
+                "id": "qinight-315",
+                "name": "Downie",
+                "url": "https://lizhi.shop/site/products/id/280?cid=2yj7gln9",
+                "description": "最佳Mac在线视频下载软件"
+              },
+              {
+                "id": "qinight-316",
+                "name": "iSlide",
+                "url": "https://lizhi.shop/site/products/id/41?cid=2yj7gln9",
+                "description": "PPT 设计美化辅助插件"
+              },
+              {
+                "id": "qinight-317",
+                "name": "WGestures 2",
+                "url": "https://lizhi.shop/site/products/id/523?cid=2yj7gln9",
+                "description": "全局鼠标手势软件"
+              },
+              {
+                "id": "qinight-318",
+                "name": "Listary",
+                "url": "https://lizhi.shop/site/products/id/58?cid=2yj7gln9",
+                "description": "文件搜索&快速启动神器"
+              },
+              {
+                "id": "qinight-319",
+                "name": "Groupy",
+                "url": "https://lizhi.shop/site/products/id/40?cid=2yj7gln9",
+                "description": "软件窗口合并标签化工具"
+              },
+              {
+                "id": "qinight-320",
+                "name": "StartAllBack",
+                "url": "https://lizhi.shop/site/products/id/233?cid=2yj7gln9",
+                "description": "Win11 找回旧版开始菜单"
+              },
+              {
+                "id": "qinight-321",
+                "name": "XYplorer",
+                "url": "https://lizhi.shop/site/products/id/263?cid=2yj7gln9",
+                "description": "超强的多标签文件管理器"
+              },
+              {
+                "id": "qinight-339",
+                "name": "Parallels Desktop",
+                "url": "https://lizhi.shop/site/products/id/92?cid=2yj7gln9",
+                "description": "最强 Mac 虚拟机软件，送 Win11"
+              },
+              {
+                "id": "qinight-340",
+                "name": "WindowTop",
+                "url": "https://lizhi.shop/site/products/id/342?cid=2yj7gln9",
+                "description": "窗口置顶透明度修改工具"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "category-25",
+        "name": "学习提升",
+        "sites": [],
+        "children": [
+          {
+            "id": "category-48",
+            "name": "在线学习",
+            "sites": [
+              {
+                "id": "qinight-210",
+                "name": "智慧职教",
+                "url": "https://www.icve.com.cn/",
+                "description": "职业教育教学资源库"
+              },
+              {
+                "id": "qinight-211",
+                "name": "科学文库",
+                "url": "https://book.sciencereading.cn/",
+                "description": "高质量学术专著和教材"
+              },
+              {
+                "id": "qinight-212",
+                "name": "多邻国",
+                "url": "https://www.duolingo.com/",
+                "description": "学习外语的最佳途径"
+              },
+              {
+                "id": "qinight-213",
+                "name": "doyoudo",
+                "url": "https://www.doyoudo.com/",
+                "description": "设计/后期剪辑教程"
+              },
+              {
+                "id": "qinight-214",
+                "name": "oeasy教程",
+                "url": "http://oeasy.org/",
+                "description": "免费技能学习教程"
+              },
+              {
+                "id": "qinight-215",
+                "name": "英语真题在线",
+                "url": "https://zhenti.burningvocabulary.com/",
+                "description": "四六级考研英语真题"
+              },
+              {
+                "id": "qinight-216",
+                "name": "田间小站",
+                "url": "https://www.tjxz.cc/",
+                "description": "高级英语学习"
+              },
+              {
+                "id": "qinight-217",
+                "name": "每日英语听力",
+                "url": "https://dict.eudic.net/ting",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-218",
+                "name": "日语语法指南",
+                "url": "https://res.wokanxing.info/jpgramma/",
+                "description": "日语语法学习"
+              },
+              {
+                "id": "qinight-221",
+                "name": "我要自学网",
+                "url": "https://www.51zxw.net/",
+                "description": "专业软件使用进阶教程"
+              },
+              {
+                "id": "qinight-222",
+                "name": "走读派读书导航",
+                "url": "http://www.zoudupai.com/",
+                "description": "读书学习第一站"
+              },
+              {
+                "id": "qinight-223",
+                "name": "学吧导航",
+                "url": "https://www.xue8nav.com/",
+                "description": "学习导航网站"
+              },
+              {
+                "id": "qinight-444",
+                "name": "公开真题库",
+                "url": "https://www.gkzenti.cn/",
+                "description": "考公/资格证/软考真题库"
+              },
+              {
+                "id": "qinight-476",
+                "name": "懒人Excel",
+                "url": "https://www.lanrenexcel.com/",
+                "description": "Excel 教程大全"
+              },
+              {
+                "id": "qinight-486",
+                "name": "Enpuz",
+                "url": "http://enpuz.com/",
+                "description": "英语句子语法分析"
+              },
+              {
+                "id": "qinight-512",
+                "name": "唐库学习",
+                "url": "http://www.tanglib.com/",
+                "description": "双语世界名著在线阅读"
+              },
+              {
+                "id": "qinight-518",
+                "name": "中国诗词",
+                "url": "https://aspoem.com/zh-Hans",
+                "description": "诗词学习网站"
+              },
+              {
+                "id": "qinight-564",
+                "name": "中文教科书",
+                "url": "https://textbook.synaiv.com/",
+                "description": "高清PDF教材下载"
+              },
+              {
+                "id": "qinight-572",
+                "name": "在线字典",
+                "url": "https://zd.hwxnet.com/",
+                "description": "在线新华字典"
+              },
+              {
+                "id": "qinight-576",
+                "name": "English-level-up-tips",
+                "url": "https://byoungd.github.io/English-level-up-tips/",
+                "description": "英语学习指南"
+              },
+              {
+                "id": "qinight-592",
+                "name": "paper2x学术导航",
+                "url": "https://paper2x.noedgeai.com/",
+                "description": "学术科研导航网站"
+              },
+              {
+                "id": "qinight-593",
+                "name": "WordsFunny",
+                "url": "https://wordsfunny.com/",
+                "description": "英语词汇大全"
+              },
+              {
+                "id": "qinight-600",
+                "name": "考公指南手册",
+                "url": "https://saduck.top/",
+                "description": "公考学习平台"
+              },
+              {
+                "id": "qinight-628",
+                "name": "Type Words",
+                "url": "https://typewords.cc/",
+                "description": "英语单词、文章练习工具"
+              },
+              {
+                "id": "qinight-651",
+                "name": "AI 编程指南",
+                "url": "https://coding.stormzhang.ai/",
+                "description": "Claude Code · Codex 教程"
+              },
+              {
+                "id": "qinight-652",
+                "name": "850单词学习手册",
+                "url": "https://ogden.munch.love/",
+                "description": "中英双语 · 精炼版"
+              },
+              {
+                "id": "qinight-655",
+                "name": "高考真题资源下载",
+                "url": "https://t.urongda.com/",
+                "description": "历年全国高考真题下载"
+              }
+            ]
+          },
+          {
+            "id": "category-50",
+            "name": "知识扩展",
+            "sites": [
+              {
+                "id": "qinight-224",
+                "name": "全历史",
+                "url": "https://www.allhistory.com/",
+                "description": "很不错的历史扩展学习网站"
+              },
+              {
+                "id": "qinight-225",
+                "name": "ONE · 一个",
+                "url": "https://wufazhuce.com/",
+                "description": "复杂世界里, 一个就够了."
+              },
+              {
+                "id": "qinight-227",
+                "name": "科普中国网",
+                "url": "https://www.kepuchina.cn/",
+                "description": "科普信息内容和资讯"
+              },
+              {
+                "id": "qinight-228",
+                "name": "中国科普博览",
+                "url": "http://www.kepu.net.cn/",
+                "description": "综合性的科学传播平台"
+              },
+              {
+                "id": "qinight-230",
+                "name": "纪录片 - 哔哩哔哩",
+                "url": "https://www.bilibili.com/documentary",
+                "description": "(゜-゜)つロ 干杯~"
+              },
+              {
+                "id": "qinight-231",
+                "name": "wikiHow",
+                "url": "https://zh.wikihow.com/",
+                "description": "你可以信赖的万事指南"
+              },
+              {
+                "id": "qinight-232",
+                "name": "果壳 科技有意思",
+                "url": "https://www.guokr.com/",
+                "description": "泛科普科学文化平台"
+              },
+              {
+                "id": "qinight-233",
+                "name": "百家讲坛",
+                "url": "https://tv.cctv.com/lm/bjjt/",
+                "description": "CCTV节目官网"
+              },
+              {
+                "id": "qinight-234",
+                "name": "故宫博物院",
+                "url": "https://www.dpm.org.cn/",
+                "description": "故宫数字历史博物馆"
+              },
+              {
+                "id": "qinight-235",
+                "name": "网易公开课",
+                "url": "https://open.163.com/",
+                "description": "高校视频课程"
+              },
+              {
+                "id": "qinight-236",
+                "name": "一席",
+                "url": "https://yixi.tv/#/home",
+                "description": "分享见解的演讲节目"
+              },
+              {
+                "id": "qinight-237",
+                "name": "TED",
+                "url": "https://www.ted.com/",
+                "description": "著名的TED演讲"
+              },
+              {
+                "id": "qinight-238",
+                "name": "古诗文网",
+                "url": "https://www.gushiwen.cn/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-299",
+                "name": "术语在线",
+                "url": "https://www.termonline.cn",
+                "description": "权威术语知识平台"
+              },
+              {
+                "id": "qinight-337",
+                "name": "深言达意",
+                "url": "https://www.shenyandayi.com/",
+                "description": "反向查词/据意查句"
+              },
+              {
+                "id": "qinight-352",
+                "name": "漢典",
+                "url": "https://www.zdic.net/",
+                "description": "辞典/古籍/诗词/书法/通识"
+              },
+              {
+                "id": "qinight-385",
+                "name": "中文播客榜",
+                "url": "https://xyzrank.com/",
+                "description": "在线播客聚合"
+              },
+              {
+                "id": "qinight-452",
+                "name": "中国大百科全书",
+                "url": "https://www.zgbk.com/",
+                "description": "中华文化权威指南"
+              },
+              {
+                "id": "qinight-475",
+                "name": "搜韵",
+                "url": "https://sou-yun.cn/",
+                "description": "诗词知识及工具"
+              },
+              {
+                "id": "qinight-492",
+                "name": "中国历史",
+                "url": "https://www.historyline.online/",
+                "description": "中国历朝代视频讲解"
+              },
+              {
+                "id": "qinight-493",
+                "name": "熊猫速读",
+                "url": "https://qread.xmsoushu.com/",
+                "description": "精品读书视频"
+              }
+            ]
+          },
+          {
+            "id": "category-51",
+            "name": "编程开发",
+            "sites": [
+              {
+                "id": "qinight-239",
+                "name": "菜鸟教程",
+                "url": "https://www.runoob.com/",
+                "description": "超全面的IT编程教程"
+              },
+              {
+                "id": "qinight-240",
+                "name": "MDN Web Docs",
+                "url": "https://developer.mozilla.org/zh-CN/",
+                "description": "Web 开发技术手册"
+              },
+              {
+                "id": "qinight-241",
+                "name": "Microsoft Learn",
+                "url": "https://docs.microsoft.com/zh-cn/learn/",
+                "description": "微软开发学习平台"
+              },
+              {
+                "id": "qinight-242",
+                "name": "w3school 在线教程",
+                "url": "https://www.w3school.com.cn/",
+                "description": "Web 技术教程"
+              },
+              {
+                "id": "qinight-243",
+                "name": "廖雪峰的官方网站",
+                "url": "https://www.liaoxuefeng.com/",
+                "description": "免费编程教程"
+              },
+              {
+                "id": "qinight-244",
+                "name": "鸟哥的Linux私房菜",
+                "url": "http://cn.linux.vbird.org/",
+                "description": "最佳Linux入门教程"
+              },
+              {
+                "id": "qinight-245",
+                "name": "猴子都能懂的GIT入门",
+                "url": "https://backlog.com/git-tutorial/cn/",
+                "description": "简单易懂的Git系列教程"
+              },
+              {
+                "id": "qinight-246",
+                "name": "git 使用简易指南",
+                "url": "https://www.bootcss.com/p/git-guide/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-247",
+                "name": "正则表达式30分钟入门教程",
+                "url": "https://deerchao.cn/tutorials/regex/regex.htm",
+                "description": "正则入门手册"
+              },
+              {
+                "id": "qinight-248",
+                "name": "Regex Learn",
+                "url": "https://regexlearn.com/zh-cn",
+                "description": "正则从零基础到高阶"
+              },
+              {
+                "id": "qinight-278",
+                "name": "Road 2 Coding",
+                "url": "https://r2coding.com",
+                "description": "编程自学之路"
+              },
+              {
+                "id": "qinight-341",
+                "name": "CS-Books-Store",
+                "url": "https://github.com/Jackpopc/CS-Books-Store",
+                "description": "计算机经典书籍下载"
+              },
+              {
+                "id": "qinight-346",
+                "name": "Quick Reference",
+                "url": "https://wangchujiang.com/reference/",
+                "description": "开发人员编程速查手册"
+              },
+              {
+                "id": "qinight-407",
+                "name": "LeetCode",
+                "url": "https://leetcode.com/",
+                "description": "在线编程练习网站"
+              },
+              {
+                "id": "qinight-408",
+                "name": "freeCodeCamp",
+                "url": "https://www.freecodecamp.org/",
+                "description": "免费编程学习网站"
+              },
+              {
+                "id": "qinight-430",
+                "name": "Regex.ai",
+                "url": "https://regex.ai/",
+                "description": "AI正则表达式生成器"
+              },
+              {
+                "id": "qinight-520",
+                "name": "Docker 从入门到实践",
+                "url": "https://yeasy.gitbook.io/docker_practice",
+                "description": "Docker 教程"
+              },
+              {
+                "id": "qinight-534",
+                "name": "Linux 101",
+                "url": "https://101.lug.ustc.edu.cn/",
+                "description": "Linux 零基础教程"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "category-26",
+        "name": "游戏娱乐",
+        "sites": [],
+        "children": [
+          {
+            "id": "category-62",
+            "name": "在线游戏",
+            "sites": [
+              {
+                "id": "qinight-249",
+                "name": "Poki在线小游戏",
+                "url": "https://poki.com",
+                "description": "上千款免费在线小游戏"
+              },
+              {
+                "id": "qinight-250",
+                "name": "YORG.io Game",
+                "url": "https://yorg.io/",
+                "description": "超耐玩的塔防游戏"
+              },
+              {
+                "id": "qinight-251",
+                "name": "CrazyGames",
+                "url": "https://www.crazygames.com/",
+                "description": "免费在线小游戏合集"
+              },
+              {
+                "id": "qinight-253",
+                "name": "俄罗斯方块",
+                "url": "https://chvin.github.io/react-tetris/",
+                "description": "摸鱼休闲必备"
+              },
+              {
+                "id": "qinight-254",
+                "name": "迷宫游戏",
+                "url": "https://maze.toys/",
+                "description": "多种模式的迷宫游戏"
+              },
+              {
+                "id": "qinight-255",
+                "name": "信任的进化",
+                "url": "https://dccxi.com/trust/",
+                "description": "从游戏了解博弈论"
+              },
+              {
+                "id": "qinight-257",
+                "name": "Play Lines FRVR",
+                "url": "https://lines.frvr.com/",
+                "description": "点线益智游戏"
+              },
+              {
+                "id": "qinight-258",
+                "name": "Mikutap",
+                "url": "https://aidn.jp/mikutap/",
+                "description": "很魔性的音乐游戏"
+              },
+              {
+                "id": "qinight-259",
+                "name": "在线小游戏合集",
+                "url": "https://cn.game-game.com/",
+                "description": "上千款免费在线游戏"
+              },
+              {
+                "id": "qinight-260",
+                "name": "小霸王街机游戏",
+                "url": "https://www.yikm.net/",
+                "description": "街机/小霸王/H5游戏"
+              },
+              {
+                "id": "qinight-300",
+                "name": "Thisissand",
+                "url": "https://thisissand.com/",
+                "description": "在线画沙画"
+              },
+              {
+                "id": "qinight-302",
+                "name": "空间站对接模拟器",
+                "url": "https://iss-sim.spacex.com",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-305",
+                "name": "Life Restart",
+                "url": "https://liferestart.syaro.io/public/index.html",
+                "description": "人生重开模拟器"
+              },
+              {
+                "id": "qinight-327",
+                "name": "在线玩CS1.6",
+                "url": "https://play-cs.com/zh/servers",
+                "description": "免客户端联机"
+              },
+              {
+                "id": "qinight-329",
+                "name": "__🚗__",
+                "url": "https://bruno-simon.com/",
+                "description": "开车小游戏"
+              },
+              {
+                "id": "qinight-332",
+                "name": ".IO 游戏",
+                "url": "https://papergames.io/zh/",
+                "description": "棋类游戏在线对战"
+              },
+              {
+                "id": "qinight-344",
+                "name": "PlayOK 棋牌游戏",
+                "url": "https://www.playok.com/",
+                "description": "在线棋牌真人对弈"
+              },
+              {
+                "id": "qinight-345",
+                "name": "Typing Game",
+                "url": "https://zty.pe/",
+                "description": "练习打字的射击游戏"
+              },
+              {
+                "id": "qinight-349",
+                "name": "Edge Surf",
+                "url": "https://www.microsoft.com/en-us/edge/surf",
+                "description": "微软网页冲浪游戏"
+              },
+              {
+                "id": "qinight-389",
+                "name": "s l o w r o a d s",
+                "url": "https://slowroads.io/",
+                "description": "公路无尽驾驶"
+              },
+              {
+                "id": "qinight-405",
+                "name": "绘谜画猜",
+                "url": "https://enazo.cn/",
+                "description": "你画我猜"
+              },
+              {
+                "id": "qinight-424",
+                "name": "Yandex Games",
+                "url": "https://yandex.com/games/zh",
+                "description": "免费在线游戏"
+              },
+              {
+                "id": "qinight-438",
+                "name": "精选游戏",
+                "url": "https://jxgame.net/",
+                "description": "精选益智小游戏"
+              },
+              {
+                "id": "qinight-455",
+                "name": "FUUN.FUN",
+                "url": "https://fuun.fun/",
+                "description": "有趣的摸鱼小游戏"
+              },
+              {
+                "id": "qinight-460",
+                "name": "Chess.com",
+                "url": "https://www.chess.com/zh",
+                "description": "世界第一国际象棋网站"
+              },
+              {
+                "id": "qinight-480",
+                "name": "红色警戒2",
+                "url": "https://ra2web.com/",
+                "description": "红色警戒2网页版"
+              },
+              {
+                "id": "qinight-490",
+                "name": "扫雷",
+                "url": "https://minesweeperplay.online/",
+                "description": "经典扫雷游戏"
+              },
+              {
+                "id": "qinight-491",
+                "name": "魔方求解器",
+                "url": "https://rubiks-cube-solver.com/zh/",
+                "description": "魔方复原助手"
+              },
+              {
+                "id": "qinight-507",
+                "name": "仓鼠之家",
+                "url": "https://hammyhome.com/",
+                "description": "在线养仓鼠"
+              },
+              {
+                "id": "qinight-522",
+                "name": "投胎模拟器",
+                "url": "https://toutai.cc/",
+                "description": "看看来世你会出生在哪"
+              },
+              {
+                "id": "qinight-525",
+                "name": "Flash 保存计划",
+                "url": "https://flash.homes/",
+                "description": "16万个在线Flash小游戏"
+              },
+              {
+                "id": "qinight-543",
+                "name": "俄罗斯方块沙子版",
+                "url": "https://sandtris.com/",
+                "description": "比原版更有难度"
+              },
+              {
+                "id": "qinight-586",
+                "name": "Bloxd.io",
+                "url": "https://bloxd.io/",
+                "description": "20+我的世界小游戏"
+              },
+              {
+                "id": "qinight-587",
+                "name": "桌游合集",
+                "url": "https://game.hullqin.cn/",
+                "description": "20+桌游小游戏"
+              },
+              {
+                "id": "qinight-588",
+                "name": "Snake Apple Game",
+                "url": "https://snakeapplega.me/",
+                "description": "在线贪吃蛇游戏"
+              },
+              {
+                "id": "qinight-589",
+                "name": "古诗连词",
+                "url": "https://poetrystrands.com/",
+                "description": "连字成诗小游戏"
+              },
+              {
+                "id": "qinight-590",
+                "name": "Drive Mad",
+                "url": "https://drive-mad.cc/",
+                "description": "遥控汽车闯关游戏"
+              },
+              {
+                "id": "qinight-599",
+                "name": "摸鱼小栈",
+                "url": "https://moyu.aolifu.org/",
+                "description": "近百款摸鱼小游戏"
+              },
+              {
+                "id": "qinight-603",
+                "name": "圈圈大作战",
+                "url": "https://bulletz.io/",
+                "description": "全球玩家在线PK"
+              },
+              {
+                "id": "qinight-604",
+                "name": "3D海战游戏",
+                "url": "https://yp3d.com/ships3d/",
+                "description": "在线联机海战游戏"
+              },
+              {
+                "id": "qinight-614",
+                "name": "Narrow One",
+                "url": "https://narrow.one/",
+                "description": "联机射箭游戏"
+              },
+              {
+                "id": "qinight-622",
+                "name": "猜电影游戏",
+                "url": "https://moviegame.top/",
+                "description": "看图猜电影"
+              },
+              {
+                "id": "qinight-629",
+                "name": "网页版MC",
+                "url": "https://www.mc.js.cool",
+                "description": "网页版Minecraft最佳中文版"
+              },
+              {
+                "id": "qinight-630",
+                "name": "海拥游戏大全",
+                "url": "https://game.haiyong.site/",
+                "description": "2000+免费热门网页游戏"
+              },
+              {
+                "id": "qinight-634",
+                "name": "STARSHIP",
+                "url": "https://starshipthegame.spacex.com/",
+                "description": "SpaceX星舰主题小游戏"
+              },
+              {
+                "id": "qinight-641",
+                "name": "复古游戏",
+                "url": "https://classicjoy.games/zh",
+                "description": "在线玩街机复古游戏"
+              },
+              {
+                "id": "qinight-650",
+                "name": "乡土游戏馆",
+                "url": "https://youxi.pomodiary.com/",
+                "description": "民间游戏复刻"
+              },
+              {
+                "id": "qinight-656",
+                "name": "Suroi",
+                "url": "https://suroi.io/",
+                "description": "2D大逃杀游戏"
+              },
+              {
+                "id": "qinight-659",
+                "name": "Poxel.io 射击游戏",
+                "url": "https://poxel.io/",
+                "description": "卡通FPS联机射击游戏"
+              },
+              {
+                "id": "qinight-668",
+                "name": "3D停车模拟器",
+                "url": "https://parkingpractice.com/zh/",
+                "description": "免费在线停车练习"
+              },
+              {
+                "id": "qinight-670",
+                "name": "GGEMU",
+                "url": "https://ggemu.com/zh-CN",
+                "description": "免费在线玩经典复古游戏"
+              }
+            ]
+          },
+          {
+            "id": "category-63",
+            "name": "趣味休闲",
+            "sites": [
+              {
+                "id": "qinight-252",
+                "name": "全景故宫",
+                "url": "https://pano.dpm.org.cn/",
+                "description": "在线逛故宫"
+              },
+              {
+                "id": "qinight-256",
+                "name": "全球全景360VR",
+                "url": "https://www.zhijianshang.com/",
+                "description": "全球景点360°全景"
+              },
+              {
+                "id": "qinight-274",
+                "name": "梗图生成器",
+                "url": "https://x.magiconch.com",
+                "description": "自制梗图"
+              },
+              {
+                "id": "qinight-276",
+                "name": "One Last Image",
+                "url": "https://lab.magiconch.com/one-last-image/",
+                "description": "One Last Kiss 封面生成器"
+              },
+              {
+                "id": "qinight-301",
+                "name": "这里有猫",
+                "url": "https://m.niucodata.com/cat/",
+                "description": "听猫打呼噜"
+              },
+              {
+                "id": "qinight-303",
+                "name": "今天吃啥呀？",
+                "url": "http://guozhivip.com/eat/",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-304",
+                "name": "全球高清实况镜头",
+                "url": "https://www.skylinewebcams.com",
+                "description": "全球实况街景"
+              },
+              {
+                "id": "qinight-306",
+                "name": "Windows Update Prank",
+                "url": "https://fakeupdate.net",
+                "description": "假装 Windows 升级界面"
+              },
+              {
+                "id": "qinight-330",
+                "name": "中国制霸生成器",
+                "url": "https://lab.magiconch.com/china-ex/",
+                "description": "热门地图标记生成工具"
+              },
+              {
+                "id": "qinight-333",
+                "name": "360°航拍全景",
+                "url": "https://airpano.org.cn/",
+                "description": "全球360°虚拟游览"
+              },
+              {
+                "id": "qinight-373",
+                "name": "iPanda熊猫频道",
+                "url": "https://live.ipanda.com/xmcd/",
+                "description": "全景熊猫直播"
+              },
+              {
+                "id": "qinight-380",
+                "name": "Wonders of Street View",
+                "url": "https://neal.fun/wonders-of-street-view/",
+                "description": "随机传送到世界各地"
+              },
+              {
+                "id": "qinight-382",
+                "name": "动画巡礼地图",
+                "url": "https://anitabi.cn",
+                "description": "(๑•̀ㅂ•́)و✧"
+              },
+              {
+                "id": "qinight-409",
+                "name": "拼图侠",
+                "url": "http://pintuxia.com/",
+                "description": "在线玩拼图"
+              },
+              {
+                "id": "qinight-410",
+                "name": "Gallerix 博物馆",
+                "url": "https://gallerix.asia/",
+                "description": "在线数字博物馆"
+              },
+              {
+                "id": "qinight-411",
+                "name": "Picrew",
+                "url": "https://picrew.me/",
+                "description": "自己捏头像"
+              },
+              {
+                "id": "qinight-413",
+                "name": "动画喜好表生成器",
+                "url": "https://lab.magiconch.com/anime-grid/",
+                "description": "生成动画个人喜好表"
+              },
+              {
+                "id": "qinight-416",
+                "name": "Piskel",
+                "url": "https://www.piskelapp.com/",
+                "description": "手动绘制GIF像素画"
+              },
+              {
+                "id": "qinight-425",
+                "name": "时光邮局",
+                "url": "https://www.hi2future.com/",
+                "description": "给未来写封信"
+              },
+              {
+                "id": "qinight-461",
+                "name": "自由钢琴",
+                "url": "https://www.autopiano.cn/",
+                "description": "在线模拟钢琴"
+              },
+              {
+                "id": "qinight-462",
+                "name": "WindowSwap",
+                "url": "https://www.window-swap.com/Window",
+                "description": "窗外风景直播"
+              },
+              {
+                "id": "qinight-468",
+                "name": "数字敦煌",
+                "url": "https://www.e-dunhuang.com/",
+                "description": "在线逛敦煌石窟"
+              },
+              {
+                "id": "qinight-478",
+                "name": "电影日历",
+                "url": "https://www.cikeee.cc/",
+                "description": "每天一部优秀电影"
+              },
+              {
+                "id": "qinight-483",
+                "name": "逗比拯救世界",
+                "url": "https://www.dbbqb.com/",
+                "description": "专业表情包搜索网站"
+              },
+              {
+                "id": "qinight-509",
+                "name": "FreeMind",
+                "url": "https://freemind.fit/",
+                "description": "听大自然的声音"
+              },
+              {
+                "id": "qinight-521",
+                "name": "答案之书",
+                "url": "https://answersbook.iwhy.dev/",
+                "description": "帮你下定决心获得答案"
+              },
+              {
+                "id": "qinight-542",
+                "name": "一分钟公园",
+                "url": "https://oneminutepark.tv",
+                "description": "一分钟公园风景视频"
+              },
+              {
+                "id": "qinight-554",
+                "name": "像素屏保",
+                "url": "https://www.8bitdash.com/",
+                "description": "动态像素画时钟屏保"
+              },
+              {
+                "id": "qinight-555",
+                "name": "丑头像",
+                "url": "https://txstc55.github.io/ugly-avatar/",
+                "description": "丑八怪头像生成器"
+              },
+              {
+                "id": "qinight-570",
+                "name": "拾光一言",
+                "url": "https://glitter.timeline.ink/",
+                "description": "时光如歌，岁月如诗"
+              },
+              {
+                "id": "qinight-571",
+                "name": "捏猫猫",
+                "url": "https://uchinoko-maker.jp/?lang=zh-cmn-Hans",
+                "description": "自制小猫小狗插图"
+              },
+              {
+                "id": "qinight-573",
+                "name": "秦始皇兵马俑",
+                "url": "https://baikebcs.bdimg.com/baike-museum3d/qinshihuang/index.html",
+                "description": "200亿像素游览兵马俑"
+              },
+              {
+                "id": "qinight-605",
+                "name": "纸飞机折叠说明",
+                "url": "https://www.foldnfly.com",
+                "description": "教你怎么叠纸飞机"
+              },
+              {
+                "id": "qinight-623",
+                "name": "梗图网",
+                "url": "https://gengtu.net/",
+                "description": "AI梗图搜索引擎与百科"
+              },
+              {
+                "id": "qinight-636",
+                "name": "颜文字大全",
+                "url": "http://www.hehuan.co/",
+                "description": "好看可爱的颜表情符号"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "content": {
+    "hot": {
+      "title": "热门必备",
+      "siteIds": [
+        "site-3c49fb9a-1427-461e-860c-5d02784a72a3",
+        "site-8054e65a-f9e3-4979-b20f-7e0372dd90dd",
+        "qinight-303"
+      ]
+    },
+    "featured": {
+      "title": "本月精选",
+      "items": [
+        {
+          "name": "初音未来 - 初音ミク",
+          "description": "经典作品合集",
+          "url": "https://www.piapro.net/",
+          "artPath": "assets/layers/featured/01-miku.png",
+          "hidden": true
+        },
+        {
+          "name": "Miku Expo",
+          "description": "全球巡演回顾",
+          "url": "https://mikuexpo.com/",
+          "artPath": "assets/layers/featured/02-expo.png",
+          "hidden": true
+        }
+      ]
+    },
+    "friends": [
+      {
+        "name": "柒夜导航",
+        "url": "https://nav.qinight.com/",
+        "hidden": false
+      },
+      {
+        "name": "tcmiku的档案库",
+        "url": "http://tcmiku.github.io/",
+        "hidden": false
+      },
+      {
+        "name": "ACG喵导航",
+        "url": "https://www.miaoaaa.com/",
+        "hidden": false
+      }
+    ]
+  },
+  "settings": {
+    "tagline": "互联网很大，一起慢慢冲浪。",
+    "announcement": "欢迎回来！这里总有一个值得收藏的好网站。"
+  },
+  "revision": 38,
+  "updatedAt": "2026-09-06T04:41:30.172Z"
+}
