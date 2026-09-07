@@ -19,6 +19,18 @@ if (win) {
   cdDrive.addEventListener('keydown', event => {
     if (event.key === 'Enter') { event.preventDefault(); openCDWall(); }
   });
+  const recordPlayer = document.createElement('button');
+  recordPlayer.type = 'button';
+  recordPlayer.className = 'desktop-icon desktop-shortcut';
+  recordPlayer.id = 'desktop-record-player';
+  recordPlayer.setAttribute('aria-label', '唱片机');
+  recordPlayer.innerHTML = '<img src="/assets/icons/record-player.svg" width="32" height="32" alt=""><span>唱片机</span>';
+  desktop.append(recordPlayer);
+  const openRecordPlayer = () => { window.location.href = '/listening-room.html'; };
+  recordPlayer.addEventListener('dblclick', openRecordPlayer);
+  recordPlayer.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); openRecordPlayer(); }
+  });
   const glyphs = win.querySelector('.window-glyphs');
   const oldButtons = [...(glyphs?.querySelectorAll('span') || [])];
   ['最小化', '最大化', '关闭'].forEach((label, index) => {

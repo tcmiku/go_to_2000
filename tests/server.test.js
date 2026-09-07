@@ -208,3 +208,19 @@ test('radio exposes and serves only local mp3 files',async t=>{
 test('complete backup validator preserves explicitly hidden links but rejects malformed files',()=>{
   assert.throws(()=>validateStore(null));assert.throws(()=>validateStore({navigation:fixture(),content:{},settings:{}}));
 });
+
+test('listening room and isolated source runtime are served with scoped CSP',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  for(const route of ['/listening-room','/listening-room.html','/listening-room.css','/listening-room.js','/lx-client.js','/lx-sandbox.html','/lx-sandbox.js','/lx-worker.js']){
+    const response=await fetch(app.base+route);assert.equal(response.status,200,route);
+    const csp=response.headers.get('content-security-policy');
+    if(route==='/lx-sandbox.html'){assert.match(csp,/sandbox allow-scripts/);assert.match(csp,/connect-src 'none'/);assert.doesNotMatch(csp,/allow-same-origin/);}
+    if(route==='/listening-room.html'){assert.match(csp,/media-src 'self' blob: https: http:/);assert.doesNotMatch(csp,/unsafe-eval/);}
+  }
+  const root=await fetch(app.base);assert.doesNotMatch(root.headers.get('content-security-policy'),/media-src.*https:/);
+  assert.equal((await fetch(app.base+'/listening-service.js')).status,404);
+  const catalog=await app.req('/api/listening/sources');assert.equal(catalog.status,200);assert.equal(catalog.data.sources.length,8);
+  assert.equal((await app.req('/api/listening/request','POST',{url:'http://127.0.0.1/api/admin/data'})).status,403);
+  assert.equal((await app.req('/api/listening/request','POST',{url:'https://example.com'}, {Origin:'https://evil.example'})).status,403);
+  assert.equal((await app.req('/api/listening/request')).status,405);
+});

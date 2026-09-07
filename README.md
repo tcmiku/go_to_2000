@@ -111,3 +111,39 @@ npm run check
 - `assets/art/retro-admin-crt-v1.png`：后台登录页电脑、钥匙与文件夹插画。
 
 图片为独立素材，标题、导航与表单仍由 HTML 渲染。横幅按比例完整显示，移动端降低装饰图亮度以保持标题清晰。原始素材未被覆盖。完整生成提示词记录在 `assets/art/PROMPTS.md`。
+
+## 慢放 · 黑胶聆听室
+
+首页菜单「黑胶聆听室」进入，地址为 `http://localhost:3000/listening-room.html`。保留原有 CD 网站收藏墙，音乐使用独立的聆听空间。
+
+- 场景只保留唱片机与唱片墙，移除了页面导航、说明、弹窗和独立播放栏。唱片机使用 CSS 3D 的顶板、前板、侧板、机脚、铰链、透明盖、转盘和唱臂；机身机械键负责播放、暂停、停止、切歌、唱片墙切换和搜索，旋钮支持拖动、滚轮与键盘调节音量。搜索和音源设置位于机身抽屉内。
+- 首次进入会将 `data/mp3/` 的现有歌曲放上唱片墙。机身的放大镜按键展开搜索抽屉，可搜索网易云歌曲，也能重新添加移除过的本地唱片。
+- 直接点击墙上的唱片，播放取片、抽出黑胶、落盘和唱臂落下动画；实际音频开始播放后转盘旋转，暂停后停止。支持切歌、停止、进度拖动、音量、静音和机盖开合。启用系统减少动态效果时跳过过渡动画。
+- 收藏和音量、音源、机盖偏好保存在本浏览器；唱片墙与聆听室共用收藏，其他同源标签页通过 storage 事件同步。切换聆听室和唱片墙不会打断播放。
+
+### 网络音源
+
+音源目录使用 [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的八个 `latest.js` 链接：Huibq、SixYin、Flower、LX、ikun、Grass、Juhe API、QDY。点击机身天线旋钮展开音源抽屉，再按电源图标才下载并初始化对应脚本；服务端缓存脚本 15 分钟。支持按照 [LX 自定义源协议](https://lxmusic.toside.cn/desktop/custom-source) 的 `inited`、`request`、`musicUrl`、Buffer、MD5、AES、RSA 和 zlib 能力调用脚本。源更新提示不自动执行更新，也不弹出外部页面。
+
+这些脚本主要解析音乐播放地址，不提供歌曲搜索。独立搜索适配按照 LX 的网易云 EAPI 查询协议获取歌曲元数据，保留 `source/songmid/singer/albumId/types` 等字段后传给音源。只展示真实搜索结果；平台失败时显示错误，不以样例结果替代。
+
+脚本运行在不带 `allow-same-origin` 的 sandbox iframe 所创建的独立 Worker 中，不在 Node 服务端执行。iframe/Worker 禁止直接连接网络或访问主页面存储，网络调用经受限桥接转发；桥接限制方法、大小、并发和超时，解析并固定公共 IP，每次重定向重新校验，阻止本机、内网和保留地址。跨域写请求继续被主服务拒绝。主站的 CSP 不变，仅聆听室允许远程音频和封面。
+
+「已载入」表示音源脚本完成初始化，不表示其第三方解析服务可用。服务停机、限流、密钥失效、地区限制、音源需要额外能力或浏览器不支持返回的音频格式时，应在界面切换音源；不会回退为模拟音乐或把失败当作成功。2026-09-07 的非浏览器检查确认真实搜索能返回结果、Huibq 脚本可下载，但其播放解析端点返回 HTTP 503。其他第三方音源的实时可用性未逐个验证。
+
+### 开发与验证
+
+运行页面和 Node 服务仍无需第三方运行依赖，预打包的 `lx-worker.js` 已随项目提供。仅修改音源运行层后需要安装开发依赖并重新构建：
+
+```sh
+npm ci
+npm run build:music
+```
+
+新增文件为 `listening-room.html/css/js`、`listening-service.js`、`lx-client.js`、`lx-sandbox.html/js`、`scripts/lx-worker-entry.js` 和生成的 `lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
+
+```sh
+node --test tests/listening-controls.test.js tests/listening.test.js tests/server.test.js
+```
+
+依用户要求，没有进行浏览器点击、截图或电脑操作测试。此次相关的 25 项检查通过；全项目检查还存在原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。

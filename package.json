@@ -10,6 +10,14 @@
     "start:admin": "node scripts/admin-server.mjs",
     "check:data": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check cd-wall.js && node --check app.js && node --check admin.js && node --check ui.js && node --check radio.js && node --check start-menu.js && node --check minesweeper.js && node --check snake.js && node --check management-data.js && node --check navigation-data.js && node --check server.js && npm run check:data && npm test"
+    "check": "node --check listening-room.js && node --check listening-service.js && node --check lx-client.js && node --check lx-sandbox.js && node --check cd-wall.js && node --check app.js && node --check admin.js && node --check ui.js && node --check radio.js && node --check start-menu.js && node --check minesweeper.js && node --check snake.js && node --check management-data.js && node --check navigation-data.js && node --check server.js && npm run check:data && npm test",
+    "build:music": "esbuild scripts/lx-worker-entry.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=lx-worker.js"
+  },
+  "devDependencies": {
+    "buffer": "^6.0.3",
+    "crypto-js": "^4.2.0",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3",
+    "node-forge": "^1.4.0"
   }
 }
