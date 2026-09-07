@@ -6,6 +6,19 @@ if (win) {
   desktop.className = 'desktop-surface';
   desktop.innerHTML = '<div class="desktop-icon"><img src="/assets/icons/my-computer.svg" width="32" height="32" alt=""><span>我的电脑</span></div><div class="desktop-icon"><img src="/assets/icons/recycle-bin.svg" width="32" height="32" alt=""><span>回收站</span></div>';
   document.body.prepend(desktop);
+  const cdDrive = document.createElement('button');
+  cdDrive.type = 'button';
+  cdDrive.className = 'desktop-icon desktop-shortcut';
+  cdDrive.id = 'desktop-cd-rom';
+  cdDrive.title = '双击打开 CD 收藏墙，或按 Enter';
+  cdDrive.setAttribute('aria-label', 'CD-ROM · CD 收藏墙');
+  cdDrive.innerHTML = '<img src="/assets/icons/cd-rom.svg" width="32" height="32" alt=""><span>CD-ROM<br>CD 收藏墙</span>';
+  desktop.append(cdDrive);
+  const openCDWall = () => { window.location.href = '/cd-wall.html'; };
+  cdDrive.addEventListener('dblclick', openCDWall);
+  cdDrive.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); openCDWall(); }
+  });
   const glyphs = win.querySelector('.window-glyphs');
   const oldButtons = [...(glyphs?.querySelectorAll('span') || [])];
   ['最小化', '最大化', '关闭'].forEach((label, index) => {

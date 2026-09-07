@@ -44,10 +44,12 @@
 .tape-reel{position:relative;flex:0 1 56px;aspect-ratio:1;display:grid;place-items:center;z-index:1}
 .tape-pack{position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle,#362c28 0 2px,#514037 2px 3px);border:1px solid #665145;transform:scale(var(--left-pack));transition:transform .2s linear}
 .reel-right .tape-pack{transform:scale(var(--right-pack))}
-.reel-hub{position:relative;width:29px;height:29px;border-radius:50%;border:3px solid #b6bec2;background:repeating-conic-gradient(#cbd4d4 0deg 30deg,#414b55 30deg 60deg);box-shadow:0 0 0 2px #1a232a;animation:reel-spin 1.8s linear infinite;animation-play-state:paused}
+.reel-hub{position:relative;width:29px;height:29px;border-radius:50%;border:3px solid #b6bec2;background:repeating-conic-gradient(#cbd4d4 0deg 30deg,#414b55 30deg 60deg);box-shadow:0 0 0 2px #1a232a}
+.reel-hub::before{content:'';position:absolute;left:9px;top:-2px;width:4px;height:7px;background:#f2d98e;border:1px solid #6c6146;z-index:1}
 .reel-hub::after{content:'';position:absolute;inset:7px;border-radius:50%;background:#111722;border:1px solid #85969b}
-.reel-right .reel-hub{animation-duration:2.2s}
-.cassette.playing .reel-hub{animation-play-state:running}
+.tape-reel{transform-origin:center;animation:reel-spin 3.2s linear infinite;animation-play-state:paused}
+.reel-right{animation-duration:2.4s;animation-delay:-.6s}
+.cassette.playing .tape-reel{animation-play-state:running}
 .tape-bridge{position:absolute;left:20%;right:20%;height:18px;background:linear-gradient(#635043 0 2px,#2b323c 2px 15px,#635043 15px);border:1px solid #161a20}
 .cassette-caption{display:flex;justify-content:space-between;padding:4px 3px;background:#eee6c9;color:#454c55;font:6px 'Courier New',monospace;border-bottom:3px solid #36b7ac}
 .cassette-foot{height:19px;width:65%;margin:9px auto 0;background:#282c32;border:1px solid #52565b;clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);display:flex;align-items:center;justify-content:space-around}
@@ -195,7 +197,24 @@
 .desktop-surface{position:fixed;inset:0 0 42px;background:#00676d url('/assets/icons/win98-wallpaper.svg') center / cover no-repeat;z-index:5;padding:16px 8px;overflow:auto}
 .desktop-icon{width:80px;display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;color:#fff;font:12px Tahoma,"SimSun",sans-serif;text-align:center}
 .desktop-icon img{display:block;width:32px;height:32px;image-rendering:pixelated}
+.pinball-window{width:400px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}
+.pinball-window .titlebar h2{font-size:12px}
+.pinball-toolbar{display:flex;align-items:center;gap:7px;padding:7px 3px}
+.pinball-toolbar button{padding:3px 8px;font-size:11px}
+.pinball-toolbar>span{margin-left:auto;font:9px monospace;color:#555}
+.pinball-score{display:flex;justify-content:space-around;gap:8px;background:#11192a;border:2px inset #eee;padding:8px 4px;color:#91afc1;font-size:10px}
+.pinball-score output{display:block;color:#ffcf83;font:bold 16px monospace;margin-top:3px}
+.pinball-window canvas{display:block;width:auto;max-width:100%;height:min(54dvh,510px);aspect-ratio:17/27;margin:6px auto;border:3px inset #eee;background:#080d1d;touch-action:none}
+.pinball-window canvas:focus-visible{outline:1px dotted navy;outline-offset:2px}
+.pinball-controls{display:flex;gap:6px;padding:0 5px}
+.pinball-controls button{flex:1;min-width:0;font-size:11px;padding:8px 3px;touch-action:none;user-select:none}
+.pinball-status{font-size:11px;text-align:center;min-height:16px;margin:7px 4px}
+.pinball-help{text-align:center;font-size:10px;color:#555;margin:8px 0 4px}
 .desktop-icon span{padding:1px 3px;background:transparent;text-shadow:1px 1px #004040}
+.desktop-shortcut,.desktop-shortcut:hover,.desktop-shortcut:active{padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;white-space:normal;cursor:default;user-select:none;touch-action:manipulation}
+.desktop-shortcut:focus{outline:none}
+.desktop-shortcut:focus span{background:#000080;outline:1px dotted #fff;outline-offset:1px}
+.desktop-shortcut:focus img{filter:drop-shadow(1px 1px #000080)}
 .retro-ad{position:fixed;right:16px;bottom:54px;width:310px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 72px);overflow:auto;z-index:45;box-shadow:4px 4px #000}
 .retro-ad>.titlebar{position:sticky;top:0;z-index:1;background:linear-gradient(90deg,#800080,#000080);font-size:12px}
 .retro-ad-countdown{margin-left:auto;color:#ffff00;font:bold 11px 'Courier New',monospace;white-space:nowrap}

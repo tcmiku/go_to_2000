@@ -13,6 +13,7 @@ const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', an
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
 const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
+publicFiles.add('pinball.js');
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);
 function cleanText(value,max,label,{required=false}={}) {

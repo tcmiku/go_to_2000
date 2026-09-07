@@ -1,10 +1,12 @@
 import {$} from './ui.js';
 import {createGame,reveal,toggleFlag} from './minesweeper.js';
 import {mountSnakeGame} from './snake.js';
+import {mountPinball} from './pinball.js';
 
 const start=$('#start-button'), menu=$('#start-menu'), accessories=$('#accessories-button'), accessoriesWrap=accessories.parentElement, submenu=$('#accessories-menu');
 const gameDialog=$('#mines-dialog'),board=$('#mine-board');
 mountSnakeGame(submenu);
+mountPinball(submenu);
 let game=createGame(),flagMode=false,startedAt=0,elapsed=0,timer;
 function showAccessories(on){submenu.hidden=!on;accessories.setAttribute('aria-expanded',String(on));}
 function closeMenu(focus=false){menu.hidden=true;start.setAttribute('aria-expanded','false');showAccessories(false);if(focus)start.focus();}
