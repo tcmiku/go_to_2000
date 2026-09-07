@@ -57,6 +57,46 @@
 .radio-body>.track-name{color:#303a3b;font:10px 'Courier New',monospace;white-space:normal;line-height:1.5;margin:7px 0 4px;min-height:30px}
 .radio-controls #radio-play[aria-pressed=true]{border-style:inset;background:#a8bfb8}
 @keyframes reel-spin{to{transform:rotate(360deg)}}
+/* Molded portable cassette deck: the clear door pivots independently of the tape. */
+.radio-window{border-radius:9px;background:linear-gradient(115deg,#dfddd3,#b4b6b0);padding:7px;box-shadow:2px 4px 0 #3c4140,inset 0 0 0 1px #f8f5e9}
+.radio-window>.titlebar{border-radius:3px;background:#303b3b;padding:6px;gap:4px}
+.radio-window>.titlebar h2{font:bold 11px 'Courier New',monospace;letter-spacing:0;white-space:nowrap}
+.radio-window .titlebar-actions{gap:3px;flex-shrink:0}
+.radio-window .caption-button{min-width:21px;width:21px;height:21px;padding:0;font-size:16px}
+.radio-window .radio-body{padding:9px 3px 3px}
+.deck-brand{display:flex;justify-content:space-between;align-items:center;gap:4px;color:#46504b;font:8px 'Courier New',monospace;letter-spacing:.06em;margin:1px 2px 9px}
+.deck-brand b{font-size:12px;color:#273632}
+.deck-bay{position:relative;isolation:isolate;padding:12px 8px 15px;background:linear-gradient(#172321,#35423d);border:3px solid;border-color:#70786e #f0f1e7 #f0f1e7 #70786e;border-radius:7px;perspective:650px;box-shadow:inset 0 3px 12px #000a;margin-bottom:10px}
+.deck-bay .cassette{transition:transform .5s ease;transform:scale(.94);box-shadow:0 3px 6px #0009}
+.deck-bay.is-open .cassette{transform:scale(.96) translateY(-2px)}
+.deck-bay .cassette{transition:transform .3s ease,opacity .28s ease}
+.deck-bay.tape-out .cassette{transform:translateY(-38px) rotate(-7deg) scale(.8);opacity:0}
+.deck-bay[aria-busy=true] .deck-door{transition-duration:.35s}
+.deck-bay .cassette[data-side="1"] .cassette-label,.deck-bay .cassette[data-side="1"] .cassette-caption{border-color:#b18059}
+.deck-bay .cassette[data-side="2"] .cassette-label,.deck-bay .cassette[data-side="2"] .cassette-caption{border-color:#8980b5}
+.deck-door{position:absolute;inset:0;z-index:3;display:block;width:100%;height:100%;padding:0;border:7px solid;border-color:#83928b #303f3a #354740 #a0aba2;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px #d4e5da,0 2px 2px #0009;transform-origin:50% 100%;transform:rotateX(0deg);transition:transform .55s cubic-bezier(.2,.7,.2,1),box-shadow .55s;transform-style:preserve-3d}
+.deck-door:hover,.deck-door:active{background:transparent;border-color:#93a59a #303f3a #354740 #b8c6b8}
+.deck-glass{position:absolute;inset:0;pointer-events:none;background:linear-gradient(122deg,#b8e7ce1a 8%,#ebffff30 9%,#ebffff08 30%,transparent 31%,transparent 60%,#f4ffff24 61%,transparent 65%),#2243390f;box-shadow:inset 0 0 12px #0006}
+.deck-door-label{position:absolute;left:0;right:0;bottom:5px;text-align:center;color:#d9e2d7;font:7px 'Courier New',monospace;letter-spacing:.05em;text-shadow:0 1px #18241a}
+.deck-latch{position:absolute;left:35%;right:35%;bottom:-10px;height:6px;border-radius:1px;background:repeating-linear-gradient(90deg,#27352c 0 2px,#808b7d 2px 4px);box-shadow:0 1px 1px #111}
+.deck-bay.is-open .deck-door{transform:rotateX(-72deg);box-shadow:0 -3px 7px #0005}
+.deck-indicators{display:flex;align-items:center;justify-content:space-between;gap:5px;font:8px 'Courier New',monospace;color:#475346;min-height:18px}
+.deck-indicators i{display:inline-block;width:5px;height:5px;margin-right:3px;border-radius:50%;background:#52674d;border:1px solid #526049}
+.deck-indicators i.is-lit{background:#bdf063;box-shadow:0 0 5px #94e646}
+.deck-indicators #deck-door-status{margin-left:auto}
+#deck-effects{flex-shrink:0;width:23px;height:21px;padding:0;font-size:13px;line-height:1;border-width:1px;color:#697165}
+#deck-effects[aria-pressed=true]{color:#254424;background:#d1d9c9;box-shadow:inset 1px 1px #7e8b73;border-color:#7e8b73 #f1f4e9 #f1f4e9 #7e8b73}
+.radio-window .radio-controls button:disabled{opacity:.6;cursor:wait}
+.deck-door:disabled{cursor:wait}
+.radio-window .tape-readout{margin-top:5px;gap:4px;font-size:9px}
+.radio-window #radio-time{font-size:16px}
+.radio-window .radio-controls{gap:3px;padding:5px 3px 9px;background:#333d35;border-radius:3px;border:1px inset #8a9286}
+.radio-window .radio-controls button{height:32px;min-width:0;flex:1 1 0;padding:0;font:13px Arial;border:1px solid;border-color:#f8f7ec #7d8578 #7d8578 #f8f7ec;border-radius:2px;background:linear-gradient(#f0efdf,#c8cbbc);box-shadow:0 5px 0 #7a8473,0 6px 1px #162319;transition:transform .1s,box-shadow .1s,background .1s;touch-action:manipulation}
+.radio-window .radio-controls button:active,.radio-window .radio-controls button.key-down,.radio-window .radio-controls #radio-play[aria-pressed=true],.radio-window .radio-controls #radio-mute[aria-pressed=true]{transform:translateY(4px);box-shadow:0 1px 0 #68755f;background:linear-gradient(#bbc7a6,#d2ddba)}
+.radio-window .radio-controls #radio-eject{color:#865025}
+.deck-speaker{height:25px;margin-top:12px;border-radius:4px;background:repeating-linear-gradient(0deg,#343e33 0 2px,#a3ad9c 2px 4px);border:3px solid #bbc2b2;box-shadow:inset 1px 1px 2px #1d2b1d}
+.radio-window .radio-body>small{font:7px 'Courier New',monospace;letter-spacing:.04em;margin-top:7px;color:#4c5548}
+@media(prefers-reduced-motion:reduce){.deck-door,.deck-bay .cassette,.radio-window .radio-controls button{transition:none}}
 .miku-stage{grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:72px;min-height:230px;padding:20px 32px;overflow:hidden;background:#101b38;background-image:radial-gradient(#7386a4 1px,transparent 1px);background-size:27px 27px;color:#e3fcf6;border:2px inset #aaa}
 .miku-channel{font:11px "Courier New",monospace;letter-spacing:.13em;color:#6de7d5}
 .miku-stage h3{font-size:18px;line-height:1.6;margin:12px 0 8px;font-weight:normal}
