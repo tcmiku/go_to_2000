@@ -120,18 +120,33 @@ npm run check
 - 默认从用户指定的小宇宙「无聊斋」公开页面解析最近单集与音频。纸质目录支持切集、关键词查找与读取 RSS 往期；2026-09-08 实测可读取 610 期。
 - 磁带架下的加号可按名称搜索 Apple Podcasts 公共目录，也支持粘贴小宇宙播客主页链接。真实结果可加入收藏；不使用样例节目或替代音频。
 - 支持播放、暂停、停止、前后切集、前后 15 秒、进度拖动、音量旋钮拖动／滚轮／方向键与倍速。收藏、上次磁带、播放进度及音量／倍速保存在本浏览器。卷轴仅在真实播放时转动，支持系统减少动态效果设置。
+- 机械音效默认开启：播放／暂停／停止按键、舱盖开合、装退带、快进快退、切集和音量旋钮均有短促反馈。机身电源灯旁的 ♪ 可独立开关，偏好随音量和倍速保存在 `surfer.cassette.settings`。首次进入和恢复磁带保持安静，用户操作后才启用音效；音量为零、媒体静音、关闭音效或页面隐藏时停止发声。音效使用 Web Audio 本地合成，共用噪声缓冲并限制同时发声数量，不下载音效文件、不添加持续底噪；页面离开时释放音频资源。
 - `/api/podcasts/podcast`、`search`、`archive` 为只读接口，复用限制内网地址与重定向的网络层；公开目录缓存 10 分钟，RSS 最大 8 MB。第三方页面、目录和音频仍依赖相应平台可用性；非默认的小宇宙链接按该主页公开的单集范围提供内容。
 
-验证：新增解析／搜索／RSS／输入校验测试，真实浏览器验证播放、装退带、快进、610 期筛选、搜索添加、持久化及移动端布局。截图位于 `docs/screenshots/cassette-desktop.png` 和 `cassette-mobile.png`。现有黑胶／电台测试已兼容 Windows CRLF 换行；全项目仍有原有弹球测试 `three drains end the game and require a new game` 失败。
+历史验证记录：新增解析／搜索／RSS／输入校验测试，真实浏览器验证播放、装退带、快进、610 期筛选、搜索添加、持久化及移动端布局。截图位于 `docs/screenshots/cassette-desktop.png` 和 `cassette-mobile.png`。现有黑胶／电台测试已兼容 Windows CRLF 换行；全项目仍有原有弹球测试 `three drains end the game and require a new game` 失败。
+
+音效实现位于 `public/cassette-sound.js`，交互与开关位于 `public/cassette-room.js/html/css`。本次音效相关 34 项自动化检查通过，未进行浏览器或电脑操作测试；运行方式：
+
+```sh
+node --test tests/cassette-sound.test.js tests/podcast.test.js tests/radio.test.js tests/server.test.js
+```
 
 ## 慢放 · 黑胶聆听室
 
-首页菜单「黑胶聆听室」进入，地址为 `http://localhost:3000/listening-room.html`。保留原有 CD 网站收藏墙，音乐使用独立的聆听空间。
+双击 Win98 桌面的「唱片机」图标（键盘 Enter 也可），或从首页菜单「黑胶聆听室」进入，地址为 `http://localhost:3000/listening-room.html`。保留原有 CD 网站收藏墙，音乐使用独立的聆听空间。
 
-- 场景只保留唱片机与唱片墙，移除了页面导航、说明、弹窗和独立播放栏。唱片机使用 CSS 3D 的顶板、前板、侧板、机脚、铰链、透明盖、转盘和唱臂；机身机械键负责播放、暂停、停止、切歌、唱片墙切换和搜索，旋钮支持拖动、滚轮与键盘调节音量。搜索和音源设置位于机身抽屉内。
+- 唱片机正对用户放在木质桌面上，背景为木质唱片架，桌面配有软盘、CD 盒、磁带、便签与圆珠笔等千禧年杂物。页面操作集中在机身，不设独立播放栏和解释文案。唱片机使用 CSS 3D 的顶板、前板、侧板、机脚、铰链、透明盖、转盘和唱臂；机身机械键负责播放、暂停、停止、切歌、唱片墙切换和搜索，旋钮支持拖动、滚轮与键盘调节音量。搜索和音源设置位于机身抽屉内。
 - 首次进入会将 `data/mp3/` 的现有歌曲放上唱片墙。机身的放大镜按键展开搜索抽屉，可搜索网易云歌曲，也能重新添加移除过的本地唱片。
-- 直接点击墙上的唱片，播放取片、抽出黑胶、落盘和唱臂落下动画；实际音频开始播放后转盘旋转，暂停后停止。支持切歌、停止、进度拖动、音量、静音和机盖开合。启用系统减少动态效果时跳过过渡动画。
+- 封套具有纸纤维、压边、厚度与轻微磨损；点击唱片后依次取套、抽盘、落盘和落针，切歌前抬起唱臂并将旧盘归架。转盘在落针前启动，唱臂随播放进度缓慢向内移动，暂停后转盘停止。支持切歌、停止、进度拖动、音量、静音和机盖开合。启用系统减少动态效果时跳过过渡动画。
 - 收藏和音量、音源、机盖偏好保存在本浏览器；唱片墙与聆听室共用收藏，其他同源标签页通过 storage 事件同步。切换聆听室和唱片墙不会打断播放。
+
+### 渲染与加载性能
+
+- 首屏只创建最多 10 张背景封套；打开唱片墙时再创建完整收藏，重复打开和同列数的窗口缩放复用现有节点。收藏上限为 500 张。
+- 屏外唱片行使用 `content-visibility` 延迟渲染，远程封面懒加载并异步解码。
+- 播放时间、进度和唱臂角度仅在值变化时更新；角度样式只作用于唱臂，避免影响整个机身。后台标签页暂停 CSS 装饰动画和进度绘制，音乐继续播放，返回后同步显示。
+- 音源切换复用当前页面已下载的运行脚本，每个候选音源仍使用新的隔离 iframe/Worker。
+- 自动化测试覆盖 500 张收藏按需创建、节点复用、后台恢复和运行脚本缓存；未进行帧率、GPU 或真实设备性能测量。
 
 ### 透明机盖歌词投影
 
@@ -163,10 +178,10 @@ npm ci
 npm run build:music
 ```
 
-新增文件为 `listening-room.html/css/js`、`listening-service.js`、`music-source-selection.js`、`lx-client.js`、`lx-sandbox.html/js`、`scripts/lx-worker-entry.js` 和生成的 `lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
+前端实现位于 `public/listening-room.html/css/js`、`public/music-source-selection.js`、`public/lx-client.js`、`public/lx-sandbox.html/js`；音源服务位于 `server/listening-service.js`。Worker 源码为 `scripts/lx-worker-entry.js`，构建产物为 `public/lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
 
 ```sh
 node --test tests/music-source-selection.test.js tests/listening-controls.test.js tests/listening.test.js tests/server.test.js
 ```
 
-依用户要求，没有进行浏览器点击、截图或电脑操作测试。此次相关的 42 项检查通过；全项目检查还存在原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。
+最近一次聆听室性能优化的上述 46 项检查通过；该轮未进行浏览器点击、截图或电脑操作测试。此前全项目检查记录有原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。

@@ -21,7 +21,7 @@ const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css',
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 publicFiles.add('pinball.js');
 publicFiles.add('lyrics.css');
-['cassette-room.html','cassette-room.css','cassette-room.js'].forEach(file=>publicFiles.add(file));
+['cassette-room.html','cassette-room.css','cassette-room.js','cassette-sound.js'].forEach(file=>publicFiles.add(file));
 ['listening-room.html','listening-room.css','listening-room.js','lyrics.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);

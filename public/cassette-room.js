@@ -1,3 +1,4 @@
+import { CassetteSound } from './cassette-sound.js';
 const $=selector=>document.querySelector(selector);
 const DEFAULT={id:'xyz:5e280fac418a84a0461fb129',title:'无聊斋',author:'教主_单口喜剧'};
 const colors=['#83b7b0','#d7b16f','#aba58e','#b38370','#92a6af','#b0b887','#c9bca6','#9d999f'];
@@ -15,9 +16,17 @@ const preferences=readStored('surfer.cassette.settings',{});
 audio.volume=Number.isFinite(preferences?.volume)?Math.max(0,Math.min(1,preferences.volume)):.7;
 audio.playbackRate=[.75,1,1.25,1.5,2].includes(preferences?.speed)?preferences.speed:1;
 audio.defaultPlaybackRate=audio.playbackRate;
+const effects=new CassetteSound({enabled:preferences?.effects!==false,level:()=>audio.muted?0:audio.volume});
+const effectsButton=$('#effects-toggle');
+function reflectEffects(){effectsButton.setAttribute('aria-pressed',String(effects.enabled));effectsButton.setAttribute('aria-label',effects.enabled?'关闭机械音效':'开启机械音效');}
+for(const type of ['pointerdown','keydown','click','wheel'])document.addEventListener(type,event=>{if(event.isTrusted)effects.unlock();},{capture:true,passive:true});
+effectsButton.onclick=()=>{effects.setEnabled(!effects.enabled);reflectEffects();savePreferences();if(effects.enabled)void effects.play('key');};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)effects.silence();});
+audio.addEventListener('volumechange',()=>{if(audio.muted||audio.volume===0)effects.silence();});
+reflectEffects();
 const positionKey=()=>podcast?`surfer.cassette.position:${podcast.id}`:'';
 function savePosition(){if(podcast&&podcast.episodes[episodeIndex])saveStored(positionKey(),{id:podcast.episodes[episodeIndex].id,time:audio.currentTime||0});}
-function savePreferences(){saveStored('surfer.cassette.settings',{volume:audio.volume,speed:audio.playbackRate});}
+function savePreferences(){saveStored('surfer.cassette.settings',{volume:audio.volume,speed:audio.playbackRate,effects:effects.enabled});}
 function colorFor(id){const index=collection.findIndex(p=>p.id===id);if(index>=0)return colors[index%colors.length];return colors[[...id].reduce((n,c)=>n+c.charCodeAt(0),0)%colors.length];}
 function cassetteMarkup(p){return `<span class="cassette" style="--tape-color:${colorFor(p.id)}"><span class="tape-label"><span class="tape-letter">A</span><span class="tape-title">${escape(p.title)}</span><span class="tape-grade">NORMAL<br>POSITION</span></span><span class="tape-reels"><span class="reel"><i></i></span><span class="reel"><i></i></span></span><span class="tape-fineprint">LOW NOISE · HIGH OUTPUT</span><span class="tape-bottom"><i></i><i></i><i></i></span></span>`;}
 function renderRack(){
@@ -32,7 +41,7 @@ async function api(path,params={}){
   if(!res.ok)throw new Error(data.error||'暂时连接不上，请重试');return data;
 }
 function status(message=''){$('#paper-status').textContent=message;$('#paper-status').title=message;}
-function setDoor(open){doorOpen=open;deck.classList.toggle('door-open',open);$('#door').setAttribute('aria-expanded',String(open));$('#door').setAttribute('aria-label',open?'合上磁带舱':'打开磁带舱');}
+function setDoor(open,silent=false){if(open!==doorOpen&&!silent)void effects.play(open?'open':'close');doorOpen=open;deck.classList.toggle('door-open',open);$('#door').setAttribute('aria-expanded',String(open));$('#door').setAttribute('aria-label',open?'合上磁带舱':'打开磁带舱');}
 function reflectPlaying(on){deck.classList.toggle('playing',on);$('#power-led').classList.toggle('on',on);$('#play').classList.toggle('pressed',on);$('#play-icon').textContent=on?'Ⅱ':'▶';$('#play').setAttribute('aria-label',on?'暂停':'播放');$('#play-state').textContent=on?'PLAY':podcast&&audio.currentTime>0?'PAUSE':'STOP';}
 function renderEpisodes(){
   const filter=$('#episode-filter').value.trim().toLocaleLowerCase();
@@ -87,7 +96,7 @@ async function insertTape(p,origin,{initial=false}={}){
   if(transition)return;
   savePosition();const version=++requestVersion;transition=true;audio.pause();playIntent=false;setControls();status();
   $('#paper-title').textContent=p.title;$('#episode-filter').value='';$('#episode-list').setAttribute('aria-busy','true');$('#episode-list').innerHTML='<div class="paper-loading"><i></i><i></i><i></i></div>';
-  setDoor(true);$('#loaded-tape').style.opacity='0';
+  setDoor(true,initial);if(!initial)void effects.play('slide');$('#loaded-tape').style.opacity='0';
   try{
     const [loaded]=await Promise.all([memory.get(p.id)?Promise.resolve(memory.get(p.id)):api('podcast',{id:p.id}),initial?Promise.resolve():animateTape(p,origin)]);
     let data=loaded;
@@ -99,7 +108,7 @@ async function insertTape(p,origin,{initial=false}={}){
     memory.set(p.id,data);podcast=data;
     saveStored('surfer.cassette.current',data.id);
     if(!collection.some(item=>item.id===data.id)){collection.push({id:data.id,title:data.title,author:data.author});saveStored('surfer.cassettes',collection);}
-    $('#loaded-tape').innerHTML=cassetteMarkup(data);$('#loaded-tape').style.opacity='1';setDoor(false);transition=false;renderRack();
+    $('#loaded-tape').innerHTML=cassetteMarkup(data);$('#loaded-tape').style.opacity='1';if(!initial)void effects.play('seat');setDoor(false,initial);transition=false;renderRack();
     const index=data.episodes.findIndex(e=>e.id===savedPosition?.id);
     episodeIndex=0;
     if(data.episodes.length)selectEpisode(Math.max(0,index),{restore:index>=0?Number(savedPosition?.time)||0:0});
@@ -117,21 +126,22 @@ async function insertTape(p,origin,{initial=false}={}){
 async function eject(){
   if(transition)return;
   if(!podcast){setDoor(!doorOpen);return;}
-  savePosition();transition=true;++requestVersion;playIntent=false;audio.pause();setControls();setDoor(true);$('#loaded-tape').style.opacity='0';
+  effects.silence();void effects.play('slide');savePosition();transition=true;++requestVersion;playIntent=false;audio.pause();setControls();setDoor(true);$('#loaded-tape').style.opacity='0';
   const p=podcast,origin=[...document.querySelectorAll('.tape-spine')].find(el=>el.dataset.id===p.id);
   await animateTape(p,origin,true);podcast=null;transition=false;audio.removeAttribute('src');audio.load();$('#loaded-tape').innerHTML='';$('#paper-title').textContent='—';$('#episode-filter').value='';renderRack();renderEpisodes();reflectPlaying(false);setControls();updateProgress();status();
 }
 $('#rack-slots').onclick=event=>{const button=event.target.closest('[data-id]');if(button)void insertTape(collection.find(p=>p.id===button.dataset.id),button);};
 $('#door').onclick=()=>{if(!doorOpen){audio.pause();playIntent=false;}setDoor(!doorOpen);};
 $('#eject').onclick=()=>void eject();
-$('#play').onclick=()=>{if(!audio.paused||playIntent){playIntent=false;audio.pause();reflectPlaying(false);}else void playCurrent();};
-$('#stop').onclick=()=>{playIntent=false;audio.pause();audio.currentTime=0;updateProgress();savePosition();$('#play-state').textContent='STOP';};
-$('#previous').onclick=()=>{savePosition();selectEpisode(episodeIndex-1,{play:true});};
-$('#next').onclick=()=>{savePosition();selectEpisode(episodeIndex+1,{play:true});};
+$('#play').onclick=()=>{void effects.play('key');if(!audio.paused||playIntent){playIntent=false;audio.pause();reflectPlaying(false);}else void playCurrent();};
+$('#stop').onclick=()=>{effects.silence();void effects.play('stop');playIntent=false;audio.pause();audio.currentTime=0;updateProgress();savePosition();$('#play-state').textContent='STOP';};
+$('#previous').onclick=()=>{void effects.play('wind');savePosition();selectEpisode(episodeIndex-1,{play:true});};
+$('#next').onclick=()=>{void effects.play('wind');savePosition();selectEpisode(episodeIndex+1,{play:true});};
 function seekTo(value){const max=Number.isFinite(audio.duration)?audio.duration:podcast?.episodes[episodeIndex]?.duration||0;if(max&&audio.readyState>0){audio.currentTime=Math.max(0,Math.min(max,value));updateProgress();savePosition();}}
-$('#rewind').onclick=()=>seekTo(audio.currentTime-15);$('#forward').onclick=()=>seekTo(audio.currentTime+15);
+$('#rewind').onclick=()=>{void effects.play('wind');seekTo(audio.currentTime-15);};$('#forward').onclick=()=>{void effects.play('wind');seekTo(audio.currentTime+15);};
 $('#seek').oninput=event=>seekTo(Number(event.target.value));
-function reflectVolume(){$('#volume').value=String(Math.round(audio.volume*100));$('#volume-knob').style.setProperty('--volume-angle',`${audio.volume*270-135}deg`);}
+let lastVolumeStep=Math.round(audio.volume*10),lastDetent=0;
+function reflectVolume(){const step=Math.round(audio.volume*10);if(step!==lastVolumeStep){lastVolumeStep=step;if(Date.now()-lastDetent>70){lastDetent=Date.now();void effects.play('dial');}}$('#volume').value=String(Math.round(audio.volume*100));$('#volume-knob').style.setProperty('--volume-angle',`${audio.volume*270-135}deg`);}
 $('#volume').oninput=event=>{audio.volume=Number(event.target.value)/100;reflectVolume();savePreferences();};
 let volumeDrag=null;
 $('#volume').onpointerdown=event=>{if(event.button!==0)return;event.preventDefault();event.currentTarget.focus({preventScroll:true});event.currentTarget.setPointerCapture(event.pointerId);volumeDrag={x:event.clientX,y:event.clientY,value:audio.volume};};
@@ -140,9 +150,9 @@ const endVolumeDrag=()=>{volumeDrag=null;savePreferences();};
 $('#volume').onpointerup=endVolumeDrag;$('#volume').onpointercancel=endVolumeDrag;
 $('#volume').addEventListener('wheel',event=>{event.preventDefault();audio.volume=Math.max(0,Math.min(1,audio.volume+(event.deltaY<0?.05:-.05)));reflectVolume();savePreferences();},{passive:false});
 function reflectSpeed(){$('#speed').textContent=`${audio.playbackRate}×`;$('#speed').setAttribute('aria-label',`播放速度 ${audio.playbackRate} 倍`);}
-$('#speed').onclick=()=>{const speeds=[.75,1,1.25,1.5,2];audio.playbackRate=speeds[(speeds.indexOf(audio.playbackRate)+1)%speeds.length];audio.defaultPlaybackRate=audio.playbackRate;reflectSpeed();savePreferences();};
+$('#speed').onclick=()=>{void effects.play('key');const speeds=[.75,1,1.25,1.5,2];audio.playbackRate=speeds[(speeds.indexOf(audio.playbackRate)+1)%speeds.length];audio.defaultPlaybackRate=audio.playbackRate;reflectSpeed();savePreferences();};
 audio.addEventListener('ratechange',reflectSpeed);
-$('#episode-list').onclick=event=>{const button=event.target.closest('[data-index]');if(button&&!transition){savePosition();selectEpisode(Number(button.dataset.index),{play:true});}};
+$('#episode-list').onclick=event=>{const button=event.target.closest('[data-index]');if(button&&!transition){void effects.play('key');savePosition();selectEpisode(Number(button.dataset.index),{play:true});}};
 $('#episode-filter').oninput=()=>{if(!transition)renderEpisodes();};
 $('#archive').onclick=async()=>{
   if(!podcast||archiveLoading)return;const id=podcast.id,version=requestVersion;archiveLoading=true;renderEpisodes();status();
@@ -167,7 +177,7 @@ audio.addEventListener('timeupdate',()=>{updateProgress();if(Date.now()-saveAt>5
 audio.addEventListener('ended',()=>{playIntent=false;if(podcast&&episodeIndex<podcast.episodes.length-1)selectEpisode(episodeIndex+1,{play:true});else{reflectPlaying(false);$('#play-state').textContent='END';}});
 audio.addEventListener('error',()=>{if(podcast&&!transition&&audio.getAttribute('src')){playIntent=false;reflectPlaying(false);status('音频连接失败，按 ▶ 重试');}});
 document.addEventListener('keydown',event=>{if(dialog.open||event.target.matches('input,button,a,textarea,select'))return;if(event.code==='Space'&&podcast){event.preventDefault();$('#play').click();}});
-window.addEventListener('pagehide',()=>{savePosition();flight?.cancel();});
+window.addEventListener('pagehide',()=>{savePosition();effects.dispose();flight?.cancel();});
 if('mediaSession' in navigator){for(const [name,fn] of Object.entries({play:()=>void playCurrent(),pause:()=>{playIntent=false;audio.pause();},previoustrack:()=>$('#previous').click(),nexttrack:()=>$('#next').click(),seekbackward:()=>seekTo(audio.currentTime-15),seekforward:()=>seekTo(audio.currentTime+15)}))try{navigator.mediaSession.setActionHandler(name,fn);}catch{/* Older browsers support fewer media controls. */}}
 const lastTape=collection.find(p=>p.id===readStored('surfer.cassette.current',''))||DEFAULT;
 renderRack();reflectVolume();reflectSpeed();setControls();void insertTape(lastTape,null,{initial:true});

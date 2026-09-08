@@ -260,7 +260,7 @@ test('listening room and isolated source runtime are served with scoped CSP',asy
 
 test('cassette room serves its assets, scopes media CSP and validates read-only API requests',async t=>{
   const app=await instance(t,{adminEnabled:false});
-  for(const route of ['/cassette-room','/cassette-room.html','/cassette-room.css','/cassette-room.js']){
+  for(const route of ['/cassette-room','/cassette-room.html','/cassette-room.css','/cassette-room.js','/cassette-sound.js']){
     const response=await fetch(app.base+route);assert.equal(response.status,200,route);
     if(route==='/cassette-room'||route.endsWith('.html')){assert.match(response.headers.get('content-security-policy'),/media-src 'self' https: http:/);assert.doesNotMatch(response.headers.get('content-security-policy'),/unsafe-eval/);}
   }

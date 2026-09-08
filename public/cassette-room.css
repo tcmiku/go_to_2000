@@ -83,3 +83,7 @@
 @media(max-width:599px){.walkman-wrap{left:calc(50% - 145px);top:107px;transform:rotate(-2deg) scale(.51)}.collection{left:calc(50% - 158px);top:481px;transform:rotate(1deg) scale(.86)}.track-paper{top:836px;transform:rotate(-1deg)}.scene{height:1120px}.tabletop{min-height:1120px}.pencil{left:calc(50% + 172px);top:875px}.headphone-cable{top:329px}}
 @media(max-width:359px){.walkman-wrap{left:calc(50% - 132px);transform:rotate(-2deg) scale(.46)}.collection{left:calc(50% - 145px);transform:rotate(1deg) scale(.79)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* A small engraved sound switch beside the power lamp. */
+#effects-toggle{width:28px;height:28px;margin-left:2px;padding:0;border:1px solid #8cb0b56b;border-radius:4px;background:linear-gradient(#195b79,#12465f);color:#f2ce8f;font-size:17px;box-shadow:inset 0 1px #b6d5d533,0 1px 2px #062e41;touch-action:manipulation}
+#effects-toggle[aria-pressed=false]{color:#89a6ac;background:#17465c;box-shadow:inset 0 1px 2px #0b3041}
