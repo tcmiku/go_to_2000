@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {selectMusicSource} from '../public/music-source-selection.js';
+import {createLyricsProjection} from '../public/lyrics.js';
 const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\r?\n/gm,'');
 const html=await readFile(new URL('../public/listening-room.html',import.meta.url),'utf8');
 
@@ -29,7 +30,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
       const animation={frames,options,pending:true,finished,finish(){if(this.pending){this.pending=false;resolve();}},cancel(){if(this.pending){this.pending=false;reject(new Error('cancelled'));}}};
       animations.push(animation);return animation;
     }
-    querySelector(selector){if(selector==='[data-close]')return this.closeButton??=new Element();if(selector==='input, select')return this.id==='discover-dialog'?$('#music-query'):$('#source-select');if(selector.startsWith('.transfer-'))return(this.parts??={})[selector]??=new Element();return null;}
+    querySelector(selector){if(selector==='[data-close]')return this.closeButton??=new Element();if(selector==='input, select')return this.id==='discover-dialog'?$('#music-query'):$('#source-select');if(selector.startsWith('.transfer-')||selector.startsWith('[data-lyric='))return(this.parts??={})[selector]??=new Element();return null;}
   }
   for(const tag of html.matchAll(/<([\w-]+)\b([^>]*\bid="([^"]+)"[^>]*)>/g)){
     const element=new Element();element.id=tag[3];element.tagName=tag[1].toUpperCase();element.hidden=/\bhidden\b/.test(tag[2]);
@@ -48,6 +49,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
     window:{addEventListener:(name,fn)=>{windowEvents[name]=fn;}},
     readStorage:(key,fallback)=>key.endsWith('preferences.v1')?{source:preferred}:savedRecords||fallback,saveStorage:(key,value)=>{saved.set(key,structuredClone(value));return true;},e:String,
     loadProbeTracks:async()=>[{source:'wy',songmid:1,name:'Probe'}],selectMusicSource:options=>selectMusicSource({...options,probe:sourceProbe||(async()=>{})}),
+    createLyricsProjection:options=>createLyricsProjection({...options,fetchLyrics:async()=>({ok:true,json:async()=>({lyric:''})}),isHidden:()=>document.hidden,reduced:()=>reducedMotion}),
     setTimeout:(fn)=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     fetch:async()=>({ok:true,json:async()=>({tracks:['One','Two','Three'].map(name=>({name,src:`/data/mp3/${name}.mp3`}))})}),
     LXClient:class{dispose(){this.sources=null;}async load(id){sourceCalls.push(id);if(sourceLoad)await sourceLoad(id);this.id=id;this.sources={wy:{actions:['musicUrl'],qualitys:['128k']}};return{sources:this.sources};}async resolve(){return `https://example.com/${this.id}.mp3`;}}

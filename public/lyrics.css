@@ -1,0 +1,76 @@
+/* An inside-surface projection: the open lid shows its rear face. */
+.holo-lyrics {
+  position: absolute;
+  inset: 44px 52px 42px;
+  display: grid;
+  grid-template-rows: 24px 54px 1fr 54px 18px;
+  gap: 6px;
+  padding: 14px 28px;
+  color: #d6fff3;
+  text-align: center;
+  pointer-events: none;
+  transform: translateZ(-4px) rotateX(180deg);
+  opacity: 0;
+  transition: opacity .45s ease, transform 1.3s cubic-bezier(.4,0,.2,1);
+  background: radial-gradient(ellipse, #72c7b51c, transparent 72%);
+  text-shadow: 0 0 9px #86e6d680;
+}
+.holo-lyrics[hidden] { display: none; }
+.playing .holo-lyrics { opacity: 1; }
+.paused .holo-lyrics { opacity: .45; }
+.lid-closed .holo-lyrics { transform: translateZ(7px); }
+.holo-lyrics::before,
+.holo-lyrics::after {
+  content: '';
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: #b8fff199;
+  border-style: solid;
+  pointer-events: none;
+}
+.holo-lyrics::before { left: 0; top: 0; border-width: 1px 0 0 1px; }
+.holo-lyrics::after { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+.holo-registration {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 9px/1.2 monospace;
+  letter-spacing: 3px;
+  color: #a9dece;
+  opacity: .55;
+}
+.holo-registration i { width: 28px; height: 2px; background: #c6ffef; box-shadow: -6px 0 #c6ffef; }
+.holo-context {
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  opacity: .3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.holo-next { opacity: .4; }
+.holo-focus { display: grid; align-content: center; gap: 8px; min-height: 100px; }
+.holo-current {
+  display: block;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 2px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  max-height: 148px;
+  overflow: hidden;
+  color: #e1fff6;
+  text-shadow: 0 0 2px #fff8, 0 0 14px #8af4de88, 1px 0 #9bffe854;
+}
+.holo-lyrics[data-long=true] .holo-current { font-size: 24px; letter-spacing: 1px; }
+.holo-translation { font-size: 15px; line-height: 1.5; opacity: .65; max-height: 46px; overflow: hidden; }
+.holo-translation:empty { display: none; }
+.holo-baseline { align-self: end; height: 1px; background: linear-gradient(90deg, transparent, #b9ffe394, transparent); }
+.view-wall .holo-lyrics,
+.is-backgrounded .holo-lyrics,
+.busy .holo-lyrics { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .holo-lyrics { transition: none; } }

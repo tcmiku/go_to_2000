@@ -1,8 +1,10 @@
 import http from 'node:http';
+import { createReadStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { createListeningService } from './listening-service.js';
 import { createPodcastService } from './podcast-service.js';
 import { validateAd } from '../public/retro-ad.js';
-import { readFile, writeFile, mkdir, rename, readdir, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename, readdir, stat, lstat } from 'node:fs/promises';
 import { representation, notModified, sendRepresentation } from './http-cache.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -18,8 +20,9 @@ const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=ut
 const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 publicFiles.add('pinball.js');
+publicFiles.add('lyrics.css');
 ['cassette-room.html','cassette-room.css','cassette-room.js'].forEach(file=>publicFiles.add(file));
-['listening-room.html','listening-room.css','listening-room.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
+['listening-room.html','listening-room.css','listening-room.js','lyrics.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);
 function cleanText(value,max,label,{required=false}={}) {
@@ -98,7 +101,14 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
   function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}).end(JSON.stringify(value));}
   function publicData(){const data=structuredClone(store);data.navigation.categories.forEach(c=>{c.sites=c.sites.filter(s=>!s.hidden);(c.children||[]).forEach(x=>x.sites=x.sites.filter(s=>!s.hidden));});const ids=new Set(flattenCategories(data.navigation.categories).flatMap(c=>c.sites.map(s=>s.id)));data.content.hot.siteIds=data.content.hot.siteIds.filter(id=>ids.has(id));data.content.featured.items=data.content.featured.items.filter(s=>!s.hidden);data.content.friends=data.content.friends.filter(s=>!s.hidden);return data;}
   let publicStore, publicResponse;
-  const listeningService=createListeningService();
+  const listeningService=createListeningService({readLocalLyrics:async src=>{
+    const track=(await getRadioTracks()).find(track=>track.src===src);
+    if(!track)throw httpError(404,'本地歌曲不存在');
+    const filename=decodeURIComponent(track.src.slice('/data/mp3/'.length)).replace(/\.mp3$/i,'.lrc');
+    const target=path.join(mp3Dir,filename);
+    try{const info=await lstat(target);if(!info.isFile()||info.size>256000)throw httpError(413,'歌词文件无效或过大');return await readFile(target,'utf8');}
+    catch(error){if(error.code==='ENOENT')return null;throw error;}
+  }});
   const podcastService=createPodcastService();
   return http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -243,8 +253,24 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         const filename=route.slice('/data/mp3/'.length);
         const radioNames=new Set((await getRadioTracks()).map(track=>decodeURIComponent(track.src.slice('/data/mp3/'.length))));
         if(!filename || filename!==path.basename(filename) || !radioNames.has(filename))throw httpError(404,'页面不存在');
-        const bytes=await readFile(path.join(mp3Dir,filename));
-        return res.writeHead(200,{'Content-Type':'audio/mpeg','Cache-Control':'public, max-age=3600'}).end(req.method==='HEAD'?undefined:bytes);
+        const target=path.join(mp3Dir,filename),info=await stat(target),size=info.size;
+        let start=0,end=size-1,status=200;
+        const headers={'Content-Type':'audio/mpeg','Cache-Control':'public, max-age=3600','Accept-Ranges':'bytes'};
+        // An unverified If-Range falls back to a complete representation.
+        if(req.headers.range&&!req.headers['if-range']){
+          const match=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+          if(match&&(match[1]||match[2])){
+            if(match[1]){start=Number(match[1]);end=match[2]?Math.min(Number(match[2]),size-1):size-1;}
+            else start=Math.max(0,size-Number(match[2]));
+          }
+          if(!match||(!match[1]&&!match[2])||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=size||end<start){
+            return res.writeHead(416,{...headers,'Content-Range':`bytes */${size}`,'Content-Length':0}).end();
+          }
+          status=206;headers['Content-Range']=`bytes ${start}-${end}/${size}`;
+        }
+        res.writeHead(status,{...headers,'Content-Length':Math.max(0,end-start+1)});
+        if(req.method==='HEAD'||size===0)return res.end();
+        return await pipeline(createReadStream(target,{start,end}),res);
       }
       const filename=route==='/'?'index.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');

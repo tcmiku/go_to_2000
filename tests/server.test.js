@@ -202,7 +202,22 @@ test('radio exposes and serves only local mp3 files',async t=>{
   assert.deepEqual(listing.data.tracks,[{name:'sample-track',src:'/data/mp3/sample-track.mp3'}]);
   const audio=await fetch(app.base+'/data/mp3/sample-track.mp3');
   assert.equal(audio.status,200);assert.equal(audio.headers.get('content-type'),'audio/mpeg');assert.equal(await audio.text(),'ID3 test');
+  assert.equal(audio.headers.get('accept-ranges'),'bytes');assert.equal(audio.headers.get('content-length'),'8');
+  for(const [range,expected,contentRange] of [['bytes=0-2','ID3','bytes 0-2/8'],['bytes=4-','test','bytes 4-7/8'],['bytes=-4','test','bytes 4-7/8'],['bytes=4-100','test','bytes 4-7/8']]){
+    const partial=await fetch(app.base+'/data/mp3/sample-track.mp3',{headers:{Range:range}});
+    assert.equal(partial.status,206);assert.equal(partial.headers.get('content-range'),contentRange);assert.equal(await partial.text(),expected);
+  }
+  for(const range of ['bytes=20-','bytes=4-2','bytes=-0','bytes=abc']){
+    const invalid=await fetch(app.base+'/data/mp3/sample-track.mp3',{headers:{Range:range}});assert.equal(invalid.status,416);assert.equal(invalid.headers.get('content-range'),'bytes */8');
+  }
+  const head=await fetch(app.base+'/data/mp3/sample-track.mp3',{method:'HEAD',headers:{Range:'bytes=0-2'}});assert.equal(head.status,206);assert.equal(await head.text(),'');
   assert.equal((await fetch(app.base+'/data/mp3/ignore.txt')).status,404);
+  await writeFile(path.join(app.dir,'mp3','sample-track.lrc'),'[00:00]窗边的光\n[00:03]唱片转过一圈');
+  const lyrics=await app.req('/api/listening/lyrics?source=local&src=%2Fdata%2Fmp3%2Fsample-track.mp3');
+  assert.equal(lyrics.status,200);assert.match(lyrics.data.lyric,/窗边的光/);
+  assert.equal((await app.req('/api/listening/lyrics?source=local&src=%2Fdata%2Fmp3%2F..%2F.private%2Faccount.json')).status,404);
+  assert.equal((await fetch(app.base+'/data/mp3/sample-track.lrc')).status,404);
+  assert.equal((await fetch(app.base+'/lyrics.js')).status,200);assert.equal((await fetch(app.base+'/lyrics.css')).status,200);
 });
 
 test('complete backup validator preserves explicitly hidden links but rejects malformed files',()=>{

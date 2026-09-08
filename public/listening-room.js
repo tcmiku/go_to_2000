@@ -1,8 +1,10 @@
 import { escapeHTML as e, readStorage, saveStorage } from './ui.js';
 import { LXClient } from './lx-client.js';
 import { loadProbeTracks, selectMusicSource } from './music-source-selection.js';
+import { createLyricsProjection } from './lyrics.js';
 const $=selector=>document.querySelector(selector);
 const audio=$('#audio'),lx=new LXClient();
+const lyrics=createLyricsProjection({audio,root:$('#holo-lyrics'),caption:$('#lyric-caption')});
 const STORAGE='slow-records.collection.v1',PREFS='slow-records.preferences.v1';
 const palette=[['#777b63','#f2e3bf','#b6a16f'],['#b4a58a','#303f3a','#617b6d'],['#a55b48','#f4debb','#d0a477'],['#303f48','#ebdfb9','#9d9e78'],['#ccbc9c','#3c4b3b','#908d58'],['#647a79','#f4e6ce','#bd8761']];
 const prefs=readStorage(PREFS,{})||{};
@@ -109,7 +111,7 @@ function updateTime(){
   if(timeDisplay.label!==label){seek.setAttribute('aria-valuetext',label);timeDisplay.label=label;}
   if(timeDisplay.angle!==angle){$('#tonearm').style.setProperty('--arm-angle',`${angle}deg`);timeDisplay.angle=angle;}
 }
-function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden)updateTime();}
+function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden){updateTime();lyrics.sync();}}
 document.addEventListener('visibilitychange',updateVisibility);
 function labelDisc(track){$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
 function displayTrack(track){current=track;$('#now-title').textContent=track.name;if(!deckTrack)labelDisc(track);}
@@ -159,7 +161,7 @@ async function flyRecord(track,rect,token,returning=false){
   }finally{el.remove();if(flight===el){flight=null;shelf?.classList.remove('sleeve-in-hand');}}
 }
 function cancelPlayback(){
-  operation++;audio.pause();
+  operation++;lyrics.reset();audio.pause();
   for(const animation of flightAnimations)animation.cancel();flightAnimations.clear();
   if(flight){flight.remove();flight=null;}
   for(const sleeve of document.querySelectorAll('.sleeve-in-hand'))sleeve.classList.remove('sleeve-in-hand');
@@ -208,7 +210,7 @@ async function playRecord(track,rect){
     }
     await flyRecord(track,rect,token);if(token!==operation)return;deckTrack=track;labelDisc(track);syncSleeves();$('#turntable').classList.remove('no-record');setStatus('正在读取唱片','…');
     const {url,error}=await settledSource;if(token!==operation)return;if(error)throw error;
-    audio.src=url;audio.load();await lowerTonearm(token);if(token!==operation)return;await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();
+    audio.src=url;audio.load();lyrics.setTrack(track);await lowerTonearm(token);if(token!==operation)return;await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();
   }catch(error){if(token!==operation)return;setBusy(false);$('#turntable').classList.remove('playing','paused','motor-starting','arm-raised','arm-over-record','arm-lifting');feedback(error.name==='NotAllowedError'?'等待播放':`播放失败：${error.message||'音源不可用'}`);}
 }
 $('#play-toggle').onclick=async()=>{
@@ -220,13 +222,13 @@ $('#play-toggle').onclick=async()=>{
   try{
     $('.machine-display').classList.remove('is-error');
     if(!$('#turntable').classList.contains('paused')){setBusy(true);await lowerTonearm(token);if(token!==operation)return;}
-    await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);
+    lyrics.setTrack(current);await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);
   }catch{if(token!==operation)return;cancelPlayback();feedback('播放失败');}
 };
 function adjacent(delta){if(!records.length){location.hash='wall';return;}const index=records.findIndex(track=>track.id===current?.id);playRecord(records[(index+(index<0?1:delta)+records.length)%records.length]);}
 $('#previous-track').onclick=()=>adjacent(-1);$('#next-track').onclick=()=>adjacent(1);
 $('#stop-button').onclick=()=>{cancelPlayback();if(audio.readyState)audio.currentTime=0;$('#turntable').classList.remove('playing','paused');setStatus('已停止','■');updateTime();};
-$('#seek').oninput=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Number($('#seek').value)/1000*audio.duration;updateTime();};
+$('#seek').oninput=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Number($('#seek').value)/1000*audio.duration;updateTime();lyrics.sync();};
 function updateVolume(){
   const percent=Math.round(audio.volume*100);$('#volume').style.setProperty('--angle',`${audio.volume*280-140}deg`);$('#volume').setAttribute('aria-valuenow',String(percent));$('#volume').setAttribute('aria-valuetext',audio.muted?'静音':`${percent}%`);$('#mute-toggle').setAttribute('aria-label',audio.muted?'取消静音':'静音');$('#mute-toggle').setAttribute('aria-pressed',String(audio.muted));
 }

@@ -79,8 +79,28 @@ export function normalizeSearchResult(body) {
   }));
   return {tracks,total:body.data?.totalCount??body.result?.songCount??tracks.length};
 }
-export function createListeningService({request=publicRequest}={}) {
-  const scripts=new Map(),searches=new Map();let active=0;
+const lyricText=value=>typeof value==='string'?value.slice(0,128000):'';
+const matchText=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]+/gu,'');
+export function createListeningService({request=publicRequest,readLocalLyrics=async()=>null}={}) {
+  const scripts=new Map(),searches=new Map(),lyrics=new Map();let active=0;
+  async function searchSongs(query,page=1){
+    const key=`${query}:${page}`;
+    if(searches.get(key)?.until>Date.now())return searches.get(key).data;
+    const route='/api/search/song/list/page';
+    const result=await request('https://interface.music.163.com/eapi/batch',{method:'POST',headers:{origin:'https://music.163.com'},form:{params:eapiParams(route,{keyword:query,needCorrect:'1',channel:'typing',offset:24*(page-1),scene:'normal',total:page===1,limit:24})}});
+    if(result.statusCode!==200)throw fail(502,'搜索平台暂时不可用，请稍后重试');
+    const data={...normalizeSearchResult(result.body),page};
+    if(searches.size>=100)searches.delete(searches.keys().next().value);
+    searches.set(key,{data,until:Date.now()+60000});return data;
+  }
+  async function songLyrics(id){
+    if(lyrics.get(id)?.until>Date.now())return lyrics.get(id).data;
+    const result=await request(`https://music.163.com/api/song/lyric?id=${id}&lv=-1&kv=-1&tv=-1`,{maxBytes:512*1024,timeout:10000});
+    if(result.statusCode!==200||result.body?.code!==200)throw fail(502,'歌词暂时不可用');
+    const data={lyric:lyricText(result.body.lrc?.lyric),translation:lyricText(result.body.tlyric?.lyric)};
+    if(lyrics.size>=100)lyrics.delete(lyrics.keys().next().value);
+    lyrics.set(id,{data,until:Date.now()+15*60*1000});return data;
+  }
   return async function handle(route,url,input) {
     if (route==='/api/listening/sources') return {sources:sourceCatalog};
     if (active>=6) throw fail(429,'请求较多，请稍后再试');
@@ -99,14 +119,27 @@ export function createListeningService({request=publicRequest}={}) {
       if (route==='/api/listening/search') {
         const query=(url.searchParams.get('q')||'').trim(),page=Math.max(1,Math.min(100,Number(url.searchParams.get('page'))||1));
         if (!query||query.length>100) throw fail(400,'请输入 1—100 字的歌曲或歌手名称');
-        const key=`${query}:${page}`;
-        if (searches.get(key)?.until>Date.now()) return searches.get(key).data;
-        const route='/api/search/song/list/page';
-        const result=await request('https://interface.music.163.com/eapi/batch',{method:'POST',headers:{origin:'https://music.163.com'},form:{params:eapiParams(route,{keyword:query,needCorrect:'1',channel:'typing',offset:24*(page-1),scene:'normal',total:page===1,limit:24})}});
-        if(result.statusCode!==200)throw fail(502,'搜索平台暂时不可用，请稍后重试');
-        const data={...normalizeSearchResult(result.body),page};
-        if(searches.size>100)searches.delete(searches.keys().next().value);
-        searches.set(key,{data,until:Date.now()+60000});return data;
+        return await searchSongs(query,page);
+      }
+      if(route==='/api/listening/lyrics'){
+        const source=url.searchParams.get('source');
+        if(source==='wy'){
+          const id=url.searchParams.get('id')||'';
+          if(!/^[1-9]\d{0,19}$/.test(id))throw fail(400,'歌曲 ID 无效');
+          return await songLyrics(id);
+        }
+        if(source!=='local')throw fail(400,'不支持的歌词来源');
+        const src=url.searchParams.get('src')||'';
+        if(!src.startsWith('/data/mp3/')||src.length>2000)throw fail(400,'本地歌曲地址无效');
+        const local=await readLocalLyrics(src);
+        if(local!==null)return{lyric:lyricText(local),translation:''};
+        const name=(url.searchParams.get('name')||'').trim(),singer=(url.searchParams.get('singer')||'').trim(),duration=Number(url.searchParams.get('duration'));
+        if(name.length>150||singer.length>150)throw fail(400,'歌曲信息过长');
+        // Do not guess an instrumental, cover, live version or an ambiguous filename.
+        if(!name||!singer||!Number.isFinite(duration)||duration<=0)return{lyric:'',translation:''};
+        const result=await searchSongs(`${name} ${singer}`);
+        const match=result.tracks.find(track=>matchText(track.name)===matchText(name)&&track.singer.split(' / ').some(artist=>matchText(artist)===matchText(singer))&&Math.abs(track.duration-duration)<=3);
+        return match?await songLyrics(String(match.songmid)):{lyric:'',translation:''};
       }
       if (route==='/api/listening/request') {
         if (!input||typeof input.url!=='string'||input.url.length>8192)throw fail(400,'音源请求无效');
