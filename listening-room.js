@@ -9,6 +9,8 @@ const prefs=readStorage(PREFS,{})||{};
 let records=[],localTracks=[],current=null,deckTrack=null,busy=false,operation=0,flight=null,connectedId=null,connecting=null,sourceOperation=0,loadingLocal=true;
 const flightAnimations=new Set();
 let sourceController=null;
+let backgroundMarkupKey=null,collectionMarkupKey=null;
+const timeDisplay={};
 let results=[],searchPage=1,searchTotal=0,lastQuery='',searchController=null,activeDrawer=null,drawerTrigger=null,feedbackTimer;
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const storageRecord=readStorage(STORAGE,null);
@@ -21,16 +23,27 @@ function savePrefs(){saveStorage(PREFS,{volume:audio.volume,muted:audio.muted,so
 function colors(track){let hash=0;for(const char of track.id)hash=(hash*31+char.charCodeAt(0))>>>0;return {colors:palette[hash%palette.length],pattern:hash%4};}
 function artwork(track){
   const {colors:[bg,ink,shape],pattern}=colors(track);let image='';
-  try{const url=new URL(track.img);if(['https:','http:'].includes(url.protocol))image=`<img src="${e(url.href)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;}catch{}
+  try{const url=new URL(track.img);if(['https:','http:'].includes(url.protocol))image=`<img src="${e(url.href)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;}catch{}
   return `<span class="cover cover-pattern-${pattern}${image?' has-image':''}" style="--cover-bg:${bg};--cover-ink:${ink};--cover-shape:${shape}"><span class="cover-geometry" aria-hidden="true"></span><strong class="cover-name">${e(track.name)}</strong><span class="cover-artist">${e(track.singer||'')}</span>${image}<span class="cover-paper" aria-hidden="true"></span><span class="cover-seam" aria-hidden="true"></span></span>`;
 }
 document.addEventListener('error',event=>{if(event.target instanceof HTMLImageElement)event.target.closest('.cover')?.classList.add('fallback');},true);
 function renderCollection(){
-  $('#background-records').innerHTML=records.slice(0,10).map(track=>`<span class="background-record" data-sleeve="${e(track.id)}">${artwork(track)}</span>`).join('');
-  const perRow=innerWidth<=500?2:innerWidth<=800?3:5;
-  const tiles=records.map(track=>`<button class="record-card" data-record="${e(track.id)}" aria-label="播放 ${e(track.name)}，${e(track.singer||'')}">${artwork(track)}</button>`);
-  tiles.push('<button class="empty-slot" data-discover aria-label="添加音乐"><span aria-hidden="true">＋</span></button>');
-  $('#record-collection').innerHTML=Array.from({length:Math.ceil(tiles.length/perRow)},(_,i)=>`<div class="collection-row">${tiles.slice(i*perRow,(i+1)*perRow).join('')}</div>`).join('');
+  const background=records.slice(0,10),backgroundKey=JSON.stringify(background);
+  if(backgroundKey!==backgroundMarkupKey){
+    $('#background-records').innerHTML=background.map(track=>`<span class="background-record" data-sleeve="${e(track.id)}">${artwork(track)}</span>`).join('');
+    backgroundMarkupKey=backgroundKey;
+  }
+  // Build the full collection only when it is opened, and keep its DOM (including
+  // decoded artwork and keyboard focus) across visits and same-column resizes.
+  if(location.hash==='#wall'){
+    const perRow=innerWidth<=500?2:innerWidth<=800?3:5,key=perRow+JSON.stringify(records);
+    if(key!==collectionMarkupKey){
+      const tiles=records.map(track=>`<button class="record-card" data-record="${e(track.id)}" aria-label="播放 ${e(track.name)}，${e(track.singer||'')}">${artwork(track)}</button>`);
+      tiles.push('<button class="empty-slot" data-discover aria-label="添加音乐"><span aria-hidden="true">＋</span></button>');
+      $('#record-collection').innerHTML=Array.from({length:Math.ceil(tiles.length/perRow)},(_,i)=>`<div class="collection-row">${tiles.slice(i*perRow,(i+1)*perRow).join('')}</div>`).join('');
+      collectionMarkupKey=key;
+    }
+  }
   $('#record-collection').setAttribute('aria-busy',String(loadingLocal));
   syncSleeves();
 }
@@ -52,7 +65,7 @@ function fitPlayer(){
   const scale=Math.min(1.32,(innerWidth-(innerWidth<500?16:50))/950,innerHeight*.93/800);
   document.documentElement.style.setProperty('--player-scale',String(Math.max(.25,scale)));
 }
-fitPlayer();let resizeTimer;window.addEventListener('resize',()=>{fitPlayer();clearTimeout(resizeTimer);resizeTimer=setTimeout(renderCollection,180);});
+fitPlayer();let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{fitPlayer();renderCollection();},100);});
 function closeDrawer(restore=true){
   if(!activeDrawer)return;activeDrawer.hidden=true;activeDrawer=null;document.body.classList.remove('drawer-is-open');
   $('#source-open').setAttribute('aria-expanded','false');$('#discover-button').setAttribute('aria-pressed','false');if(restore)drawerTrigger?.focus({preventScroll:true});
@@ -87,9 +100,17 @@ function updatePlayback(){
 }
 function time(value){if(!Number.isFinite(value)||value<0)return '0:00';return `${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`;}
 function updateTime(){
-  const duration=Number.isFinite(audio.duration)?audio.duration:0;$('#lcd-time').textContent=time(audio.currentTime).padStart(5,'0');const seek=$('#seek');seek.disabled=!duration;seek.value=duration?audio.currentTime/duration*1000:0;seek.style.setProperty('--fill',`${Number(seek.value)/10}%`);seek.setAttribute('aria-valuetext',`${time(audio.currentTime)} / ${time(duration)}`);
-  $('#turntable').style.setProperty('--arm-angle',`${50+(duration?Math.min(1,Math.max(0,audio.currentTime/duration))*7:0)}deg`);
+  if(document.hidden)return;
+  const duration=Number.isFinite(audio.duration)?audio.duration:0,progress=duration?Math.min(1,Math.max(0,audio.currentTime/duration)):0;
+  const display=time(audio.currentTime).padStart(5,'0'),value=Math.round(progress*1000),label=`${time(audio.currentTime)} / ${time(duration)}`,angle=(50+progress*7).toFixed(2),seek=$('#seek');
+  if(timeDisplay.display!==display){$('#lcd-time').textContent=display;timeDisplay.display=display;}
+  if(timeDisplay.disabled!==!duration){seek.disabled=!duration;timeDisplay.disabled=!duration;}
+  if(timeDisplay.value!==value){seek.value=value;seek.style.setProperty('--fill',`${value/10}%`);timeDisplay.value=value;}
+  if(timeDisplay.label!==label){seek.setAttribute('aria-valuetext',label);timeDisplay.label=label;}
+  if(timeDisplay.angle!==angle){$('#tonearm').style.setProperty('--arm-angle',`${angle}deg`);timeDisplay.angle=angle;}
 }
+function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden)updateTime();}
+document.addEventListener('visibilitychange',updateVisibility);
 function labelDisc(track){$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
 function displayTrack(track){current=track;$('#now-title').textContent=track.name;if(!deckTrack)labelDisc(track);}
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,reduced()?0:ms));
@@ -259,7 +280,7 @@ async function init(){
   audio.volume=Number.isFinite(prefs.volume)?Math.max(0,Math.min(1,prefs.volume)):.65;audio.muted=prefs.muted===true;
   if([...$('#source-select').options].some(option=>option.value===prefs.source))$('#source-select').value=prefs.source;
   if([...$('#quality-select').options].some(option=>option.value===prefs.quality))$('#quality-select').value=prefs.quality;
-  setLid(prefs.lidOpen!==false);updateVolume();route();renderCollection();
+  setLid(prefs.lidOpen!==false);updateVolume();updateVisibility();route();renderCollection();
   connectSource({automatic:true}).catch(()=>{});
   try{
     const response=await fetch('/api/radio',{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error();const data=await response.json();

@@ -4,8 +4,13 @@ export class LXClient {
     this.dispose();const generation=this.generation;
     this.loadController=new AbortController();const signal=AbortSignal.any([this.loadController.signal,AbortSignal.timeout(25000)]);
     const fetchJSON=async url=>{const response=await fetch(url,{signal});const data=await response.json();if(!response.ok)throw new Error(data.error);return data;};
-    const [source,runtimeResponse]=await Promise.all([fetchJSON(`/api/listening/source?id=${encodeURIComponent(id)}`),fetch('/lx-worker.js',{signal})]);
-    if(!runtimeResponse.ok)throw new Error('音源运行环境无法加载');const runtime=await runtimeResponse.text();
+    // The bundled runtime is identical for every source; retain only the code,
+    // while still creating a fresh isolated iframe/worker for each candidate.
+    const runtimeTask=this.runtimeCode?Promise.resolve(this.runtimeCode):(async()=>{
+      const response=await fetch('/lx-worker.js',{signal});if(!response.ok)throw new Error('音源运行环境无法加载');
+      const code=await response.text();if(generation===this.generation)this.runtimeCode=code;return code;
+    })();
+    const [source,runtime]=await Promise.all([fetchJSON(`/api/listening/source?id=${encodeURIComponent(id)}`),runtimeTask]);
     if(generation!==this.generation)throw new Error('音源切换已取消');
     return new Promise((resolve,reject)=>{
       this.initial={resolve,reject,source,runtime};

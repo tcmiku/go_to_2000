@@ -4002,3 +4002,13 @@ svg {
 @media (prefers-reduced-motion: reduce) {
   .cue-lever, .strobe-housing i { transition: none; }
 }
+
+/* Offscreen sleeves and background tabs do not need continuous painting. */
+.collection-row {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 250px;
+  overflow-clip-margin: 30px;
+}
+.is-backgrounded *,
+.is-backgrounded *::before,
+.is-backgrounded *::after { animation-play-state: paused !important; }

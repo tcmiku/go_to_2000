@@ -81,7 +81,7 @@ test('probe tracks come from saved network records or the existing search servic
 const clientSource=(await readFile(new URL('../lx-client.js',import.meta.url),'utf8')).replace('export class LXClient','class LXClient');
 function realClient(fetch){
   const timers=new Map();let timerId=0;
-  const context=vm.createContext({window:{addEventListener(){}},setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),AbortController,AbortSignal,URL,fetch});
+  const context=vm.createContext({window:{addEventListener(){}},document:{createElement:()=>({setAttribute(){},remove(){},contentWindow:{postMessage(){}}}),body:{append(){}}},setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),AbortController,AbortSignal,URL,fetch});
   vm.runInContext(clientSource+'\nglobalThis.client = new LXClient();',context);return {client:context.client,timers};
 }
 test('cancelled URL probes remove their timeout and do not later dispose the selected source',async()=>{
@@ -95,4 +95,17 @@ test('disposing an initialization aborts both script and runtime downloads',asyn
   const signals=[];const {client}=realClient((_url,{signal})=>new Promise((_resolve,reject)=>{signals.push(signal);signal.addEventListener('abort',()=>reject(signal.reason),{once:true});}));
   const pending=client.load('huibq');client.dispose();await assert.rejects(pending);
   assert.equal(signals.length,2);assert.equal(signals.every(signal=>signal.aborted),true);
+});
+
+test('source changes reuse runtime code but still initialize fresh isolated frames',async()=>{
+  const requests=[];const {client}=realClient(async url=>{requests.push(url);return {ok:true,text:async()=> 'runtime-code',json:async()=>({script:'source-code'})};});
+  const frames=[];
+  for(const id of ['huibq','sixyin','flower']){
+    const pending=client.load(id);for(let i=0;i<12;i++)await Promise.resolve();
+    frames.push(client.frame);
+    await client.receive({source:client.frame.contentWindow,origin:'null',data:{kind:'inited',sources:supported}});await pending;
+  }
+  assert.equal(requests.filter(url=>url==='/lx-worker.js').length,1);
+  assert.equal(requests.filter(url=>url.startsWith('/api/listening/source')).length,3);
+  assert.equal(new Set(frames).size,3);client.dispose();
 });

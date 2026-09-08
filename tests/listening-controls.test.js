@@ -6,11 +6,15 @@ import {selectMusicSource} from '../music-source-selection.js';
 const source=(await readFile(new URL('../listening-room.js',import.meta.url),'utf8')).replace(/^import .*\n/gm,'');
 const html=await readFile(new URL('../listening-room.html',import.meta.url),'utf8');
 
-async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe}={}){
-  const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},animations=[],overlays=new Set(),sourceCalls=[];let timerId=0;
+async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords}={}){
+  const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},documentEvents={},animations=[],overlays=new Set(),sourceCalls=[];let timerId=0;
   class Element{
     constructor(){this.attributes={};this.listeners={};this.textContent='';this.dataset={};this.hidden=false;this.disabled=false;this.style={setProperty(){}};this.value='';this.options=[];this.tagName='DIV';const classes=new Set();this.classList={add:(...xs)=>xs.forEach(x=>classes.add(x)),remove:(...xs)=>xs.forEach(x=>classes.delete(x)),contains:x=>classes.has(x),toggle:(x,on)=>{on??=!classes.has(x);on?classes.add(x):classes.delete(x);}};}
     setAttribute(key,value){this.attributes[key]=String(value);}
+    set innerHTML(value){this.markup=value;this.htmlWrites=(this.htmlWrites||0)+1;}
+    get innerHTML(){return this.markup||'';}
+    set textContent(value){this.text=value;this.textWrites=(this.textWrites||0)+1;}
+    get textContent(){return this.text;}
     getAttribute(key){return this.attributes[key];}
     addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);}
     emit(name,event={}){for(const fn of this.listeners[name]||[])fn({preventDefault(){},target:this,...event});}
@@ -34,7 +38,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
   }
   for(const name of ['machine-display','status-dot']){const element=new Element();element.classList.add(name);nodes.set('.'+name,element);}
   const $=selector=>nodes.get(selector)||[...nodes.values()].find(node=>selector.startsWith('.')&&node.classList.contains(selector.slice(1)))||null;
-  const document={activeElement:null,body:new Element(),documentElement:new Element(),querySelector:$,querySelectorAll:selector=>selector==='.machine-drawer'?[$('#discover-dialog'),$('#source-dialog')]:[],createElement:()=>new Element(),addEventListener(){}};
+  const document={activeElement:null,hidden:false,body:new Element(),documentElement:new Element(),querySelector:$,querySelectorAll:selector=>selector==='.machine-drawer'?[$('#discover-dialog'),$('#source-dialog')]:[],createElement:()=>new Element(),addEventListener:(name,fn)=>{documentEvents[name]=fn;}};
   $('#source-select').options=sourceIds.map(value=>({value}));$('#source-select').value='huibq';$('#quality-select').options=[{value:'128k'}];$('#quality-select').value='128k';
   const audio=$('#audio');Object.assign(audio,{paused:true,ended:false,currentTime:0,duration:0,readyState:0,src:'',volume:.65,muted:false});
   audio.load=()=>{audio.readyState=audio.src?1:0;audio.duration=audio.src?240:NaN;audio.currentTime=0;audio.emit('emptied');};
@@ -42,7 +46,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
   let hash='';const location={get hash(){return hash;},set hash(value){hash=value?(value.startsWith('#')?value:'#'+value):'';}};
   const context=vm.createContext({document,location,innerWidth:1280,innerHeight:900,URL,AbortSignal,AbortController,HTMLImageElement:class{},CSS:{escape:value=>value},matchMedia:()=>({matches:reducedMotion}),requestAnimationFrame:fn=>fn(),cancelAnimationFrame(){},
     window:{addEventListener:(name,fn)=>{windowEvents[name]=fn;}},
-    readStorage:(key,fallback)=>key.endsWith('preferences.v1')?{source:preferred}:fallback,saveStorage:(key,value)=>{saved.set(key,structuredClone(value));return true;},e:String,
+    readStorage:(key,fallback)=>key.endsWith('preferences.v1')?{source:preferred}:savedRecords||fallback,saveStorage:(key,value)=>{saved.set(key,structuredClone(value));return true;},e:String,
     loadProbeTracks:async()=>[{source:'wy',songmid:1,name:'Probe'}],selectMusicSource:options=>selectMusicSource({...options,probe:sourceProbe||(async()=>{})}),
     setTimeout:(fn)=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     fetch:async()=>({ok:true,json:async()=>({tracks:['One','Two','Three'].map(name=>({name,src:`/data/mp3/${name}.mp3`}))})}),
@@ -52,7 +56,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
   const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
   const advance=async()=>{await flush();const queued=[...timers];timers.clear();for(const [,fn]of queued)fn();for(const animation of animations)animation.finish();await flush();};
   const settle=async()=>{for(let i=0;i<20;i++)await advance();};
-  await flush();return{$,audio,saved,location,windowEvents,flush,advance,settle,document,animations,overlays,sourceCalls};
+  await flush();return{$,audio,saved,location,windowEvents,documentEvents,flush,advance,settle,document,animations,overlays,sourceCalls};
 }
 
 test('physical play, pause and stop keys control media and tonearm state',async()=>{
@@ -135,4 +139,28 @@ test('source failure leaves local records playable and the retry button enabled'
   const p=await player({sourceLoad:async()=>{throw new Error('offline');}});await p.settle();
   assert.equal(p.$('#source-connect').disabled,false);assert.equal(p.$('.status-dot').classList.contains('failed'),true);
   p.$('#play-toggle').click();await p.settle();assert.equal(p.audio.src,'/data/mp3/One.mp3');assert.equal(p.audio.paused,false);
+});
+
+test('500 saved records create only ten background sleeves until the wall is opened',async()=>{
+  const savedRecords=Array.from({length:500},(_,i)=>({id:`wy:${i}`,source:'wy',songmid:i+1,name:`Record ${i}`}));
+  const p=await player({savedRecords});await p.settle();
+  assert.equal((p.$('#background-records').innerHTML.match(/data-sleeve=/g)||[]).length,10);
+  assert.equal(p.$('#record-collection').innerHTML,'');
+  p.$('#wall-toggle').click();p.windowEvents.hashchange();
+  assert.equal((p.$('#record-collection').innerHTML.match(/data-record=/g)||[]).length,500);
+  const writes=p.$('#record-collection').htmlWrites,backgroundWrites=p.$('#background-records').htmlWrites;
+  for(let i=0;i<20;i++)p.windowEvents.resize();await p.settle();
+  p.$('#wall-toggle').click();p.windowEvents.hashchange();p.$('#wall-toggle').click();p.windowEvents.hashchange();
+  assert.equal(p.$('#record-collection').htmlWrites,writes);assert.equal(p.$('#background-records').htmlWrites,backgroundWrites);
+});
+
+test('clock writes are deduplicated and background tabs catch up without pausing audio',async()=>{
+  const p=await player();p.$('#play-toggle').click();await p.settle();
+  p.audio.currentTime=10;p.audio.emit('timeupdate');const writes=p.$('#lcd-time').textWrites;
+  for(let i=0;i<10;i++)p.audio.emit('timeupdate');assert.equal(p.$('#lcd-time').textWrites,writes);
+  p.document.hidden=true;p.documentEvents.visibilitychange();
+  p.audio.currentTime=27;p.audio.emit('timeupdate');assert.equal(p.$('#lcd-time').textContent,'00:10');
+  assert.equal(p.document.body.classList.contains('is-backgrounded'),true);assert.equal(p.audio.paused,false);
+  p.document.hidden=false;p.documentEvents.visibilitychange();
+  assert.equal(p.$('#lcd-time').textContent,'00:27');assert.equal(p.document.body.classList.contains('is-backgrounded'),false);
 });
