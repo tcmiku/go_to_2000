@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {selectMusicSource} from '../public/music-source-selection.js';
-const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\n/gm,'');
+const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\r?\n/gm,'');
 const html=await readFile(new URL('../public/listening-room.html',import.meta.url),'utf8');
 
 async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords}={}){

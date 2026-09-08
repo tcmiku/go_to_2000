@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 
-const source=(await readFile(new URL('../public/radio.js',import.meta.url),'utf8')).replace(/^import .*\n/,'');
+const source=(await readFile(new URL('../public/radio.js',import.meta.url),'utf8')).replace(/^import .*\r?\n/,'');
 
 async function player({reduced=false,effects=true}={}){
   const nodes=new Map(),timers=new Map(),sounds=[],media=[],saved=new Map();

@@ -53,7 +53,8 @@ export async function publicRequest(input, options={}, redirects=0) {
         publicRequest(next.href,nextOptions,redirects+1).then(resolve,reject);return;
       }
       const chunks=[];let size=0;
-      res.on('data',chunk=>{size+=chunk.length;if(size>2*1024*1024){res.destroy();reject(fail(502,'音源响应过大'));}else chunks.push(chunk);});
+      const maxBytes=Math.min(8*1024*1024,Math.max(1024,Number(options.maxBytes)||2*1024*1024));
+      res.on('data',chunk=>{size+=chunk.length;if(size>maxBytes){res.destroy();reject(fail(502,'音源响应过大'));}else chunks.push(chunk);});
       res.on('error',()=>reject(fail(502,'音源连接中断')));
       res.on('end',()=>{const text=Buffer.concat(chunks).toString('utf8');let body=text;try {body=JSON.parse(text);}catch {}resolve({statusCode:res.statusCode,headers:Object.fromEntries(Object.entries(res.headers).filter(([key])=>key!=='set-cookie')),body});});
     });

@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { createListeningService } from './listening-service.js';
+import { createPodcastService } from './podcast-service.js';
 import { validateAd } from '../public/retro-ad.js';
 import { readFile, writeFile, mkdir, rename, readdir, stat } from 'node:fs/promises';
 import { representation, notModified, sendRepresentation } from './http-cache.js';
@@ -17,6 +18,7 @@ const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=ut
 const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 publicFiles.add('pinball.js');
+['cassette-room.html','cassette-room.css','cassette-room.js'].forEach(file=>publicFiles.add(file));
 ['listening-room.html','listening-room.css','listening-room.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);
@@ -97,6 +99,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
   function publicData(){const data=structuredClone(store);data.navigation.categories.forEach(c=>{c.sites=c.sites.filter(s=>!s.hidden);(c.children||[]).forEach(x=>x.sites=x.sites.filter(s=>!s.hidden));});const ids=new Set(flattenCategories(data.navigation.categories).flatMap(c=>c.sites.map(s=>s.id)));data.content.hot.siteIds=data.content.hot.siteIds.filter(id=>ids.has(id));data.content.featured.items=data.content.featured.items.filter(s=>!s.hidden);data.content.friends=data.content.friends.filter(s=>!s.hidden);return data;}
   let publicStore, publicResponse;
   const listeningService=createListeningService();
+  const podcastService=createPodcastService();
   return http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
     res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
@@ -127,6 +130,13 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(route==='/api/public' && ['GET','HEAD'].includes(req.method)){
         if(publicStore!==store){publicResponse=representation(JSON.stringify(publicData()),'application/json; charset=utf-8');publicStore=store;}
         return await sendRepresentation(req,res,publicResponse);
+      }
+      if(route==='/cassette-room.html'||route==='/cassette-room') {
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' https: http:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
+      }
+      if(route.startsWith('/api/podcasts/')) {
+        if(req.method!=='GET')throw httpError(405,'请求方式不支持');
+        return json(res,200,await podcastService(route,url));
       }
       if(route==='/api/visits'&&req.method==='GET')return json(res,200,visitSummary());
       if(route==='/api/visits'&&req.method==='POST'){
@@ -236,7 +246,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         const bytes=await readFile(path.join(mp3Dir,filename));
         return res.writeHead(200,{'Content-Type':'audio/mpeg','Cache-Control':'public, max-age=3600'}).end(req.method==='HEAD'?undefined:bytes);
       }
-      const filename=route==='/'?'index.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
+      const filename=route==='/'?'index.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const targetRoot=filename.startsWith('assets/')?root:publicRoot;
