@@ -1,11 +1,14 @@
 import { escapeHTML as e, readStorage, saveStorage } from './ui.js';
 import { LXClient } from './lx-client.js';
+import { loadProbeTracks, selectMusicSource } from './music-source-selection.js';
 const $=selector=>document.querySelector(selector);
 const audio=$('#audio'),lx=new LXClient();
 const STORAGE='slow-records.collection.v1',PREFS='slow-records.preferences.v1';
 const palette=[['#777b63','#f2e3bf','#b6a16f'],['#b4a58a','#303f3a','#617b6d'],['#a55b48','#f4debb','#d0a477'],['#303f48','#ebdfb9','#9d9e78'],['#ccbc9c','#3c4b3b','#908d58'],['#647a79','#f4e6ce','#bd8761']];
 const prefs=readStorage(PREFS,{})||{};
-let records=[],localTracks=[],current=null,busy=false,operation=0,flight=null,connectedId=null,connecting=null,sourceOperation=0,loadingLocal=true;
+let records=[],localTracks=[],current=null,deckTrack=null,busy=false,operation=0,flight=null,connectedId=null,connecting=null,sourceOperation=0,loadingLocal=true;
+const flightAnimations=new Set();
+let sourceController=null;
 let results=[],searchPage=1,searchTotal=0,lastQuery='',searchController=null,activeDrawer=null,drawerTrigger=null,feedbackTimer;
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const storageRecord=readStorage(STORAGE,null);
@@ -19,16 +22,24 @@ function colors(track){let hash=0;for(const char of track.id)hash=(hash*31+char.
 function artwork(track){
   const {colors:[bg,ink,shape],pattern}=colors(track);let image='';
   try{const url=new URL(track.img);if(['https:','http:'].includes(url.protocol))image=`<img src="${e(url.href)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;}catch{}
-  return `<span class="cover cover-pattern-${pattern}${image?' has-image':''}" style="--cover-bg:${bg};--cover-ink:${ink};--cover-shape:${shape}"><span class="cover-geometry" aria-hidden="true"></span><strong class="cover-name">${e(track.name)}</strong><span class="cover-artist">${e(track.singer||'')}</span>${image}</span>`;
+  return `<span class="cover cover-pattern-${pattern}${image?' has-image':''}" style="--cover-bg:${bg};--cover-ink:${ink};--cover-shape:${shape}"><span class="cover-geometry" aria-hidden="true"></span><strong class="cover-name">${e(track.name)}</strong><span class="cover-artist">${e(track.singer||'')}</span>${image}<span class="cover-paper" aria-hidden="true"></span><span class="cover-seam" aria-hidden="true"></span></span>`;
 }
 document.addEventListener('error',event=>{if(event.target instanceof HTMLImageElement)event.target.closest('.cover')?.classList.add('fallback');},true);
 function renderCollection(){
-  $('#background-records').innerHTML=records.slice(0,10).map(track=>`<span class="background-record">${artwork(track)}</span>`).join('');
+  $('#background-records').innerHTML=records.slice(0,10).map(track=>`<span class="background-record" data-sleeve="${e(track.id)}">${artwork(track)}</span>`).join('');
   const perRow=innerWidth<=500?2:innerWidth<=800?3:5;
   const tiles=records.map(track=>`<button class="record-card" data-record="${e(track.id)}" aria-label="播放 ${e(track.name)}，${e(track.singer||'')}">${artwork(track)}</button>`);
   tiles.push('<button class="empty-slot" data-discover aria-label="添加音乐"><span aria-hidden="true">＋</span></button>');
   $('#record-collection').innerHTML=Array.from({length:Math.ceil(tiles.length/perRow)},(_,i)=>`<div class="collection-row">${tiles.slice(i*perRow,(i+1)*perRow).join('')}</div>`).join('');
   $('#record-collection').setAttribute('aria-busy',String(loadingLocal));
+  syncSleeves();
+}
+function syncSleeves(){
+  for(const sleeve of document.querySelectorAll('[data-sleeve], [data-record]')){
+    const onDeck=(sleeve.dataset.sleeve||sleeve.dataset.record)===deckTrack?.id;
+    sleeve.classList.toggle('record-is-playing',onDeck);
+    if(sleeve.dataset.record)sleeve.setAttribute('aria-pressed',String(onDeck));
+  }
 }
 function route(){
   const wall=location.hash==='#wall';$('#wall-view').hidden=!wall;document.body.classList.toggle('view-wall',wall);
@@ -42,12 +53,6 @@ function fitPlayer(){
   document.documentElement.style.setProperty('--player-scale',String(Math.max(.25,scale)));
 }
 fitPlayer();let resizeTimer;window.addEventListener('resize',()=>{fitPlayer();clearTimeout(resizeTimer);resizeTimer=setTimeout(renderCollection,180);});
-const camera=event=>{
-  if(event.pointerType!=='mouse'||reduced()||activeDrawer||document.body.classList.contains('view-wall')||document.body.classList.contains('grabbing'))return;
-  const x=(event.clientX/innerWidth-.5)*2,y=(event.clientY/innerHeight-.5)*2;
-  $('#turntable').style.setProperty('--view-x',`${49-y*1.4}deg`);$('#turntable').style.setProperty('--view-z',`${-11+x*1.2}deg`);
-};
-let cameraFrame;document.addEventListener('pointermove',event=>{cancelAnimationFrame(cameraFrame);cameraFrame=requestAnimationFrame(()=>camera(event));},{passive:true});
 function closeDrawer(restore=true){
   if(!activeDrawer)return;activeDrawer.hidden=true;activeDrawer=null;document.body.classList.remove('drawer-is-open');
   $('#source-open').setAttribute('aria-expanded','false');$('#discover-button').setAttribute('aria-pressed','false');if(restore)drawerTrigger?.focus({preventScroll:true});
@@ -57,7 +62,6 @@ function openDrawer(id,trigger){
   closeDrawer(false);drawerTrigger=trigger||document.activeElement;
   if(location.hash==='#wall'){location.hash='room';route();}
   activeDrawer=$('#'+id);activeDrawer.hidden=false;document.body.classList.add('drawer-is-open');
-  $('#turntable').style.setProperty('--view-x','49deg');$('#turntable').style.setProperty('--view-z','-11deg');
   $('#source-open').setAttribute('aria-expanded',String(id==='source-dialog'));$('#discover-button').setAttribute('aria-pressed',String(id==='discover-dialog'));
   (activeDrawer.querySelector('input, select')||activeDrawer).focus({preventScroll:true});
 }
@@ -84,51 +88,119 @@ function updatePlayback(){
 function time(value){if(!Number.isFinite(value)||value<0)return '0:00';return `${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`;}
 function updateTime(){
   const duration=Number.isFinite(audio.duration)?audio.duration:0;$('#lcd-time').textContent=time(audio.currentTime).padStart(5,'0');const seek=$('#seek');seek.disabled=!duration;seek.value=duration?audio.currentTime/duration*1000:0;seek.style.setProperty('--fill',`${Number(seek.value)/10}%`);seek.setAttribute('aria-valuetext',`${time(audio.currentTime)} / ${time(duration)}`);
+  $('#turntable').style.setProperty('--arm-angle',`${50+(duration?Math.min(1,Math.max(0,audio.currentTime/duration))*7:0)}deg`);
 }
-function displayTrack(track){current=track;$('#now-title').textContent=track.name;$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
+function labelDisc(track){$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
+function displayTrack(track){current=track;$('#now-title').textContent=track.name;if(!deckTrack)labelDisc(track);}
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,reduced()?0:ms));
-async function flyRecord(track,rect,token){
-  if(reduced())return;
-  const el=document.createElement('div');el.className='flying-record';el.style.setProperty('--label',colors(track).colors[0]);el.innerHTML=`<div class="flying-vinyl"></div>${artwork(track)}`;
-  const start=rect||$('#background-wall').getBoundingClientRect(),size=Math.min(start.width||140,180),x=start.x+(start.width-size)/2,y=start.y;
-  el.style.left=`${x}px`;el.style.top=`${y}px`;el.style.width=`${size}px`;el.style.height=`${size}px`;document.body.append(el);flight=el;
-  const centerX=innerWidth/2-size/2,centerY=Math.min(innerHeight*.27,260);
-  try{
-    await el.animate([{transform:'translate(0,0) rotate(-4deg)',opacity:.6},{transform:`translate(${centerX-x}px,${centerY-y}px) rotate(2deg)`,opacity:1}],{duration:480,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'}).finished;
-    if(token!==operation)return;el.classList.add('extracted');await delay(500);if(token!==operation)return;
-    const target=$('#platter-target').getBoundingClientRect(),mat=$('#now-cover').getBoundingClientRect();
-    const destX=target.x+target.width/2-size/2,destY=target.y+target.height/2-size/2,sx=mat.width/size,sy=mat.height/size;
-    await el.animate([{transform:`translate(${centerX-x}px,${centerY-y}px) scale(1) rotate(2deg)`},{transform:`translate(${destX-x}px,${destY-y}px) scale(${sx},${sy}) rotate(-11deg)`}],{duration:650,easing:'cubic-bezier(.45,0,.2,1)',fill:'forwards'}).finished;
-  }catch{}finally{el.remove();if(flight===el)flight=null;}
+function sleeveFor(track){return [...document.querySelectorAll('[data-sleeve]')].find(node=>node.dataset.sleeve===track.id);}
+async function moveRecordPart(node,frames,duration,token){
+  if(token!==operation)return;
+  const animation=node.animate(frames,{duration,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+  flightAnimations.add(animation);
+  try{await animation.finished;}catch(error){if(token===operation)throw error;}
+  finally{flightAnimations.delete(animation);}
 }
-function cancelPlayback(){operation++;audio.pause();if(flight){for(const animation of flight.getAnimations())animation.cancel();flight.remove();flight=null;}setBusy(false);}
-async function ensureSource(){const id=$('#source-select').value;if(connectedId===id&&lx.sources)return;if(connecting)return connecting;return connectSource();}
-async function connectSource(){
-  const token=++sourceOperation,id=$('#source-select').value;$('#source-status').textContent='…';$('#source-connect').disabled=true;connectedId=null;$('.status-dot').classList.remove('connected');
-  const promise=lx.load(id).then(({sources})=>{
-    if(token!==sourceOperation)return;const platforms=Object.keys(sources).filter(key=>sources[key]?.actions?.includes('musicUrl'));
-    if(!platforms.length)throw new Error('音源不可用');connectedId=id;$('.status-dot').classList.add('connected');$('#source-status').textContent=platforms.includes('wy')?'✓':'不支持当前曲库';announce('音源已载入');savePrefs();
-  }).catch(error=>{if(token===sourceOperation){connectedId=null;$('#source-status').textContent='连接失败';$('.status-dot').classList.remove('connected');announce(error.message);}throw error;}).finally(()=>{if(token===sourceOperation){connecting=null;$('#source-connect').disabled=false;}});
+async function flyRecord(track,rect,token,returning=false){
+  if(reduced())return;
+  const shelf=sleeveFor(track),start=rect||shelf?.getBoundingClientRect()||$('#background-wall').getBoundingClientRect();
+  const size=Math.min(180,innerWidth*.32),sx=start.x+start.width/2-size/2,sy=start.y+start.height/2-size/2;
+  const x=innerWidth/2-size*.83,y=Math.min(innerHeight*.23,220);
+  const pose=(px,py,scaleX=1,scaleY=scaleX,angle=0)=>`translate(${px}px,${py}px) rotate(${angle}deg) scale(${scaleX},${scaleY})`;
+  const rack=pose(sx,sy,Math.min(start.width/size,1.6)),held=pose(x,y,1,1,-5),extracted=pose(x+size*.72,y-size*.06,1,1,5);
+  const el=document.createElement('div');el.className='record-transfer';el.style.setProperty('--label',colors(track).colors[0]);el.style.setProperty('--transfer-size',`${size}px`);
+  el.innerHTML=`<div class="transfer-disc flying-vinyl"><span class="transfer-label">${e(track.name.slice(0,14))}</span></div><div class="transfer-sleeve">${artwork(track)}</div>`;
+  const disc=el.querySelector('.transfer-disc'),sleeve=el.querySelector('.transfer-sleeve');
+  sleeve.style.transform=returning?held:rack;disc.style.transform=returning?'scale(0)':rack;
+  document.body.append(el);flight=el;shelf?.classList.add('sleeve-in-hand');
+  const platterPose=(lift=0)=>{
+    const target=$('#platter-target').getBoundingClientRect(),mat=$('#now-cover').getBoundingClientRect();
+    return pose(target.x+target.width/2-size/2,target.y+target.height/2-size/2-lift,mat.width/size*.977,mat.height/size*.977);
+  };
+  try{
+    if(returning){
+      disc.style.transform=platterPose();
+      await Promise.all([moveRecordPart(disc,[{transform:platterPose()},{transform:platterPose(32),offset:.24},{transform:extracted}],680,token),moveRecordPart(sleeve,[{transform:rack},{transform:held}],530,token)]);
+      if(token!==operation)return;
+      await moveRecordPart(disc,[{transform:extracted},{transform:held}],430,token);
+      if(token!==operation)return;
+      await Promise.all([moveRecordPart(sleeve,[{transform:held},{transform:rack}],480,token),moveRecordPart(disc,[{transform:held},{transform:rack}],480,token)]);
+    }else{
+      await Promise.all([moveRecordPart(sleeve,[{transform:rack},{transform:held}],480,token),moveRecordPart(disc,[{transform:rack},{transform:held}],480,token)]);
+      if(token!==operation)return;
+      await moveRecordPart(disc,[{transform:held},{transform:extracted}],480,token);
+      if(token!==operation)return;
+      await Promise.all([moveRecordPart(sleeve,[{transform:held},{transform:rack}],650,token),moveRecordPart(disc,[{transform:extracted},{transform:platterPose(28)}],720,token)]);
+      if(token!==operation)return;
+      shelf?.classList.remove('sleeve-in-hand');
+      await moveRecordPart(disc,[{transform:platterPose(28)},{transform:platterPose()}],300,token);
+    }
+  }finally{el.remove();if(flight===el){flight=null;shelf?.classList.remove('sleeve-in-hand');}}
+}
+function cancelPlayback(){
+  operation++;audio.pause();
+  for(const animation of flightAnimations)animation.cancel();flightAnimations.clear();
+  if(flight){flight.remove();flight=null;}
+  for(const sleeve of document.querySelectorAll('.sleeve-in-hand'))sleeve.classList.remove('sleeve-in-hand');
+  $('#turntable').classList.remove('motor-starting','arm-raised','arm-over-record','arm-lifting');setBusy(false);
+}
+async function lowerTonearm(token){
+  const player=$('#turntable');player.classList.add('motor-starting','arm-raised','arm-lifting');
+  await delay(260);if(token!==operation)return;
+  player.classList.remove('arm-lifting');player.classList.add('arm-over-record');await delay(800);if(token!==operation)return;
+  player.classList.remove('arm-raised');await delay(400);
+}
+async function ensureSource(){if(connecting)return connecting;const id=$('#source-select').value;if(connectedId===id&&lx.sources)return;return connectSource({automatic:true});}
+async function connectSource({automatic=false}={}){
+  const token=++sourceOperation,preferred=$('#source-select').value;
+  sourceController?.abort();lx.dispose();sourceController=new AbortController();const {signal}=sourceController;
+  const ids=automatic?[...$('#source-select').options].map(option=>option.value):[preferred];
+  $('#source-status').textContent='…';$('#source-connect').disabled=true;$('#source-open').setAttribute('aria-busy','true');connectedId=null;
+  $('.status-dot').classList.remove('connected','failed');$('.status-dot').classList.add('testing');
+  const promise=(async()=>{
+    const tracks=await loadProbeTracks(records,AbortSignal.any([signal,AbortSignal.timeout(10000)]));signal.throwIfAborted();
+    const id=await selectMusicSource({client:lx,ids,preferred,tracks,quality:$('#quality-select').value,signal,onAttempt:(_id,index,total)=>{
+      if(token===sourceOperation)$('#source-status').textContent=`… ${index}/${total}`;
+    }});
+    signal.throwIfAborted();if(token!==sourceOperation)return;
+    connectedId=id;$('#source-select').value=id;$('.status-dot').classList.add('connected');$('#source-status').textContent='✓';$('#source-status').setAttribute('aria-label','音源可用');announce('已选中可用音源');savePrefs();
+  })().catch(error=>{if(token===sourceOperation){connectedId=null;lx.dispose();$('#source-status').textContent='×';$('.status-dot').classList.remove('connected');$('.status-dot').classList.add('failed');announce(error.message);$('#source-status').setAttribute('aria-label',error.message);}
+    throw error;
+  }).finally(()=>{if(token===sourceOperation){connecting=null;$('#source-connect').disabled=false;$('#source-open').setAttribute('aria-busy','false');$('.status-dot').classList.remove('testing');}});
+  $('#source-status').setAttribute('aria-label','检测音源');
   connecting=promise;return promise;
 }
 async function playRecord(track,rect){
+  const previous=deckTrack,needleDown=$('#turntable').classList.contains('playing')||$('#turntable').classList.contains('paused'),lidClosed=$('#turntable').classList.contains('lid-closed')||location.hash==='#wall';
   cancelPlayback();const token=operation;setBusy(true);$('.machine-display').classList.remove('is-error');setStatus('正在取出唱片','…');audio.removeAttribute('src');audio.load();updateTime();closeDrawer(false);
   if(location.hash==='#wall'){location.hash='room';route();}
-  $('#play-toggle').focus({preventScroll:true});setLid(true);$('#turntable').classList.remove('playing','paused');$('#turntable').classList.add('no-record');displayTrack(track);
+  $('#play-toggle').focus({preventScroll:true});setLid(true);$('#turntable').classList.remove('playing','paused');displayTrack(track);
   try{
     const sourcePromise=(async()=>{if(track.source==='local')return track.src;await ensureSource();if(token!==operation)throw new Error('播放已取消');return lx.resolve(track,$('#quality-select').value);})();
     const settledSource=sourcePromise.then(url=>({url}),error=>({error}));
-    await flyRecord(track,rect,token);if(token!==operation)return;$('#turntable').classList.remove('no-record');setStatus('正在读取唱片','…');
+    if(previous){
+      $('#turntable').classList.add('arm-raised','arm-lifting');if(needleDown)$('#turntable').classList.add('arm-over-record');
+      await delay(260);if(token!==operation)return;$('#turntable').classList.remove('arm-over-record','arm-lifting');
+      await delay(lidClosed?1040:800);if(token!==operation)return;
+      $('#turntable').classList.add('no-record');deckTrack=null;syncSleeves();
+      await flyRecord(previous,null,token,true);if(token!==operation)return;
+    }
+    await flyRecord(track,rect,token);if(token!==operation)return;deckTrack=track;labelDisc(track);syncSleeves();$('#turntable').classList.remove('no-record');setStatus('正在读取唱片','…');
     const {url,error}=await settledSource;if(token!==operation)return;if(error)throw error;
-    audio.src=url;audio.load();$('#turntable').classList.add('paused');await delay(1300);if(token!==operation)return;await audio.play();if(token!==operation)return;setBusy(false);updatePlayback();
-  }catch(error){if(token!==operation)return;setBusy(false);$('#turntable').classList.remove('playing','paused');feedback(error.name==='NotAllowedError'?'等待播放':`播放失败：${error.message||'音源不可用'}`);}
+    audio.src=url;audio.load();await lowerTonearm(token);if(token!==operation)return;await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();
+  }catch(error){if(token!==operation)return;setBusy(false);$('#turntable').classList.remove('playing','paused','motor-starting','arm-raised','arm-over-record','arm-lifting');feedback(error.name==='NotAllowedError'?'等待播放':`播放失败：${error.message||'音源不可用'}`);}
 }
 $('#play-toggle').onclick=async()=>{
   if(busy){cancelPlayback();setStatus('已取消','■');return;}
   if(!current){if(records.length)playRecord(records[0]);else location.hash='wall';return;}
   if(!audio.paused){audio.pause();return;}
-  if(!audio.getAttribute('src')||audio.error){playRecord(current);return;}
-  try{$('.machine-display').classList.remove('is-error');await audio.play();}catch{feedback('播放失败');}
+  if(!audio.getAttribute('src')||audio.error||deckTrack?.id!==current.id){playRecord(current);return;}
+  const token=operation;
+  try{
+    $('.machine-display').classList.remove('is-error');
+    if(!$('#turntable').classList.contains('paused')){setBusy(true);await lowerTonearm(token);if(token!==operation)return;}
+    await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);
+  }catch{if(token!==operation)return;cancelPlayback();feedback('播放失败');}
 };
 function adjacent(delta){if(!records.length){location.hash='wall';return;}const index=records.findIndex(track=>track.id===current?.id);playRecord(records[(index+(index<0?1:delta)+records.length)%records.length]);}
 $('#previous-track').onclick=()=>adjacent(-1);$('#next-track').onclick=()=>adjacent(1);
@@ -149,11 +221,11 @@ $('#mute-toggle').onclick=()=>{audio.muted=!audio.muted;updateVolume();savePrefs
 for(const name of ['play','pause','playing'])audio.addEventListener(name,updatePlayback);
 for(const name of ['timeupdate','loadedmetadata','durationchange','emptied'])audio.addEventListener(name,updateTime);
 audio.addEventListener('waiting',()=>{if(!busy&&!audio.paused)setStatus('正在缓冲','…');});
-audio.addEventListener('error',()=>{if(!audio.getAttribute('src'))return;setBusy(false);$('#turntable').classList.remove('playing','paused');feedback('播放失败');});
+audio.addEventListener('error',()=>{if(!audio.getAttribute('src'))return;cancelPlayback();$('#turntable').classList.remove('playing','paused');feedback('播放失败');});
 audio.addEventListener('ended',()=>{if(records.length>1)adjacent(1);else{updatePlayback();setStatus('播放结束','■');}});
 $('#source-open').onclick=()=>openDrawer('source-dialog',$('#source-open'));
-$('#source-connect').onclick=()=>connectSource().catch(()=>{});
-$('#source-select').onchange=()=>{sourceOperation++;connecting=null;connectedId=null;lx.dispose();$('.status-dot').classList.remove('connected');$('#source-connect').disabled=false;$('#source-status').textContent='';savePrefs();};
+$('#source-connect').onclick=()=>connectSource({automatic:true}).catch(()=>{});
+$('#source-select').onchange=()=>connectSource().catch(()=>{});
 $('#quality-select').onchange=savePrefs;
 function renderResults(){
   $('#search-results').innerHTML=results.map(track=>{const saved=records.some(record=>record.id===track.id);return `<article class="search-result"><div class="result-cover">${artwork(track)}</div><div class="result-info"><strong>${e(track.name)}</strong><p>${e(track.singer||'')}${track.albumName?` · ${e(track.albumName)}`:''}</p></div><button class="add-record${saved?' saved':''}" data-add="${e(track.id)}" aria-label="${saved?'移除':'收藏'} ${e(track.name)}" aria-pressed="${saved}">${saved?'−':'＋'}</button></article>`;}).join('');
@@ -181,12 +253,14 @@ window.addEventListener('keydown',event=>{
   if(event.code!=='Space'||event.repeat||activeDrawer||/INPUT|TEXTAREA|SELECT|BUTTON|A/.test(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider')return;
   event.preventDefault();$('#play-toggle').click();
 });
-window.addEventListener('pagehide',()=>{cancelPlayback();lx.dispose();});
+window.addEventListener('pagehide',()=>{cancelPlayback();sourceOperation++;sourceController?.abort();connecting=null;connectedId=null;lx.dispose();});
+window.addEventListener('pageshow',event=>{if(event.persisted)connectSource({automatic:true}).catch(()=>{});});
 async function init(){
   audio.volume=Number.isFinite(prefs.volume)?Math.max(0,Math.min(1,prefs.volume)):.65;audio.muted=prefs.muted===true;
   if([...$('#source-select').options].some(option=>option.value===prefs.source))$('#source-select').value=prefs.source;
   if([...$('#quality-select').options].some(option=>option.value===prefs.quality))$('#quality-select').value=prefs.quality;
   setLid(prefs.lidOpen!==false);updateVolume();route();renderCollection();
+  connectSource({automatic:true}).catch(()=>{});
   try{
     const response=await fetch('/api/radio',{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error();const data=await response.json();
     localTracks=data.tracks.map(track=>{const [name,...artist]=track.name.split(/\s+-\s+/);return {id:`local:${track.src}`,name,singer:artist.join(' - ')||'',albumName:'',source:'local',src:track.src};});

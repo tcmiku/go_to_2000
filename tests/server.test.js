@@ -211,7 +211,7 @@ test('complete backup validator preserves explicitly hidden links but rejects ma
 
 test('listening room and isolated source runtime are served with scoped CSP',async t=>{
   const app=await instance(t,{adminEnabled:false});
-  for(const route of ['/listening-room','/listening-room.html','/listening-room.css','/listening-room.js','/lx-client.js','/lx-sandbox.html','/lx-sandbox.js','/lx-worker.js']){
+  for(const route of ['/listening-room','/listening-room.html','/listening-room.css','/listening-room.js','/music-source-selection.js','/lx-client.js','/lx-sandbox.html','/lx-sandbox.js','/lx-worker.js']){
     const response=await fetch(app.base+route);assert.equal(response.status,200,route);
     const csp=response.headers.get('content-security-policy');
     if(route==='/lx-sandbox.html'){assert.match(csp,/sandbox allow-scripts/);assert.match(csp,/connect-src 'none'/);assert.doesNotMatch(csp,/allow-same-origin/);}

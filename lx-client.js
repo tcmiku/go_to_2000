@@ -2,8 +2,9 @@ export class LXClient {
   constructor(){this.pending=new Map();this.requests=new Map();this.sequence=0;this.generation=0;this.receive=this.receive.bind(this);window.addEventListener('message',this.receive);}
   async load(id) {
     this.dispose();const generation=this.generation;
-    const fetchJSON=async url=>{const response=await fetch(url,{signal:AbortSignal.timeout(25000)});const data=await response.json();if(!response.ok)throw new Error(data.error);return data;};
-    const [source,runtimeResponse]=await Promise.all([fetchJSON(`/api/listening/source?id=${encodeURIComponent(id)}`),fetch('/lx-worker.js')]);
+    this.loadController=new AbortController();const signal=AbortSignal.any([this.loadController.signal,AbortSignal.timeout(25000)]);
+    const fetchJSON=async url=>{const response=await fetch(url,{signal});const data=await response.json();if(!response.ok)throw new Error(data.error);return data;};
+    const [source,runtimeResponse]=await Promise.all([fetchJSON(`/api/listening/source?id=${encodeURIComponent(id)}`),fetch('/lx-worker.js',{signal})]);
     if(!runtimeResponse.ok)throw new Error('音源运行环境无法加载');const runtime=await runtimeResponse.text();
     if(generation!==this.generation)throw new Error('音源切换已取消');
     return new Promise((resolve,reject)=>{
@@ -33,15 +34,22 @@ export class LXClient {
       finally{if(generation===this.generation)this.requests.delete(data.id);}
     }
   }
-  resolve(track,quality='128k') {
+  resolve(track,quality='128k',signal) {
+    if(signal?.aborted)return Promise.reject(signal.reason);
     if(!this.sources?.[track.source]?.actions?.includes('musicUrl'))return Promise.reject(new Error('当前音源不支持该平台，请更换音源'));
     const qualities=this.sources[track.source].qualitys||[],selected=qualities.includes(quality)?quality:qualities[0];
     if(!selected)return Promise.reject(new Error('当前音源没有可用音质'));
-    return new Promise((resolve,reject)=>{const id=++this.sequence;const timer=setTimeout(()=>this.fail(new Error('播放地址解析超时，请更换音源后重试')),30000);this.pending.set(id,{resolve,reject,timer});this.post({kind:'resolve',id,track,quality:selected});});
+    return new Promise((resolve,reject)=>{
+      const id=++this.sequence,timer=setTimeout(()=>this.fail(new Error('播放地址解析超时，请更换音源后重试')),30000);
+      const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);};
+      const abort=()=>{this.pending.delete(id);cleanup();reject(signal.reason);};
+      this.pending.set(id,{resolve:value=>{cleanup();resolve(value);},reject:error=>{cleanup();reject(error);},timer});
+      signal?.addEventListener('abort',abort,{once:true});this.post({kind:'resolve',id,track,quality:selected});
+    });
   }
   fail(error){this.dispose(error);}
   dispose(error=new Error('音源切换已取消')) {
-    this.generation++;clearTimeout(this.timer);this.initial?.reject(error);this.initial=null;
+    this.generation++;this.loadController?.abort();this.loadController=null;clearTimeout(this.timer);this.initial?.reject(error);this.initial=null;
     this.post({kind:'dispose'});this.frame?.remove();this.frame=null;this.sources=null;
     for(const task of this.pending.values()){clearTimeout(task.timer);task.reject(error);}this.pending.clear();
     for(const controller of this.requests.values())controller.abort();this.requests.clear();

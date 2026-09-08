@@ -123,13 +123,13 @@ npm run check
 
 ### 网络音源
 
-音源目录使用 [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的八个 `latest.js` 链接：Huibq、SixYin、Flower、LX、ikun、Grass、Juhe API、QDY。点击机身天线旋钮展开音源抽屉，再按电源图标才下载并初始化对应脚本；服务端缓存脚本 15 分钟。支持按照 [LX 自定义源协议](https://lxmusic.toside.cn/desktop/custom-source) 的 `inited`、`request`、`musicUrl`、Buffer、MD5、AES、RSA 和 zlib 能力调用脚本。源更新提示不自动执行更新，也不弹出外部页面。
+音源目录使用 [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的八个 `latest.js` 链接：Huibq、SixYin、Flower、LX、ikun、Grass、Juhe API、QDY。进入聆听室即自动检测：优先上次选中的音源，再按目录顺序尝试，选中并记住首个通过检测的音源。检测使用最多两首已收藏的网络歌曲，没有可用收藏时通过现有搜索接口取得检测曲目；必须完成脚本初始化、网易云平台和音质检查、播放地址解析，以及独立静音音频元素的 `canplay` 检查才算通过。检测不调用播放，不修改本地唱片或打断当前音频；每个音源最多检测 22 秒，单首曲目的解析和加载最多 7 秒。旋钮灯闪黄表示检测中，绿色表示通过，红色表示失败。展开机身天线旋钮可手动选择音源，电源图标可重新自动检测；手动选择会取消旧检测。服务端缓存脚本 15 分钟。支持按照 [LX 自定义源协议](https://lxmusic.toside.cn/desktop/custom-source) 的 `inited`、`request`、`musicUrl`、Buffer、MD5、AES、RSA 和 zlib 能力调用脚本。源更新提示不自动执行更新，也不弹出外部页面。
 
 这些脚本主要解析音乐播放地址，不提供歌曲搜索。独立搜索适配按照 LX 的网易云 EAPI 查询协议获取歌曲元数据，保留 `source/songmid/singer/albumId/types` 等字段后传给音源。只展示真实搜索结果；平台失败时显示错误，不以样例结果替代。
 
 脚本运行在不带 `allow-same-origin` 的 sandbox iframe 所创建的独立 Worker 中，不在 Node 服务端执行。iframe/Worker 禁止直接连接网络或访问主页面存储，网络调用经受限桥接转发；桥接限制方法、大小、并发和超时，解析并固定公共 IP，每次重定向重新校验，阻止本机、内网和保留地址。跨域写请求继续被主服务拒绝。主站的 CSP 不变，仅聆听室允许远程音频和封面。
 
-「已载入」表示音源脚本完成初始化，不表示其第三方解析服务可用。服务停机、限流、密钥失效、地区限制、音源需要额外能力或浏览器不支持返回的音频格式时，应在界面切换音源；不会回退为模拟音乐或把失败当作成功。2026-09-07 的非浏览器检查确认真实搜索能返回结果、Huibq 脚本可下载，但其播放解析端点返回 HTTP 503。其他第三方音源的实时可用性未逐个验证。
+通过检测表示至少一首检测曲目当时可以加载，不保证所有歌曲始终可用。服务停机、限流、密钥失效、地区限制或音频格式不支持会导致检测失败并自动尝试下一音源。全部失败时保留本地播放和手动重试；不会回退为模拟音乐或把失败当作成功。2026-09-07 的非浏览器检查确认真实搜索能返回结果、Huibq 脚本可下载，但其播放解析端点返回 HTTP 503。其他第三方音源的实时可用性未逐个验证。
 
 ### 开发与验证
 
@@ -140,10 +140,10 @@ npm ci
 npm run build:music
 ```
 
-新增文件为 `listening-room.html/css/js`、`listening-service.js`、`lx-client.js`、`lx-sandbox.html/js`、`scripts/lx-worker-entry.js` 和生成的 `lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
+新增文件为 `listening-room.html/css/js`、`listening-service.js`、`music-source-selection.js`、`lx-client.js`、`lx-sandbox.html/js`、`scripts/lx-worker-entry.js` 和生成的 `lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
 
 ```sh
-node --test tests/listening-controls.test.js tests/listening.test.js tests/server.test.js
+node --test tests/music-source-selection.test.js tests/listening-controls.test.js tests/listening.test.js tests/server.test.js
 ```
 
-依用户要求，没有进行浏览器点击、截图或电脑操作测试。此次相关的 25 项检查通过；全项目检查还存在原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。
+依用户要求，没有进行浏览器点击、截图或电脑操作测试。此次相关的 42 项检查通过；全项目检查还存在原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。

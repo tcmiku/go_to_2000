@@ -16,22 +16,40 @@
       <div id="turntable-stage" class="turntable-stage">
         <div class="player-shadow" aria-hidden="true"></div>
         <div id="turntable" class="turntable no-record" role="group" aria-label="唱片机">
+          <div class="desk-props" aria-hidden="true">
+            <div class="floppy-stack">
+              <div class="floppy floppy-back"><span class="floppy-shutter"></span><span class="floppy-label">BACKUP<br><small>1999.12</small></span></div>
+              <div class="floppy floppy-front"><span class="floppy-shutter"></span><span class="floppy-label"><b>my music</b><i></i><small>1.44 MB</small></span><span class="floppy-notch"></span></div>
+            </div>
+            <div class="cd-stack">
+              <div class="jewel-case jewel-under"><span class="cd-booklet"><small>VOL. 02</small><b>夜 / 曲</b></span></div>
+              <div class="jewel-case jewel-top"><span class="jewel-spine"></span><span class="desk-compact-disc"><i></i></span><span class="cd-marker">SUMMER '00</span><span class="jewel-latch"></span></div>
+            </div>
+            <div class="mixtape-group">
+              <div class="paper-ticket"><span>LIVE HOUSE</span><b>2000.06.24</b><i></i></div>
+              <div class="desk-cassette"><span class="cassette-sticker"><b>MY MIX 01</b><small>A <i> / </i> C60</small></span><span class="cassette-tape-window"><i></i><b></b><i></i></span><span class="cassette-bottom"></span><span class="cassette-screw tape-screw-a"></span><span class="cassette-screw tape-screw-b"></span><span class="cassette-screw tape-screw-c"></span><span class="cassette-screw tape-screw-d"></span></div>
+            </div>
+            <div class="note-group"><div class="desk-note"><span>周六 8:00</span><span>老地方见 :)</span><small>2000.01</small></div><div class="ballpoint-pen"><span class="pen-cap"></span><span class="pen-clip"></span><span class="pen-tip"></span></div><div class="paper-clip"></div></div>
+          </div>
           <div class="case-face case-left" aria-hidden="true"></div><div class="case-face case-right" aria-hidden="true"></div>
           <div class="case-face case-back" aria-hidden="true"></div><div class="case-bottom" aria-hidden="true"></div>
           <div class="foot foot-fl" aria-hidden="true"></div><div class="foot foot-fr" aria-hidden="true"></div><div class="foot foot-bl" aria-hidden="true"></div><div class="foot foot-br" aria-hidden="true"></div>
           <div class="deck">
             <div class="deck-inset" aria-hidden="true"></div>
+            <span class="deck-vents" aria-hidden="true"></span><span class="adapter-spindle" aria-hidden="true"></span><span class="strobe-housing" aria-hidden="true"><i></i></span>
+            <span class="lid-bumper bumper-left" aria-hidden="true"></span><span class="lid-bumper bumper-right" aria-hidden="true"></span>
             <div class="hinge hinge-left" aria-hidden="true"></div><div class="hinge hinge-right" aria-hidden="true"></div>
             <div class="platter-base" aria-hidden="true"></div><div class="platter-rim" aria-hidden="true"></div>
-            <button id="now-cover" class="platter-mat" aria-label="打开唱片墙"><span id="record-on-deck" class="record-on-deck"><span class="vinyl-sheen"></span><span id="record-label" class="record-label"><span id="disc-title"></span><span class="record-side">A</span><span class="record-speed">33⅓</span></span></span></button>
+            <button id="now-cover" class="platter-mat" aria-label="打开唱片墙"><span id="record-on-deck" class="record-on-deck"><span id="record-label" class="record-label"><span id="disc-title"></span><span class="record-side">A</span><span class="record-speed">33⅓</span></span></span><span class="vinyl-sheen" aria-hidden="true"></span></button>
             <span id="platter-target" class="spindle" aria-hidden="true"></span>
             <div class="arm-base" aria-hidden="true"><span class="arm-base-ring"></span><span class="arm-pivot"></span></div>
-            <div id="tonearm" class="tonearm" aria-hidden="true"><span class="counterweight"></span><span class="arm-bearing"></span><span class="arm-rod"></span><span class="arm-wire"></span><span class="headshell"><i></i><i></i><i></i></span><span class="stylus"></span></div>
-            <span class="arm-rest" aria-hidden="true"></span>
+            <div id="tonearm" class="tonearm" aria-hidden="true"><span class="counterweight"><span class="counterweight-face"></span></span><span class="tracking-collar"></span><span class="arm-yoke"></span><span class="arm-bearing"></span><span class="arm-rod"></span><span class="arm-wire"></span><span class="headshell"><i></i><i></i><i></i></span><span class="cartridge-body"><span class="cartridge-front"></span><span class="cartridge-side"></span></span><span class="stylus"></span><span class="cartridge-contacts"></span></div>
+            <span class="arm-rest" aria-hidden="true"></span><span class="anti-skate" aria-hidden="true"></span><span class="cue-lever" aria-hidden="true"></span>
             <div class="speed-switch" aria-hidden="true"><span>33</span><i></i><span>45</span></div>
             <span class="deck-screw screw-a" aria-hidden="true"></span><span class="deck-screw screw-b" aria-hidden="true"></span><span class="deck-screw screw-c" aria-hidden="true"></span><span class="deck-screw screw-d" aria-hidden="true"></span>
           </div>
           <div class="machine-front">
+            <span class="walnut-rail walnut-rail-top" aria-hidden="true"></span><span class="walnut-rail walnut-rail-left" aria-hidden="true"></span><span class="walnut-rail walnut-rail-right" aria-hidden="true"></span>
             <span class="panel-screw panel-screw-a" aria-hidden="true"></span><span class="panel-screw panel-screw-b" aria-hidden="true"></span><span class="panel-screw panel-screw-c" aria-hidden="true"></span><span class="panel-screw panel-screw-d" aria-hidden="true"></span>
             <div class="speaker-grille" aria-hidden="true"></div>
             <div class="maker-plate" aria-hidden="true">S L O W <span>STEREO · 1978</span></div>
@@ -59,10 +77,10 @@
             <section id="source-dialog" class="machine-drawer source-drawer" role="dialog" aria-modal="false" aria-label="音乐源设置" tabindex="-1" hidden>
               <button class="drawer-close" data-close aria-label="收回面板">×</button><div class="drawer-grip" aria-hidden="true"></div>
               <svg class="source-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16v5m-4 0h8M8 11a4 4 0 0 1 8 0M5 8a8 8 0 0 1 14 0M2 5a12 12 0 0 1 20 0"/></svg>
-              <div class="source-fields"><select id="source-select" aria-label="音乐源"><option value="huibq">Huibq</option><option value="sixyin">SixYin</option><option value="flower">Flower</option><option value="lx">LX</option><option value="ikun">ikun</option><option value="grass">Grass</option><option value="juhe">Juhe API</option><option value="qdy">QDY</option></select><select id="quality-select" aria-label="优先音质"><option value="128k">128 kbps</option><option value="320k">320 kbps</option><option value="flac">FLAC</option></select><button id="source-connect" class="panel-button" aria-label="连接音源">⏻</button></div><p id="source-status" class="panel-status" role="status"></p>
+              <div class="source-fields"><select id="source-select" aria-label="音乐源"><option value="huibq">Huibq</option><option value="sixyin">SixYin</option><option value="flower">Flower</option><option value="lx">LX</option><option value="ikun">ikun</option><option value="grass">Grass</option><option value="juhe">Juhe API</option><option value="qdy">QDY</option></select><select id="quality-select" aria-label="优先音质"><option value="128k">128 kbps</option><option value="320k">320 kbps</option><option value="flac">FLAC</option></select><button id="source-connect" class="panel-button" aria-label="重新检测音源">⏻</button></div><p id="source-status" class="panel-status" role="status"></p>
             </section>
           </div>
-          <button id="lid-toggle" class="dust-cover" aria-label="合上机盖" aria-pressed="true"><span class="lid-glass"></span><span class="lid-edge lid-edge-left"></span><span class="lid-edge lid-edge-right"></span><span class="lid-edge lid-edge-front"></span><span class="lid-handle"></span></button>
+          <button id="lid-toggle" class="dust-cover" aria-label="合上机盖" aria-pressed="true"><span class="lid-glass"><span class="acrylic-scuffs" aria-hidden="true"></span></span><span class="lid-edge lid-edge-left"></span><span class="lid-edge lid-edge-right"></span><span class="lid-edge lid-edge-front"></span><span class="lid-hinge-tab hinge-tab-left" aria-hidden="true"></span><span class="lid-hinge-tab hinge-tab-right" aria-hidden="true"></span><span class="lid-handle"></span></button>
         </div>
       </div>
     </section>
