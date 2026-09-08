@@ -191,7 +191,7 @@ test('password change invalidates previous sessions, logout revokes the session,
 
 test('both entry points and their public modules are served with correct content types',async t=>{
   const app=await instance(t);
-  for(const route of ['/','/cd-wall.html','/cd-wall.css','/cd-wall.js','/admin','/admin/','/styles.css','/admin.css','/app.js','/admin.js','/ui.js','/radio.js','/navigation-data.js','/assets/layers/hero/globe.png']){
+  for(const route of ['/','/cd-wall.html','/cd-wall.css','/cd-case.css','/cd-wall.js','/cd-sound.js','/admin','/admin/','/styles.css','/admin.css','/app.js','/admin.js','/ui.js','/radio.js','/navigation-data.js','/assets/layers/hero/globe.png']){
     const result=await fetch(app.base+route);assert.equal(result.status,200,route);assert.ok(result.headers.get('content-type'));assert.ok(!result.headers.get('content-security-policy').includes("script-src 'self' 'unsafe-inline'"));
   }
 });
@@ -207,6 +207,24 @@ test('radio exposes and serves only local mp3 files',async t=>{
 
 test('complete backup validator preserves explicitly hidden links but rejects malformed files',()=>{
   assert.throws(()=>validateStore(null));assert.throws(()=>validateStore({navigation:fixture(),content:{},settings:{}}));
+});
+
+test('static files and public data revalidate, while saved changes invalidate the public cache',async t=>{
+  const app=await instance(t);await setup(app);
+  for(const route of ['/cd-wall.js','/cd-case.css','/assets/wood-grain.svg','/api/public']){
+    const first=await fetch(app.base+route),etag=first.headers.get('etag');
+    assert.ok(etag,route);await first.arrayBuffer();
+    const cached=await fetch(app.base+route,{headers:{'If-None-Match':etag}});
+    assert.equal(cached.status,304,route);assert.equal((await cached.arrayBuffer()).byteLength,0);
+  }
+  const before=await app.req('/api/public'),data=(await app.req('/api/admin/data')).data;
+  data.navigation.categories[0].sites[0].hidden=true;
+  assert.equal((await app.req('/api/admin/data','PUT',data)).status,200);
+  const after=await app.req('/api/public','GET',undefined,{'If-None-Match':before.headers.get('etag')});
+  assert.equal(after.status,200);assert.notEqual(after.headers.get('etag'),before.headers.get('etag'));
+  assert.equal(after.data.navigation.categories[0].sites.length,0);
+  assert.equal((await app.req('/api/admin/data')).headers.get('cache-control'),'no-store');
+  assert.equal((await fetch(app.base+'/http-cache.js')).status,404);
 });
 
 test('listening room and isolated source runtime are served with scoped CSP',async t=>{

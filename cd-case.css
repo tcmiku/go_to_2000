@@ -1,4 +1,6 @@
 /* Moulded polystyrene edges, inset paper and a separate black disc tray. */
+/* Keep the plastic detail without a full-screen backdrop blur on touch devices. */
+@media(pointer:coarse){#case-dialog::backdrop{backdrop-filter:none}}
 .cd-spine{
   border-left:3px solid #b8c3c488;border-right:4px solid #242c2ac9;border-radius:2px 2px 1px 1px;
   background:linear-gradient(90deg,#efffff9c 0,#fff3 2%,#17252266 8%,transparent 15% 73%,#f4ffff36 81%,#14221e80 90%),linear-gradient(180deg,#0b17164d,transparent 7% 91%,#10181477),var(--paper);

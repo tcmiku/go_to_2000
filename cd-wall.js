@@ -8,9 +8,15 @@ drawSoundSwitch();$('.wood-crown').insertBefore(soundButton,$('.shelf-search'));
 soundButton.onclick=()=>{setMuted(!isMuted());drawSoundSwitch();playSound('paper');};
 const palette=[['#b9ae98','#292824'],['#313d49','#ede9dc'],['#803e35','#f0dfc7'],['#d9d4c2','#343735'],['#536553','#eee7cd'],['#bfa36c','#372f27'],['#655666','#efe0d2'],['#d5c5b1','#684533'],['#2f3437','#eee8d9'],['#859a9b','#21373a']];
 let sites=[],groups=[],category='all',page=0,perRow=30,rowsPerPage=4,activeButton=null,transitioning=false;
+let loading=false,loaded=false,revision=null,searchTimer,composing=false,filterCache=null,renderKey='';
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function color(id){let hash=0;for(const c of id)hash=(hash*31+c.charCodeAt(0))>>>0;return palette[hash%palette.length];}
-function filtered(){const query=$('#cd-search').value.trim().toLowerCase();return sites.filter(s=>(category==='all'||s.categoryId===category||s.parentId===category)&&`${s.name} ${s.url} ${s.description}`.toLowerCase().includes(query));}
+function filtered(){
+  const query=$('#cd-search').value.trim().toLowerCase();
+  if(filterCache?.query===query&&filterCache.category===category)return filterCache.items;
+  const items=sites.filter(s=>(category==='all'||s.categoryId===category||s.parentId===category)&&s.searchText.includes(query));
+  filterCache={query,category,items};return items;
+}
 function renderTags(){
   const parent=groups.find(c=>c.id===category)?.parentId||category;
   const tag=(id,name,selected)=>`<button class="paper-tag" data-category="${e(id)}" aria-pressed="${selected}">${e(name)}</button>`;
@@ -20,7 +26,10 @@ function renderTags(){
   $('#subcategory-tabs').innerHTML=children.length?tag(parent,'全部',category===parent)+children.map(c=>tag(c.id,c.name,c.id===category)).join(''):'';
 }
 function render(){
+  clearTimeout(searchTimer);
   const items=filtered(),size=perRow*rowsPerPage,pages=Math.max(1,Math.ceil(items.length/size));page=Math.min(page,pages-1);
+  const key=JSON.stringify([revision,category,filterCache.query,page,perRow]);
+  if(key===renderKey)return;renderKey=key;
   const visible=items.slice(page*size,(page+1)*size);
   $('#cabinet').style.setProperty('--per-row',perRow);
   $('#cabinet').innerHTML=visible.length?Array.from({length:Math.ceil(visible.length/perRow)},(_,row)=>{
@@ -32,15 +41,18 @@ function render(){
   $('#previous-page').disabled=page===0;$('#next-page').disabled=page===pages-1;
 }
 async function load(){
+  if(loading)return;loading=true;
   $('#cabinet').setAttribute('aria-busy','true');
   try{
-    const response=await fetch('/api/public',{cache:'no-store',signal:AbortSignal.timeout(15000)});
+    const response=await fetch('/api/public',{cache:'no-cache',signal:AbortSignal.timeout(15000)});
     if(!response.ok)throw new Error('目录暂时无法连接');
-    const data=await response.json();groups=flattenCategories(validateNavigation(data.navigation).categories);
-    sites=groups.flatMap(c=>c.sites.filter(s=>!s.hidden&&normalizeUrl(s.url)).map(s=>({...s,categoryId:c.id,categoryName:c.name,parentId:c.parentId}))).map((s,i)=>({...s,number:i+1}));
+    const data=await response.json();if(loaded&&data.revision===revision)return;
+    const nextGroups=flattenCategories(validateNavigation(data.navigation).categories);
+    sites=nextGroups.flatMap(c=>c.sites.filter(s=>!s.hidden&&normalizeUrl(s.url)).map(s=>({...s,categoryId:c.id,categoryName:c.name,parentId:c.parentId}))).map((s,i)=>({...s,number:i+1,searchText:`${s.name} ${s.url} ${s.description||''}`.toLowerCase()}));
+    groups=nextGroups;revision=data.revision;loaded=true;filterCache=null;renderKey='';
     if(!groups.some(c=>c.id===category))category='all';renderTags();render();
-  }catch{$('#cabinet').innerHTML='<div class="empty-state"><button class="paper-tag" id="retry-load">连接失败 · 重试</button></div>';$('#collection-status').textContent='目录加载失败';}
-  finally{$('#cabinet').setAttribute('aria-busy','false');}
+  }catch{if(!loaded){renderKey='';$('#cabinet').innerHTML='<div class="empty-state"><button class="paper-tag" id="retry-load">连接失败 · 重试</button></div>';$('#collection-status').textContent='目录加载失败';}}
+  finally{loading=false;$('#cabinet').setAttribute('aria-busy','false');}
 }
 async function openCase(button){
   if(transitioning||$('#case-dialog').open)return;
@@ -66,7 +78,10 @@ async function closeCase(){
   finally{dialog.close();playSound('place');document.body.classList.remove('case-is-open');activeButton?.classList.remove('taken');activeButton?.focus({preventScroll:true});transitioning=false;}
 }
 $('#cabinet').addEventListener('click',event=>{const button=event.target.closest('[data-id]');if(button)openCase(button);if(event.target.closest('#retry-load'))load();if(event.target.closest('#reset-search')){$('#cd-search').value='';category='all';page=0;renderTags();render();}});
-$('#cd-search').addEventListener('input',()=>{page=0;render();});
+function scheduleSearch(){clearTimeout(searchTimer);if(composing)return;searchTimer=setTimeout(()=>{page=0;render();},120);}
+$('#cd-search').addEventListener('compositionstart',()=>{composing=true;clearTimeout(searchTimer);});
+$('#cd-search').addEventListener('compositionend',()=>{composing=false;scheduleSearch();});
+$('#cd-search').addEventListener('input',scheduleSearch);
 for(const id of ['category-tabs','subcategory-tabs'])$('#'+id).addEventListener('click',event=>{if(event.target.closest('[data-category]'))playSound('paper');});
 for(const id of ['previous-page','next-page'])$('#'+id).addEventListener('click',()=>playSound('place'));
 $('#disc-link').addEventListener('click',()=>playSound('disc'));
@@ -75,5 +90,5 @@ for(const [id,delta] of [['previous-page',-1],['next-page',1]])$('#'+id).onclick
 $('#return-case').onclick=closeCase;$('#case-dialog').addEventListener('cancel',event=>{event.preventDefault();closeCase();});
 $('#case-dialog').addEventListener('click',event=>{if(event.target===$('#case-dialog'))closeCase();});
 new ResizeObserver(entries=>{const width=entries[0].contentRect.width,next=Math.max(7,Math.min(34,Math.floor((width-32)/31)));if(next!==perRow){perRow=next;page=0;if(sites.length)render();}}).observe($('#cabinet'));
-window.addEventListener('focus',()=>{if(!$('#case-dialog').open)load();});
+window.addEventListener('focus',()=>{if(!document.hidden&&!$('#case-dialog').open)load();});
 load();

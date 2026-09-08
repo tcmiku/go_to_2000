@@ -154,7 +154,7 @@ async function load() {
   if (loading) return;
   loading = true;
   try {
-    const response = await fetch('/api/public', {cache:'no-store',signal:AbortSignal.timeout(15000)});
+    const response = await fetch('/api/public', {cache:'no-cache',signal:AbortSignal.timeout(15000)});
     if(!response.ok) throw new Error('目录暂时无法连接');
     const data = await response.json();
     if (loaded && data.revision === revision) return;

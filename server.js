@@ -1,7 +1,8 @@
 import http from 'node:http';
 import { createListeningService } from './listening-service.js';
 import { validateAd } from './retro-ad.js';
-import { readFile, writeFile, mkdir, rename, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename, readdir, stat } from 'node:fs/promises';
+import { representation, notModified, sendRepresentation } from './http-cache.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
@@ -93,6 +94,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
   async function body(req){let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>8*1024*1024)throw httpError(413,'数据不能超过 8 MB');chunks.push(chunk);}try{return JSON.parse(Buffer.concat(chunks).toString());}catch{throw httpError(400,'JSON 数据格式无效');}}
   function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}).end(JSON.stringify(value));}
   function publicData(){const data=structuredClone(store);data.navigation.categories.forEach(c=>{c.sites=c.sites.filter(s=>!s.hidden);(c.children||[]).forEach(x=>x.sites=x.sites.filter(s=>!s.hidden));});const ids=new Set(flattenCategories(data.navigation.categories).flatMap(c=>c.sites.map(s=>s.id)));data.content.hot.siteIds=data.content.hot.siteIds.filter(id=>ids.has(id));data.content.featured.items=data.content.featured.items.filter(s=>!s.hidden);data.content.friends=data.content.friends.filter(s=>!s.hidden);return data;}
+  let publicStore, publicResponse;
   const listeningService=createListeningService();
   return http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -121,7 +123,10 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(req.method!==method)throw httpError(405,'请求方式不支持');
         return json(res,200,await listeningService(route,url,method==='POST'?await body(req):undefined));
       }
-      if(route==='/api/public' && req.method==='GET')return json(res,200,publicData());
+      if(route==='/api/public' && ['GET','HEAD'].includes(req.method)){
+        if(publicStore!==store){publicResponse=representation(JSON.stringify(publicData()),'application/json; charset=utf-8');publicStore=store;}
+        return await sendRepresentation(req,res,publicResponse);
+      }
       if(route==='/api/visits'&&req.method==='GET')return json(res,200,visitSummary());
       if(route==='/api/visits'&&req.method==='POST'){
         const result=await locked(async()=>{
@@ -234,7 +239,9 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const target=path.resolve(root,filename);if(!target.startsWith(root+path.sep))throw httpError(404,'页面不存在');
-      const bytes=await readFile(target);res.writeHead(200,{'Content-Type':types[path.extname(filename)],'Cache-Control':'no-cache'}).end(req.method==='HEAD'?undefined:bytes);
+      const info=await stat(target),etag=`W/"${info.size}-${info.mtimeMs}-${info.ctimeMs}"`;
+      if(notModified(req,res,etag))return;
+      return await sendRepresentation(req,res,representation(await readFile(target),types[path.extname(filename)],etag));
     }catch(error){if(!res.headersSent)json(res,error.status || (error.code==='ENOENT'?404:500),{error:error.status?error.message:error.code==='ENOENT'?'页面不存在':'服务暂时不可用，请重试'});else res.end();}
   });
 }
