@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
-import {selectMusicSource} from '../music-source-selection.js';
-const source=(await readFile(new URL('../listening-room.js',import.meta.url),'utf8')).replace(/^import .*\n/gm,'');
-const html=await readFile(new URL('../listening-room.html',import.meta.url),'utf8');
+import {selectMusicSource} from '../public/music-source-selection.js';
+const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\n/gm,'');
+const html=await readFile(new URL('../public/listening-room.html',import.meta.url),'utf8');
 
 async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords}={}){
   const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},documentEvents={},animations=[],overlays=new Set(),sourceCalls=[];let timerId=0;

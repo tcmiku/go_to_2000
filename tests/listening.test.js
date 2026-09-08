@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createDecipheriv, createHash } from 'node:crypto';
 import vm from 'node:vm';
-import { createListeningService, isPublicAddress, normalizeSearchResult, eapiParams, publicRequest, sourceCatalog } from '../listening-service.js';
+import { createListeningService, isPublicAddress, normalizeSearchResult, eapiParams, publicRequest, sourceCatalog } from '../server/listening-service.js';
 
 test('music network bridge blocks private addresses, mapped loopback and reserved ranges',async()=>{
   for(const value of ['127.0.0.1','10.4.1.2','172.16.2.1','192.168.1.1','169.254.169.254','100.64.2.1','0.0.0.0','::1','::ffff:127.0.0.1','fd00::1','fe80::1','2001:db8::1','2002:7f00:1::','198.19.1.2','203.0.113.1'])assert.equal(isPublicAddress(value),false,value);
@@ -44,7 +44,7 @@ test('search encryption follows the LX EAPI envelope',()=>{
 });
 
 test('isolated LX runtime supports init, callback network, crypto and musicUrl',async()=>{
-  const bundle=await readFile(new URL('../lx-worker.js',import.meta.url),'utf8');
+  const bundle=await readFile(new URL('../public/lx-worker.js',import.meta.url),'utf8');
   const messages=[],context=vm.createContext({TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,setTimeout,clearTimeout,console:{log(){},error(){},warn(){}},crypto:globalThis.crypto,postMessage:value=>messages.push(value)});
   vm.runInContext('self=globalThis',context);vm.runInContext(bundle,context,{timeout:3000});
   const script=`const {on,send,request,EVENT_NAMES,utils}=lx;

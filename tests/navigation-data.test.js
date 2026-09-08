@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { flattenCategories, normalizeUrl, selectGroups, validateNavigation, validatePageContent } from '../navigation-data.js';
+import { flattenCategories, normalizeUrl, selectGroups, validateNavigation, validatePageContent } from '../public/navigation-data.js';
 
 const fixture = () => ({
   version: 1,

@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch --watch-preserve-output server.js",
+    "dev": "node --watch --watch-preserve-output server/server.js",
     "dev:admin": "node scripts/admin-server.mjs --watch",
-    "start": "node server.js",
+    "start": "node server/server.js",
     "start:admin": "node scripts/admin-server.mjs",
     "check:data": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check listening-room.js && node --check listening-service.js && node --check lx-client.js && node --check lx-sandbox.js && node --check cd-wall.js && node --check app.js && node --check admin.js && node --check ui.js && node --check radio.js && node --check start-menu.js && node --check minesweeper.js && node --check snake.js && node --check management-data.js && node --check navigation-data.js && node --check server.js && npm run check:data && npm test",
-    "build:music": "esbuild scripts/lx-worker-entry.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=lx-worker.js"
+    "check": "node --check public/listening-room.js && node --check server/listening-service.js && node --check public/lx-client.js && node --check public/lx-sandbox.js && node --check public/cd-wall.js && node --check public/app.js && node --check public/admin.js && node --check public/ui.js && node --check public/radio.js && node --check public/start-menu.js && node --check public/minesweeper.js && node --check public/snake.js && node --check public/management-data.js && node --check public/navigation-data.js && node --check server/server.js && npm run check:data && npm test",
+    "build:music": "esbuild scripts/lx-worker-entry.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=public/lx-worker.js"
   },
   "devDependencies": {
     "buffer": "^6.0.3",

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPinball,launchPinball,stepPinball,bumpers} from '../pinball.js';
+import {createPinball,launchPinball,stepPinball,bumpers} from '../public/pinball.js';
 
 test('launch uses the right channel and repeated launch cannot reset a live ball',()=>{
   const g=createPinball();launchPinball(g);

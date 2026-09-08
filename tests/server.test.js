@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createApp, validateStore } from '../server.js';
+import { createApp, validateStore } from '../server/server.js';
 
 const fixture=()=>({version:1,source:{name:'Original source',url:'https://example.com'},categories:[{id:'tools',name:'工具',sites:[{id:'one',name:'工具一',url:'https://one.example.com',description:'原始说明'}],children:[{id:'books',name:'书籍',sites:[{id:'two',name:'书籍二',url:'https://two.example.com',description:'电子书'}]}]}]});
 async function instance(t,options={}){

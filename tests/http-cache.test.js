@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { gunzipSync } from 'node:zlib';
-import { representation, sendRepresentation } from '../http-cache.js';
+import { representation, sendRepresentation } from '../server/http-cache.js';
 
 test('public representations compress, negotiate, revalidate and support HEAD', async t => {
   const body = JSON.stringify({ title: '网站收藏'.repeat(1500) });

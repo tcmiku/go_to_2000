@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {setTimeout as sleep} from 'node:timers/promises';
-import {selectMusicSource,probeAudio,loadProbeTracks} from '../music-source-selection.js';
+import {selectMusicSource,probeAudio,loadProbeTracks} from '../public/music-source-selection.js';
 
 const tracks=[{source:'wy',songmid:1,name:'First'},{source:'wy',songmid:2,name:'Second'}];
 const supported={wy:{actions:['musicUrl'],qualitys:['128k']}};
@@ -78,7 +78,7 @@ test('probe tracks come from saved network records or the existing search servic
   assert.deepEqual(await loadProbeTracks([],signal),tracks);assert.equal(calls,1);
 });
 
-const clientSource=(await readFile(new URL('../lx-client.js',import.meta.url),'utf8')).replace('export class LXClient','class LXClient');
+const clientSource=(await readFile(new URL('../public/lx-client.js',import.meta.url),'utf8')).replace('export class LXClient','class LXClient');
 function realClient(fetch){
   const timers=new Map();let timerId=0;
   const context=vm.createContext({window:{addEventListener(){}},document:{createElement:()=>({setAttribute(){},remove(){},contentWindow:{postMessage(){}}}),body:{append(){}}},setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),AbortController,AbortSignal,URL,fetch});

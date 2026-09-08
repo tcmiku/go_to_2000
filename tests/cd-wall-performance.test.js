@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { escapeHTML } from '../ui.js';
-import { flattenCategories, validateNavigation, normalizeUrl } from '../navigation-data.js';
+import { escapeHTML } from '../public/ui.js';
+import { flattenCategories, validateNavigation, normalizeUrl } from '../public/navigation-data.js';
 
-const source=(await readFile(new URL('../cd-wall.js',import.meta.url),'utf8')).replace(/^import .*;\r?$/gm,'');
+const source=(await readFile(new URL('../public/cd-wall.js',import.meta.url),'utf8')).replace(/^import .*;\r?$/gm,'');
 async function wall(){
   const elements=new Map(),timers=new Map();let timerId=0,calls=0,fail=false;
   const data={revision:1,navigation:{version:1,source:{name:'Test',url:'https://example.com'},categories:[{id:'tools',name:'工具',sites:[{id:'one',name:'Test 工具',url:'https://example.com',description:'测试'}],children:[]}]}};

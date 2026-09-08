@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { validateStore } from '../server.js';
-import { flattenCategories, validateNavigation, validatePageContent } from '../navigation-data.js';
+import { validateStore } from '../server/server.js';
+import { flattenCategories, validateNavigation, validatePageContent } from '../public/navigation-data.js';
 
 try {
   const navigation = validateNavigation(JSON.parse(await readFile(new URL('../data/navigation.json', import.meta.url), 'utf8')));

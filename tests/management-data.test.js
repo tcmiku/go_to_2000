@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryNodes, upsertSite, deleteSites, moveSites, deleteCategory } from '../management-data.js';
-import { validateNavigation, validatePageContent } from '../navigation-data.js';
+import { categoryNodes, upsertSite, deleteSites, moveSites, deleteCategory } from '../public/management-data.js';
+import { validateNavigation, validatePageContent } from '../public/navigation-data.js';
 function fixture(){return{navigation:{version:1,source:{name:'测试',url:'https://example.com'},categories:[{id:'parent',name:'一级',sites:[{id:'a',name:'A',url:'https://a.example.com',description:''}],children:[{id:'child',name:'二级',sites:[{id:'b',name:'B',url:'https://b.example.com',description:''}]}]},{id:'other',name:'其他',sites:[{id:'c',name:'C',url:'https://c.example.com',description:''}]}]},content:{hot:{title:'推荐',siteIds:['a','b','c']},featured:{title:'精选',items:[]},friends:[]}};}
 function validate(d){validateNavigation(d.navigation);validatePageContent(d.content,d.navigation.categories);}
 test('editing a website in place preserves its order and moving it removes the original record',()=>{const d=fixture();const site={...d.navigation.categories[0].sites[0],name:'修改后的 A'};upsertSite(d,site,'parent');assert.equal(d.navigation.categories[0].sites[0].name,'修改后的 A');upsertSite(d,site,'child');assert.equal(d.navigation.categories[0].sites.length,0);assert.deepEqual(d.navigation.categories[0].children[0].sites.map(s=>s.id),['b','a']);assert.deepEqual(d.content.hot.siteIds,['a','b','c']);validate(d);});

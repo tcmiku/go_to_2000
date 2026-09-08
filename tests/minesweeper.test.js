@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,reveal,toggleFlag,neighbors} from '../minesweeper.js';
+import {createGame,reveal,toggleFlag,neighbors} from '../public/minesweeper.js';
 
 test('every first move has a safe neighborhood and exactly ten mines',()=>{
   for(let first=0;first<81;first++){

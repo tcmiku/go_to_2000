@@ -1,16 +1,17 @@
 import http from 'node:http';
 import { createListeningService } from './listening-service.js';
-import { validateAd } from './retro-ad.js';
+import { validateAd } from '../public/retro-ad.js';
 import { readFile, writeFile, mkdir, rename, readdir, stat } from 'node:fs/promises';
 import { representation, notModified, sendRepresentation } from './http-cache.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import { validateNavigation, validatePageContent, flattenCategories } from './navigation-data.js';
+import { validateNavigation, validatePageContent, flattenCategories } from '../public/navigation-data.js';
 
 const scrypt = promisify(scryptCallback);
-const root = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
+const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+const publicRoot = path.join(root,'public');
 const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', announcement: '欢迎回来！这里总有一个值得收藏的好网站。' };
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
 const publicFiles = new Set(['index.html','admin.html','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
@@ -238,7 +239,8 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       const filename=route==='/'?'index.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
-      const target=path.resolve(root,filename);if(!target.startsWith(root+path.sep))throw httpError(404,'页面不存在');
+      const targetRoot=filename.startsWith('assets/')?root:publicRoot;
+      const target=path.resolve(targetRoot,filename);if(!target.startsWith(targetRoot+path.sep))throw httpError(404,'页面不存在');
       const info=await stat(target),etag=`W/"${info.size}-${info.mtimeMs}-${info.ctimeMs}"`;
       if(notModified(req,res,etag))return;
       return await sendRepresentation(req,res,representation(await readFile(target),types[path.extname(filename)],etag));
