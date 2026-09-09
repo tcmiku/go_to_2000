@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /admin.js
+Disallow: /admin.css
+Disallow: /lx-sandbox.html
+Disallow: /lx-sandbox.js
+Disallow: /api/
+Disallow: /data/
+Sitemap: https://nav.tcmiku.cc.cd/sitemap.xml

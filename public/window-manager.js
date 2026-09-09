@@ -31,6 +31,19 @@ if (win) {
   recordPlayer.addEventListener('keydown', event => {
     if (event.key === 'Enter') { event.preventDefault(); openRecordPlayer(); }
   });
+  const cassettePlayer = document.createElement('button');
+  cassettePlayer.type = 'button';
+  cassettePlayer.className = 'desktop-icon desktop-shortcut';
+  cassettePlayer.id = 'desktop-cassette-player';
+  cassettePlayer.title = '双击打开随身听 · 磁带室，或按 Enter';
+  cassettePlayer.setAttribute('aria-label', '随身听 · 磁带室');
+  cassettePlayer.innerHTML = '<img src="/assets/favicons/cassette.svg" width="32" height="32" alt=""><span>随身听<br>磁带室</span>';
+  desktop.append(cassettePlayer);
+  const openCassetteRoom = () => { window.location.href = '/cassette-room.html'; };
+  cassettePlayer.addEventListener('dblclick', openCassetteRoom);
+  cassettePlayer.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); openCassetteRoom(); }
+  });
   const glyphs = win.querySelector('.window-glyphs');
   const oldButtons = [...(glyphs?.querySelectorAll('span') || [])];
   ['最小化', '最大化', '关闭'].forEach((label, index) => {
