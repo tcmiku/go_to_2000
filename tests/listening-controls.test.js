@@ -7,8 +7,8 @@ import {createLyricsProjection} from '../public/lyrics.js';
 const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\r?\n/gm,'');
 const html=await readFile(new URL('../public/listening-room.html',import.meta.url),'utf8');
 
-async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords}={}){
-  const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},documentEvents={},animations=[],overlays=new Set(),sourceCalls=[];let timerId=0;
+async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords,searchFetch}={}){
+  const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},documentEvents={},animations=[],overlays=new Set(),sourceCalls=[],searchCalls=[];let timerId=0;
   class Element{
     constructor(){this.attributes={};this.listeners={};this.textContent='';this.dataset={};this.hidden=false;this.disabled=false;this.style={setProperty(){}};this.value='';this.options=[];this.tagName='DIV';const classes=new Set();this.classList={add:(...xs)=>xs.forEach(x=>classes.add(x)),remove:(...xs)=>xs.forEach(x=>classes.delete(x)),contains:x=>classes.has(x),toggle:(x,on)=>{on??=!classes.has(x);on?classes.add(x):classes.delete(x);}};}
     setAttribute(key,value){this.attributes[key]=String(value);}
@@ -51,14 +51,17 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
     loadProbeTracks:async()=>[{source:'wy',songmid:1,name:'Probe'}],selectMusicSource:options=>selectMusicSource({...options,probe:sourceProbe||(async()=>{})}),
     createLyricsProjection:options=>createLyricsProjection({...options,fetchLyrics:async()=>({ok:true,json:async()=>({lyric:''})}),isHidden:()=>document.hidden,reduced:()=>reducedMotion}),
     setTimeout:(fn)=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
-    fetch:async()=>({ok:true,json:async()=>({tracks:['One','Two','Three'].map(name=>({name,src:`/data/mp3/${name}.mp3`}))})}),
+    fetch:async(url,options)=>{
+      if(url.startsWith('/api/listening/search')){searchCalls.push({url,signal:options.signal});return searchFetch?searchFetch(url,options):{ok:true,json:async()=>({total:0,tracks:[]})};}
+      return {ok:true,json:async()=>({tracks:['One','Two','Three'].map(name=>({name,src:`/data/mp3/${name}.mp3`}))})};
+    },
     LXClient:class{dispose(){this.sources=null;}async load(id){sourceCalls.push(id);if(sourceLoad)await sourceLoad(id);this.id=id;this.sources={wy:{actions:['musicUrl'],qualitys:['128k']}};return{sources:this.sources};}async resolve(){return `https://example.com/${this.id}.mp3`;}}
   });
   vm.runInContext(source,context);
   const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
   const advance=async()=>{await flush();const queued=[...timers];timers.clear();for(const [,fn]of queued)fn();for(const animation of animations)animation.finish();await flush();};
   const settle=async()=>{for(let i=0;i<20;i++)await advance();};
-  await flush();return{$,audio,saved,location,windowEvents,documentEvents,flush,advance,settle,document,animations,overlays,sourceCalls};
+  await flush();return{$,audio,saved,location,windowEvents,documentEvents,flush,advance,settle,document,animations,overlays,sourceCalls,searchCalls};
 }
 
 test('physical play, pause and stop keys control media and tonearm state',async()=>{
@@ -165,4 +168,89 @@ test('clock writes are deduplicated and background tabs catch up without pausing
   assert.equal(p.document.body.classList.contains('is-backgrounded'),true);assert.equal(p.audio.paused,false);
   p.document.hidden=false;p.documentEvents.visibilitychange();
   assert.equal(p.$('#lcd-time').textContent,'00:27');assert.equal(p.document.body.classList.contains('is-backgrounded'),false);
+});
+
+const catalogTrack=(id,name)=>({id:`wy:${id}`,source:'wy',songmid:id,name,singer:'Artist',albumName:'Album'});
+const catalogResponse=(tracks,total=tracks.length)=>({ok:true,json:async()=>({tracks,total})});
+const submitCatalog=p=>p.$('#search-form').onsubmit({preventDefault(){}});
+function catalogAction(p,kind,id){
+  const button={dataset:{[kind]:id},disabled:false,closest:()=>null};
+  p.$('#search-results').onclick({target:{closest:selector=>selector===`[data-${kind}]`?button:null}});
+}
+
+test('catalogue opens from the wall without changing rooms and restores focus on close',async()=>{
+  const p=await player();p.$('#wall-toggle').click();p.windowEvents.hashchange();p.$('#catalog-open').click();
+  assert.equal(p.location.hash,'#wall');assert.equal(p.document.body.classList.contains('catalog-is-open'),true);
+  assert.equal(p.document.body.classList.contains('drawer-is-open'),false);assert.equal(p.document.activeElement,p.$('#music-query'));
+  p.windowEvents.keydown({key:'Escape'});assert.equal(p.$('#discover-dialog').hidden,true);assert.equal(p.document.activeElement,p.$('#catalog-open'));
+});
+
+test('catalogue debounces typing, waits for composition, and reuses recent searches',async()=>{
+  const p=await player({searchFetch:async()=>catalogResponse([catalogTrack(1,'周杰伦')])});p.$('#catalog-open').click();
+  const input=p.$('#music-query');input.emit('compositionstart');input.value='zhou';input.emit('input');await p.settle();assert.equal(p.searchCalls.length,0);
+  input.value='周杰伦';input.emit('compositionend');input.emit('input');input.emit('input');await p.settle();
+  assert.equal(p.searchCalls.length,1);assert.match(p.$('#search-results').innerHTML,/周杰伦/);
+  submitCatalog(p);await p.flush();assert.equal(p.searchCalls.length,1);
+  p.$('#search-clear').click();assert.equal(input.value,'');assert.equal(p.$('#load-more').hidden,true);
+});
+
+test('a slower old search cannot replace a newer query or its pagination',async()=>{
+  let release;const old=new Promise(resolve=>release=resolve);
+  const p=await player({searchFetch:async url=>url.includes('old')?old:catalogResponse([catalogTrack(2,'New result')])});p.$('#catalog-open').click();
+  p.$('#music-query').value='old';submitCatalog(p);await p.flush();
+  p.$('#music-query').value='new';submitCatalog(p);await p.flush();
+  release(catalogResponse([catalogTrack(1,'Old result')],99));await p.flush();
+  assert.match(p.$('#search-results').innerHTML,/New result/);assert.doesNotMatch(p.$('#search-results').innerHTML,/Old result/);
+  assert.equal(p.searchCalls[0].signal.aborted,true);assert.equal(p.$('#load-more').hidden,true);
+});
+
+test('search results play directly without requiring collection membership',async()=>{
+  const p=await player({savedRecords:[]});p.$('#catalog-open').click();
+  catalogAction(p,'listen','local:/data/mp3/One.mp3');await p.settle();
+  assert.equal(p.audio.src,'/data/mp3/One.mp3');assert.equal(p.audio.paused,false);
+  assert.equal(p.$('#discover-dialog').hidden,true);assert.equal(p.saved.has('slow-records.collection.v1'),false);
+});
+
+test('adding a result is idempotent; removal is explicit in the shelf catalogue',async()=>{
+  const track=catalogTrack(33,'Found');const p=await player({savedRecords:[],searchFetch:async()=>catalogResponse([track])});p.$('#catalog-open').click();
+  p.$('#music-query').value='Found';submitCatalog(p);await p.flush();
+  catalogAction(p,'add',track.id);catalogAction(p,'add',track.id);
+  assert.equal(p.saved.get('slow-records.collection.v1').length,1);assert.match(p.$('#search-results').innerHTML,/✓ 已上架/);
+  p.$('#catalog-shelf').click();assert.match(p.$('#search-results').innerHTML,/取下/);catalogAction(p,'add',track.id);
+  assert.equal(p.saved.get('slow-records.collection.v1').length,0);assert.doesNotMatch(p.$('#search-results').innerHTML,/data-add=/);
+});
+
+test('failed pagination retries the same page and preserves existing results',async()=>{
+  let pageTwoAttempts=0;const p=await player({searchFetch:async url=>{
+    if(url.endsWith('page=1'))return catalogResponse([catalogTrack(1,'First')],48);
+    if(++pageTwoAttempts===1)throw new Error('offline');return catalogResponse([catalogTrack(2,'Second')],48);
+  }});p.$('#catalog-open').click();p.$('#music-query').value='query';submitCatalog(p);await p.flush();
+  p.$('#load-more').click();await p.flush();assert.match(p.$('#search-results').innerHTML,/First/);assert.equal(p.$('#search-retry').hidden,false);
+  p.$('#search-retry').click();await p.flush();assert.equal(pageTwoAttempts,2);
+  assert.match(p.$('#search-results').innerHTML,/First/);assert.match(p.$('#search-results').innerHTML,/Second/);
+  assert.equal(p.$('#load-more').hidden,true);
+});
+
+test('reopening during catalogue close cancels stale hiding and restores interaction',async()=>{
+  const p=await player({reducedMotion:false});p.$('#catalog-open').click();await p.settle();
+  p.windowEvents.keydown({key:'Escape'});
+  assert.equal(p.$('#discover-dialog').hidden,false);assert.equal(p.$('#discover-dialog').inert,true);
+  p.$('#catalog-open').click();await p.settle();
+  assert.equal(p.$('#discover-dialog').hidden,false);assert.equal(p.$('#discover-dialog').inert,false);
+  assert.equal(p.document.body.classList.contains('catalog-is-open'),true);
+  p.windowEvents.keydown({key:'Escape'});await p.settle();assert.equal(p.$('#discover-dialog').hidden,true);
+  assert.equal(p.animations.some(animation=>animation.pending),false);
+});
+
+test('rapid index changes cancel previous leaf motion without delaying local filtering',async()=>{
+  const p=await player({reducedMotion:false});p.$('#catalog-open').click();await p.settle();
+  p.$('#catalog-shelf').click();p.$('#catalog-network').click();p.$('#catalog-shelf').click();
+  assert.equal(p.$('#catalog-shelf').getAttribute('aria-pressed'),'true');assert.match(p.$('#search-results').innerHTML,/One/);
+  assert.equal(p.animations.filter(animation=>animation.pending).length,1);
+  await p.settle();assert.equal(p.animations.some(animation=>animation.pending),false);
+});
+
+test('reduced motion keeps catalogue open, close and index changes immediate',async()=>{
+  const p=await player();p.$('#catalog-open').click();p.$('#catalog-shelf').click();p.windowEvents.keydown({key:'Escape'});
+  assert.equal(p.$('#discover-dialog').hidden,true);assert.equal(p.animations.length,0);
 });

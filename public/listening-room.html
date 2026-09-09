@@ -69,12 +69,6 @@
             <div class="jack jack-left" aria-hidden="true"></div><div class="jack jack-right" aria-hidden="true"></div>
             <span class="panel-bottom-line" aria-hidden="true"></span>
 
-            <section id="discover-dialog" class="machine-drawer search-drawer" role="dialog" aria-modal="false" aria-label="音乐搜索" tabindex="-1" hidden>
-              <button class="drawer-close" data-close aria-label="收回面板">×</button>
-              <div class="drawer-grip" aria-hidden="true"></div>
-              <form id="search-form" class="search-form"><input id="music-query" type="search" placeholder="歌曲 / 歌手" aria-label="搜索歌曲或歌手" maxlength="100" required><button type="submit" class="panel-button" aria-label="搜索"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></button></form>
-              <p id="search-status" class="panel-status" role="status"></p><div id="search-results" class="search-results"></div><button id="load-more" class="panel-button load-more" aria-label="加载更多" hidden>⌄</button>
-            </section>
             <section id="source-dialog" class="machine-drawer source-drawer" role="dialog" aria-modal="false" aria-label="音乐源设置" tabindex="-1" hidden>
               <button class="drawer-close" data-close aria-label="收回面板">×</button><div class="drawer-grip" aria-hidden="true"></div>
               <svg class="source-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16v5m-4 0h8M8 11a4 4 0 0 1 8 0M5 8a8 8 0 0 1 14 0M2 5a12 12 0 0 1 20 0"/></svg>
@@ -86,6 +80,16 @@
       </div>
     </section>
     <section id="wall-view" class="wall-view" aria-label="唱片墙" hidden><div id="record-collection" class="record-collection"></div></section>
+    <button id="catalog-open" class="catalog-book" aria-label="打开唱片目录搜索音乐" aria-expanded="false" aria-controls="discover-dialog"><span aria-hidden="true">♫</span><strong>唱片目录</strong><i aria-hidden="true"></i></button>
+    <section id="discover-dialog" class="machine-drawer search-drawer record-catalog" role="dialog" aria-modal="false" aria-labelledby="catalog-title" tabindex="-1" hidden>
+      <div class="catalog-binding" aria-hidden="true"><i></i><i></i><i></i></div><span class="catalog-ribbon" aria-hidden="true"></span>
+      <span id="catalog-cover-motion" class="catalog-cover-motion" aria-hidden="true">♫</span><span id="catalog-leaf-motion" class="catalog-leaf-motion" aria-hidden="true"></span>
+      <header class="catalog-header"><div><span class="catalog-edition" aria-hidden="true">RECORD INDEX · 2000</span><h2 id="catalog-title">唱片目录</h2></div><button class="drawer-close" data-close aria-label="合上唱片目录">×</button></header>
+      <div class="catalog-tabs" role="group" aria-label="查找范围"><button id="catalog-network" aria-pressed="true">找唱片</button><button id="catalog-shelf" aria-pressed="false">我的唱片架</button></div>
+      <form id="search-form" class="search-form"><div class="catalog-query"><input id="music-query" type="search" placeholder="歌曲名 / 歌手" aria-label="搜索歌曲或歌手" maxlength="100" autocomplete="off"><button id="search-clear" type="button" aria-label="清空搜索" hidden>×</button></div><button id="search-submit" type="submit" class="catalog-search-button">查找</button></form>
+      <div class="catalog-status"><p id="search-status" class="panel-status" role="status"></p><button id="search-retry" type="button" hidden>重试 ↻</button></div>
+      <div id="search-results" class="search-results" aria-label="唱片搜索结果" aria-busy="false"></div><button id="load-more" class="catalog-more" hidden>翻下一页 ↓</button>
+    </section>
   </main>
   <div class="sr-only" id="playback-state" role="status" aria-live="polite"></div>
   <p class="sr-only" id="lyric-caption" aria-live="off"></p>
