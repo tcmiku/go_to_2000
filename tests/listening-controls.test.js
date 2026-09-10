@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {selectMusicSource} from '../public/music-source-selection.js';
+import {createSharedListeningPlayer,readAudioDuration} from '../public/listening-shared.js';
 import {createLyricsProjection} from '../public/lyrics.js';
 const source=(await readFile(new URL('../public/listening-room.js',import.meta.url),'utf8')).replace(/^import .*\r?\n/gm,'');
 const html=await readFile(new URL('../public/listening-room.html',import.meta.url),'utf8');
 
-async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords,searchFetch}={}){
+async function player({shared=false,reducedMotion=true,sourceIds=['huibq'],preferred='huibq',sourceLoad,sourceProbe,savedRecords,searchFetch}={}){
   const nodes=new Map(),saved=new Map(),timers=new Map(),windowEvents={},documentEvents={},animations=[],overlays=new Set(),sourceCalls=[],searchCalls=[];let timerId=0;
   class Element{
     constructor(){this.attributes={};this.listeners={};this.textContent='';this.dataset={};this.hidden=false;this.disabled=false;this.style={setProperty(){}};this.value='';this.options=[];this.tagName='DIV';const classes=new Set();this.classList={add:(...xs)=>xs.forEach(x=>classes.add(x)),remove:(...xs)=>xs.forEach(x=>classes.delete(x)),contains:x=>classes.has(x),toggle:(x,on)=>{on??=!classes.has(x);on?classes.add(x):classes.delete(x);}};}
@@ -44,9 +45,10 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
   const audio=$('#audio');Object.assign(audio,{paused:true,ended:false,currentTime:0,duration:0,readyState:0,src:'',volume:.65,muted:false});
   audio.load=()=>{audio.readyState=audio.src?1:0;audio.duration=audio.src?240:NaN;audio.currentTime=0;audio.emit('emptied');};
   audio.play=async()=>{audio.paused=false;audio.emit('play');audio.emit('playing');};audio.pause=()=>{audio.paused=true;audio.emit('pause');};audio.removeAttribute=()=>{audio.src='';};const getAttribute=audio.getAttribute.bind(audio);audio.getAttribute=name=>name==='src'?audio.src:getAttribute(name);
-  let hash='';const location={get hash(){return hash;},set hash(value){hash=value?(value.startsWith('#')?value:'#'+value):'';}};
+  let hash='';const location={search:shared?'?together=1':'',get hash(){return hash;},set hash(value){hash=value?(value.startsWith('#')?value:'#'+value):'';}};
   const context=vm.createContext({document,location,innerWidth:1280,innerHeight:900,URL,AbortSignal,AbortController,HTMLImageElement:class{},CSS:{escape:value=>value},matchMedia:()=>({matches:reducedMotion}),requestAnimationFrame:fn=>fn(),cancelAnimationFrame(){},
     window:{addEventListener:(name,fn)=>{windowEvents[name]=fn;}},
+    setInterval(){},createSharedListeningPlayer,readAudioDuration,
     readStorage:(key,fallback)=>key.endsWith('preferences.v1')?{source:preferred}:savedRecords||fallback,saveStorage:(key,value)=>{saved.set(key,structuredClone(value));return true;},e:String,
     loadProbeTracks:async()=>[{source:'wy',songmid:1,name:'Probe'}],selectMusicSource:options=>selectMusicSource({...options,probe:sourceProbe||(async()=>{})}),
     createLyricsProjection:options=>createLyricsProjection({...options,fetchLyrics:async()=>({ok:true,json:async()=>({lyric:''})}),isHidden:()=>document.hidden,reduced:()=>reducedMotion}),
@@ -62,7 +64,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
   const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
   const advance=async()=>{await flush();const queued=[...timers];timers.clear();for(const [,fn]of queued)fn();for(const animation of animations)animation.finish();await flush();};
   const settle=async()=>{for(let i=0;i<20;i++)await advance();};
-  await flush();return{$,audio,saved,location,windowEvents,documentEvents,flush,advance,settle,document,animations,overlays,sourceCalls,searchCalls};
+  await flush();return{sharedPlayer:context.window.sharedListeningPlayer,$,audio,saved,location,windowEvents,documentEvents,flush,advance,settle,document,animations,overlays,sourceCalls,searchCalls};
 }
 
 test('physical play, pause and stop keys control media and tonearm state',async()=>{
@@ -264,4 +266,20 @@ test('an empty administrator source list keeps local playback available',async()
 test('a removed remembered source is replaced by the current administrator catalogue',async()=>{
   const p=await player({sourceIds:['new-custom'],preferred:'deleted-source'});await p.settle();
   assert.deepEqual(p.sourceCalls,['new-custom']);assert.equal(p.$('#source-select').value,'new-custom');assert.equal(p.saved.get('slow-records.preferences.v1').source,'new-custom');
+});
+
+
+test('shared mode reuses hardware and transfers without broadcasting remote playback back',async()=>{
+  const p=await player({shared:true}),commands=[],selected=[];
+  p.sharedPlayer.connect({control:(...args)=>commands.push(args),select:track=>selected.push(track)});
+  await p.$('#play-toggle').click();assert.equal(selected.length,0);
+  const state={revision:1,track:{id:'local:/data/mp3/One.mp3',name:'One',source:'local',src:'/data/mp3/One.mp3',duration:240},position:30,playing:true};
+  const pending=p.sharedPlayer.setState(state);await p.settle();await pending;
+  assert.equal(p.audio.paused,false);assert.ok(p.audio.currentTime>=30);assert.equal(p.$('#turntable').classList.contains('playing'),true);assert.equal(commands.length,0);
+  await p.$('#play-toggle').click();assert.equal(commands.at(-1)[0],'pause');
+  p.$('#stop-button').click();assert.equal(commands.at(-1)[0],'stop');
+  p.$('#seek').value='500';p.$('#seek').onchange();assert.equal(commands.at(-1)[0],'seek');assert.equal(commands.at(-1)[1].position,120);
+  p.$('#next-track').click();assert.equal(selected.at(-1).name,'Two');
+  const count=commands.length;p.$('#lid-toggle').click();p.$('#volume').emit('keydown',{key:'Home'});p.$('#mute-toggle').click();assert.equal(commands.length,count);assert.equal(p.audio.volume,0);
+  const paused=p.sharedPlayer.setState({...state,revision:2,position:12,playing:false});await p.settle();await paused;assert.equal(p.audio.paused,true);assert.equal(p.audio.currentTime,12);
 });

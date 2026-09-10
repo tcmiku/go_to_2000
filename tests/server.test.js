@@ -352,3 +352,15 @@ test('invalid music source configurations and cross-origin writes never replace 
   assert.equal((await app.req('/api/admin/data')).data.revision,store.revision);
   assert.equal((await fetch(app.base+'/music-sources.js')).status,200);
 });
+
+test('together page and room HTTP API share state across independent listeners',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  for(const route of ['/together','/together.html','/together.js','/together.css','/together-sync.js','/listening-shared.js']){const response=await fetch(app.base+route);assert.equal(response.status,200,route);if(route.includes('html'))assert.match(response.headers.get('content-security-policy'),/media-src 'self' blob: https: http:/);}
+  const first=await app.req('/api/together/create','POST',{name:'甲'});assert.equal(first.status,200);
+  const second=await app.req('/api/together/join','POST',{room:first.data.room,name:'乙'});assert.equal(second.status,200);
+  const selected=await app.req('/api/together/control','POST',{room:first.data.room,revision:0,command:'track',track:{id:'local:test',name:'唱片',source:'local',src:'/data/mp3/test.mp3',duration:180}},{'X-Room-Token':first.data.token});assert.equal(selected.status,200);
+  const state=await app.req('/api/together/state?room='+first.data.room,'GET',undefined,{'X-Room-Token':second.data.token});assert.equal(state.data.track.name,'唱片');assert.equal(state.data.playing,true);assert.equal(state.data.members.length,2);
+  assert.equal((await app.req('/api/together/state?room='+first.data.room)).status,401);
+  assert.equal((await app.req('/api/together/create','POST',{}, {Origin:'https://evil.example'})).status,403);
+  assert.equal((await app.req('/api/together/create')).status,405);
+});

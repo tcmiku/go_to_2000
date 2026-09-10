@@ -2,8 +2,12 @@ import { escapeHTML as e, readStorage, saveStorage } from './ui.js';
 import { LXClient } from './lx-client.js';
 import { loadProbeTracks, selectMusicSource } from './music-source-selection.js';
 import { createLyricsProjection } from './lyrics.js';
+import { createSharedListeningPlayer, readAudioDuration } from './listening-shared.js';
 const $=selector=>document.querySelector(selector);
 const audio=$('#audio'),lx=new LXClient();
+const sharedMode=/(?:\?|&)together=1(?:&|$)/.test(location.search||'')&&window.parent!==window;
+let sharedPlayer=null,sharedSeeking=false;
+if(sharedMode)document.body.classList.add('shared-listening');
 const lyrics=createLyricsProjection({audio,root:$('#holo-lyrics'),caption:$('#lyric-caption')});
 const STORAGE='slow-records.collection.v1',PREFS='slow-records.preferences.v1';
 const palette=[['#777b63','#f2e3bf','#b6a16f'],['#b4a58a','#303f3a','#617b6d'],['#a55b48','#f4debb','#d0a477'],['#303f48','#ebdfb9','#9d9e78'],['#ccbc9c','#3c4b3b','#908d58'],['#647a79','#f4e6ce','#bd8761']];
@@ -141,7 +145,7 @@ function updateTime(){
   const display=time(audio.currentTime).padStart(5,'0'),value=Math.round(progress*1000),label=`${time(audio.currentTime)} / ${time(duration)}`,angle=(50+progress*7).toFixed(2),seek=$('#seek');
   if(timeDisplay.display!==display){$('#lcd-time').textContent=display;timeDisplay.display=display;}
   if(timeDisplay.disabled!==!duration){seek.disabled=!duration;timeDisplay.disabled=!duration;}
-  if(timeDisplay.value!==value){seek.value=value;seek.style.setProperty('--fill',`${value/10}%`);timeDisplay.value=value;}
+  if(!sharedSeeking&&timeDisplay.value!==value){seek.value=value;seek.style.setProperty('--fill',`${value/10}%`);timeDisplay.value=value;}
   if(timeDisplay.label!==label){seek.setAttribute('aria-valuetext',label);timeDisplay.label=label;}
   if(timeDisplay.angle!==angle){$('#tonearm').style.setProperty('--arm-angle',`${angle}deg`);timeDisplay.angle=angle;}
 }
@@ -236,13 +240,14 @@ async function connectSource({automatic=false}={}){
   $('#source-status').setAttribute('aria-label','检测音源');
   connecting=promise;return promise;
 }
-async function playRecord(track,rect){
+async function playRecord(track,rect,remote=null){
+  if(sharedMode&&!remote){sharedPlayer?.select(track);return;}
   const previous=deckTrack,needleDown=$('#turntable').classList.contains('playing')||$('#turntable').classList.contains('paused'),lidClosed=$('#turntable').classList.contains('lid-closed')||location.hash==='#wall';
   cancelPlayback();const token=operation;setBusy(true);$('.machine-display').classList.remove('is-error');setStatus('正在取出唱片','…');audio.removeAttribute('src');audio.load();updateTime();closeDrawer(false);
   if(location.hash==='#wall'){location.hash='room';route();}
   $('#play-toggle').focus({preventScroll:true});setLid(true);$('#turntable').classList.remove('playing','paused');displayTrack(track);
   try{
-    const sourcePromise=(async()=>{if(track.source==='local')return track.src;await ensureSource();if(token!==operation)throw new Error('播放已取消');return lx.resolve(track,$('#quality-select').value);})();
+    const sourcePromise=(async()=>{if(remote)return remote.url;if(track.source==='local')return track.src;await ensureSource();if(token!==operation)throw new Error('播放已取消');return lx.resolve(track,$('#quality-select').value);})();
     const settledSource=sourcePromise.then(url=>({url}),error=>({error}));
     if(previous){
       $('#turntable').classList.add('arm-raised','arm-lifting');if(needleDown)$('#turntable').classList.add('arm-over-record');
@@ -253,10 +258,11 @@ async function playRecord(track,rect){
     }
     await flyRecord(track,rect,token);if(token!==operation)return;deckTrack=track;labelDisc(track);syncSleeves();$('#turntable').classList.remove('no-record');setStatus('正在读取唱片','…');
     const {url,error}=await settledSource;if(token!==operation)return;if(error)throw error;
-    audio.src=url;audio.load();lyrics.setTrack(track);await lowerTonearm(token);if(token!==operation)return;await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();
-  }catch(error){if(token!==operation)return;setBusy(false);$('#turntable').classList.remove('playing','paused','motor-starting','arm-raised','arm-over-record','arm-lifting');feedback(error.name==='NotAllowedError'?'等待播放':`播放失败：${error.message||'音源不可用'}`);}
+    audio.src=url;audio.load();lyrics.setTrack(track);await lowerTonearm(token);if(token!==operation)return;if(remote){$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();return;}await audio.play();if(token!==operation)return;$('#turntable').classList.remove('motor-starting','arm-over-record');setBusy(false);updatePlayback();
+  }catch(error){if(token!==operation)return;setBusy(false);$('#turntable').classList.remove('playing','paused','motor-starting','arm-raised','arm-over-record','arm-lifting');feedback(error.name==='NotAllowedError'?'等待播放':`播放失败：${error.message||'音源不可用'}`);if(remote)throw error;}
 }
 $('#play-toggle').onclick=async()=>{
+  if(sharedMode){if(!sharedPlayer?.track){if(records.length)sharedPlayer?.select(records[0]);else openDiscover();}else sharedPlayer.toggle();return;}
   if(busy){cancelPlayback();setStatus('已取消','■');return;}
   if(!current){if(records.length)playRecord(records[0]);else location.hash='wall';return;}
   if(!audio.paused){audio.pause();return;}
@@ -270,8 +276,10 @@ $('#play-toggle').onclick=async()=>{
 };
 function adjacent(delta){if(!records.length){location.hash='wall';return;}const index=records.findIndex(track=>track.id===current?.id);playRecord(records[(index+(index<0?1:delta)+records.length)%records.length]);}
 $('#previous-track').onclick=()=>adjacent(-1);$('#next-track').onclick=()=>adjacent(1);
-$('#stop-button').onclick=()=>{cancelPlayback();if(audio.readyState)audio.currentTime=0;$('#turntable').classList.remove('playing','paused');setStatus('已停止','■');updateTime();};
-$('#seek').oninput=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Number($('#seek').value)/1000*audio.duration;updateTime();lyrics.sync();};
+$('#stop-button').onclick=()=>{if(sharedMode){sharedPlayer?.command('stop');return;}cancelPlayback();if(audio.readyState)audio.currentTime=0;$('#turntable').classList.remove('playing','paused');setStatus('已停止','■');updateTime();};
+$('#seek').oninput=()=>{if(sharedMode){sharedSeeking=true;return;}if(Number.isFinite(audio.duration))audio.currentTime=Number($('#seek').value)/1000*audio.duration;updateTime();lyrics.sync();};
+$('#seek').onchange=()=>{sharedSeeking=false;if(sharedMode&&sharedPlayer?.track)sharedPlayer.command('seek',{position:Number($('#seek').value)/1000*sharedPlayer.track.duration});};
+$('#seek').onblur=$('#seek').onpointercancel=()=>{sharedSeeking=false;};
 function updateVolume(){
   const percent=Math.round(audio.volume*100);$('#volume').style.setProperty('--angle',`${audio.volume*280-140}deg`);$('#volume').setAttribute('aria-valuenow',String(percent));$('#volume').setAttribute('aria-valuetext',audio.muted?'静音':`${percent}%`);$('#mute-toggle').setAttribute('aria-label',audio.muted?'取消静音':'静音');$('#mute-toggle').setAttribute('aria-pressed',String(audio.muted));
 }
@@ -288,8 +296,8 @@ for(const name of ['play','pause','playing'])audio.addEventListener(name,updateP
 for(const name of ['timeupdate','loadedmetadata','durationchange','emptied'])audio.addEventListener(name,updateTime);
 audio.addEventListener('waiting',()=>{if(!busy&&!audio.paused)setStatus('正在缓冲','…');});
 audio.addEventListener('error',()=>{if(!audio.getAttribute('src'))return;cancelPlayback();$('#turntable').classList.remove('playing','paused');feedback('播放失败');});
-audio.addEventListener('ended',()=>{if(records.length>1)adjacent(1);else{updatePlayback();setStatus('播放结束','■');}});
-$('#source-open').onclick=()=>openDrawer('source-dialog',$('#source-open'));
+audio.addEventListener('ended',()=>{if(sharedMode){updatePlayback();setStatus('播放结束','■');return;}if(records.length>1)adjacent(1);else{updatePlayback();setStatus('播放结束','■');}});
+$('#source-open').onclick=()=>{openDrawer('source-dialog',$('#source-open'));if(sharedMode&&!connectedId&&!connecting)connectSource({automatic:true}).catch(()=>{});};
 $('#source-connect').onclick=()=>connectSource({automatic:true}).catch(()=>{});
 $('#source-select').onchange=()=>connectSource().catch(()=>{});
 $('#quality-select').onchange=savePrefs;
@@ -368,19 +376,33 @@ window.addEventListener('keydown',event=>{
   if(event.code!=='Space'||event.repeat||activeDrawer||/INPUT|TEXTAREA|SELECT|BUTTON|A/.test(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider')return;
   event.preventDefault();$('#play-toggle').click();
 });
-window.addEventListener('pagehide',()=>{cancelCatalogMotions();$('#discover-dialog').hidden=activeDrawer?.id!=='discover-dialog';cancelSearch();cancelPlayback();sourceOperation++;sourceController?.abort();connecting=null;connectedId=null;lx.dispose();});
-window.addEventListener('pageshow',event=>{if(event.persisted)connectSource({automatic:true}).catch(()=>{});});
+window.addEventListener('pagehide',()=>{sharedPlayer?.reset();cancelCatalogMotions();$('#discover-dialog').hidden=activeDrawer?.id!=='discover-dialog';cancelSearch();cancelPlayback();sourceOperation++;sourceController?.abort();connecting=null;connectedId=null;lx.dispose();});
+window.addEventListener('pageshow',event=>{if(event.persisted&&!sharedMode)connectSource({automatic:true}).catch(()=>{});});
 async function init(){
   audio.volume=Number.isFinite(prefs.volume)?Math.max(0,Math.min(1,prefs.volume)):.65;audio.muted=prefs.muted===true;
   if([...$('#source-select').options].some(option=>option.value===prefs.source))$('#source-select').value=prefs.source;
   if([...$('#quality-select').options].some(option=>option.value===prefs.quality))$('#quality-select').value=prefs.quality;
   setLid(prefs.lidOpen!==false);updateVolume();updateVisibility();route();renderCollection();
-  connectSource({automatic:true}).catch(()=>{});
+  if(!sharedMode)connectSource({automatic:true}).catch(()=>{});
   try{
     const response=await fetch('/api/radio',{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error();const data=await response.json();
     localTracks=data.tracks.map(track=>{const [name,...artist]=track.name.split(/\s+-\s+/);return {id:`local:${track.src}`,name,singer:artist.join(' - ')||'',albumName:'',source:'local',src:track.src};});
-    if(!Array.isArray(storageRecord)){records=localTracks;remember();}if(!current&&records.length){displayTrack(records[0]);setStatus('等待播放','■');}
+    if(!Array.isArray(storageRecord)){records=localTracks;remember();}if(!current&&records.length&&!sharedMode){displayTrack(records[0]);setStatus('等待播放','■');}
   }catch{feedback('本地唱片加载失败');}
   finally{loadingLocal=false;renderCollection();if(activeDrawer?.id==='discover-dialog'&&!$('#music-query').value.trim())runCatalogSearch();}
+}
+if(sharedMode){
+  sharedPlayer=createSharedListeningPlayer({audio,
+    load:track=>playRecord(track,null,{url:track.src}),
+    clear:()=>{cancelPlayback();audio.removeAttribute('src');audio.load();current=null;deckTrack=null;$('#turntable').classList.add('no-record');$('#turntable').classList.remove('playing','paused');$('#now-title').textContent='— — —';$('#disc-title').textContent='';syncSleeves();updateTime();},
+    resolveTrack:async(track,signal)=>{
+      let src=track.src;
+      if(track.source!=='local'){await ensureSource();signal.throwIfAborted();src=await lx.resolve(track,$('#quality-select').value,signal);}
+      signal.throwIfAborted();const duration=await readAudioDuration(src,AbortSignal.any([signal,AbortSignal.timeout(15000)]));return {...track,src,duration};
+    },
+    refresh:()=>{updateTime();updatePlayback();lyrics.sync();},onNotice:announce,
+  });
+  window.sharedListeningPlayer=sharedPlayer;
+  setInterval(()=>sharedPlayer.sync(),500);
 }
 init();

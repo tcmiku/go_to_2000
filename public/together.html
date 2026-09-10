@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ded4c1"><title>一起听 · 同频聆听室｜千禧冲浪站</title><link rel="icon" href="/assets/favicons/vinyl.svg"><link rel="stylesheet" href="/together.css"><script type="module" src="/together.js"></script></head>
+<body>
+<header class="topbar"><a href="/">↶ 千禧冲浪站</a><span>S L O W &nbsp; / &nbsp; LISTENING CLUB</span><a href="/listening-room.html">黑胶聆听室 ↗</a></header>
+<main>
+  <div class="heading"><div><p class="eyebrow">SIDE B · 好音乐，留一个位置给你</p><h1>一起听<span>同一首歌，此时此刻。</span></h1></div><div class="connection"><i id="connection-led"></i><span id="connection">尚未入座</span></div></div>
+  <div class="room-layout">
+    <section class="listening-space" aria-label="共享黑胶聆听室">
+      <iframe id="shared-player" src="/listening-room.html?together=1" title="黑胶聆听室唱片机" allow="autoplay"></iframe>
+    </section>
+    <aside class="side-panel">
+      <section class="room-card"><div class="ticket-top"><span>ADMIT TO THE LISTENING ROOM</span><b>♫</b></div><h2>给你留了个位置</h2><form id="room-form"><label for="nickname">怎么称呼你</label><input id="nickname" maxlength="20" placeholder="听友" autocomplete="nickname"><label for="room-code">房间码</label><div class="join-row"><input id="room-code" maxlength="8" placeholder="输入 8 位房间码" autocomplete="off" spellcheck="false"><button type="submit">加入</button></div><button id="create-room" type="button" class="create-button">＋ 开一间聆听室</button></form><div id="room-info" hidden><div class="room-number"><small>ROOM NO.</small><strong id="active-code"></strong></div><div class="ticket-actions"><button id="invite">复制邀请链接 ↗</button><button id="leave">离开</button></div><div id="members" class="members" aria-label="房间成员"></div><p class="room-tip">切歌、暂停、拖动进度，大家一起跟随。</p></div></section>
+      <section class="listening-note"><p class="eyebrow">NOW SHARING</p><h2 id="shared-title">等你放上一张唱片</h2><p id="shared-status">创建房间，让音乐把我们连在一起。</p><button id="enable-audio" hidden>打开声音</button><div class="note-rule"></div><p>翻开唱片目录，找一首想分享的歌。<br>也可以从唱片墙取下一张唱片。</p><p>唱片机上的播放、切歌、停止和进度<br>会同步给房间里的每一位听友。</p><small>音量、机盖与收藏，只属于你的这一边。</small></section>
+    </aside>
+  </div><p id="notice" class="notice" role="status" aria-live="polite">创建或加入房间后，就可以一起点歌。音量只影响自己。</p>
+</main><footer>把各自的夜晚，放进同一张唱片。<span>SLOW LISTENING CLUB / 2000</span></footer>
+</body></html>

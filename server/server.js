@@ -2,6 +2,7 @@ import { validateBlog } from '../public/blog-data.js';
 import http from 'node:http';
 import { createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
+import { createTogetherService } from './together-service.js';
 import { createListeningService, isPublicAddress } from './listening-service.js';
 import { isIP } from 'node:net';
 import { defaultMusicSources, validateMusicSources } from '../public/music-sources.js';
@@ -29,6 +30,7 @@ publicFiles.add('music-sources.js');
 publicFiles.add('lyrics.css');
 ['cassette-room.html','cassette-room.css','cassette-room.js','cassette-sound.js'].forEach(file=>publicFiles.add(file));
 ['listening-room.html','listening-room.css','listening-room.js','lyrics.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
+['together.html','together.css','together.js','together-sync.js','listening-shared.js'].forEach(file=>publicFiles.add(file));
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);
 function cleanText(value,max,label,{required=false}={}) {
@@ -122,6 +124,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
     catch(error){if(error.code==='ENOENT')return null;throw error;}
   }});
   const podcastService=createPodcastService();
+  const togetherService=createTogetherService();
   return http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
     res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
@@ -138,11 +141,16 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if((origin && ![`http://${host}`,`https://${host}`].includes(origin)) || req.headers['sec-fetch-site']==='cross-site')throw httpError(403,'不允许跨站修改');
         if(!String(req.headers['content-type']||'').startsWith('application/json'))throw httpError(415,'请使用 JSON 请求');
       }
-      if(route==='/listening-room.html' || route==='/listening-room') {
+      if(route==='/listening-room.html' || route==='/listening-room' || route==='/together.html' || route==='/together') {
         res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; media-src 'self' blob: https: http:; connect-src 'self'; frame-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
       }
       if(route==='/lx-sandbox.html') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src blob:; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; sandbox allow-scripts");
+      }
+      if(route.startsWith('/api/together/')) {
+        const action=route.slice('/api/together/'.length);
+        if(req.method!==(action==='state'?'GET':'POST'))throw httpError(405,'请求方式不支持');
+        return json(res,200,togetherService(action,action==='state'?{room:url.searchParams.get('room')}:await body(req),req.headers['x-room-token']));
       }
       if(route.startsWith('/api/listening/')) {
         const method=route==='/api/listening/request'?'POST':'GET';
@@ -291,7 +299,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(req.method==='HEAD'||size===0)return res.end();
         return await pipeline(createReadStream(target,{start,end}),res);
       }
-      const filename=route==='/'?'index.html':route==='/blog'?'blog.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
+      const filename=route==='/'?'index.html':route==='/blog'?'blog.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':route==='/together'?'together.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const targetRoot=filename.startsWith('assets/')?root:publicRoot;

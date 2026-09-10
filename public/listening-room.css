@@ -4269,3 +4269,6 @@ svg {
 .catalog-search-button:active,.record-catalog .catalog-play:active,.record-catalog .add-record:active{transform:translateY(2px)}
 @media(max-width:600px){.catalog-cover-motion{left:-7px;border-left-width:7px}.catalog-leaf-motion{top:216px;left:16px;right:12px;bottom:50px}}
 @media(prefers-reduced-motion:reduce){.catalog-tabs button{transition:none}}
+
+/* The room embeds this same player; only outer navigation belongs to the host. */
+.shared-listening .home-button,.shared-listening .together-link{display:none}
