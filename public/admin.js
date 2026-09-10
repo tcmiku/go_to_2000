@@ -1,10 +1,13 @@
+import { defaultMusicSources, validateMusicSources } from './music-sources.js';
+import { validateBlog } from './blog-data.js';
+import { renderMarkdown } from './blog-render.js';
 import { categoryNodes as categoryRefs, deleteSites, moveSites, upsertSite, deleteCategory } from './management-data.js';
 import { defaultAd, validateAd } from './retro-ad.js';
 import { $, escapeHTML as e, api, external, showToast, startClock } from './ui.js';
 import { flattenCategories, normalizeUrl, validateNavigation, validatePageContent } from './navigation-data.js';
 let data, submissions=[], section='sites', query='', categoryFilter='all', statusFilter='all', submissionFilter='pending', page=1, busy=false, selected=new Set(), undoData=null, editorHandler=null, confirmHandler=null, setupRequired=false;
 const pageSize=20;
-const sections={sites:['▧','网站管理','DIRECTORY','添加、整理和维护导航页中的每一个网站。','添加网站'],submissions:['✉','处理投稿','SUBMISSIONS','审核访客推荐的网站，收录或拒绝投稿。',null],categories:['▰','分类管理','CATEGORIES','整理两级目录，调整分类顺序。','添加分类'],hot:['★','热门推荐','RECOMMENDATIONS','挑选值得发现的网站，按顺序展示在前台。','添加推荐'],featured:['✦','精选网站','FEATURED SITES','维护前台精选栏中的网站、简介和封面。','添加精选'],friends:['↗','友情链接','WEB RING','让有趣的小站彼此相连。','添加友链'],settings:['⚙','站点设置','PREFERENCES','修改公告、展示文案和管理员密码。',null],backup:['▣','备份与恢复','BACKUP & RESTORE','带走一份完整目录，随时从备份恢复。',null]};
+const sections={sources:['♫','黑胶音源','MUSIC SOURCES','维护黑胶聆听室的音源目录与自动检测顺序。','添加音源'],blog:['▤','博客管理','BLOG ARCHIVE','撰写文章、管理分类标签，保存草稿或发布到个人博客。','新建文章'],sites:['▧','网站管理','DIRECTORY','添加、整理和维护导航页中的每一个网站。','添加网站'],submissions:['✉','处理投稿','SUBMISSIONS','审核访客推荐的网站，收录或拒绝投稿。',null],categories:['▰','分类管理','CATEGORIES','整理两级目录，调整分类顺序。','添加分类'],hot:['★','热门推荐','RECOMMENDATIONS','挑选值得发现的网站，按顺序展示在前台。','添加推荐'],featured:['✦','精选网站','FEATURED SITES','维护前台精选栏中的网站、简介和封面。','添加精选'],friends:['↗','友情链接','WEB RING','让有趣的小站彼此相连。','添加友链'],settings:['⚙','站点设置','PREFERENCES','修改公告、展示文案和管理员密码。',null],backup:['▣','备份与恢复','BACKUP & RESTORE','带走一份完整目录，随时从备份恢复。',null]};
 const flat=()=>flattenCategories(data.navigation.categories);
 const records=()=>flat().flatMap(c=>c.sites.map(s=>({...s,categoryId:c.id,categoryName:c.name,parentId:c.parentId})));
 function findCategory(d,id){for(const c of d.navigation.categories){if(c.id===id)return c;for(const child of c.children||[])if(child.id===id)return child;}return null;}
@@ -22,7 +25,7 @@ function draw(){
   $('#section-title').textContent=title;$('#section-code').textContent=code;$('#section-description').textContent=description;$('#workspace-title').textContent=`${icon} ${title}`;$('#main-add').hidden=!add;$('#main-add').textContent=`＋ ${add||''}`;
   $('#updated-at').textContent=`最后保存：${new Date(data.updatedAt).toLocaleString('zh-CN')} · v${data.revision}`;
   $('#undo-button').hidden=!undoData;drawStats();drawNav();
-  if(section==='sites')drawSites();else if(section==='submissions')drawSubmissions();else if(section==='categories')drawCategories();else if(section==='hot')drawHot();else if(section==='featured'||section==='friends')drawLinks();else if(section==='settings')drawSettings();else drawBackup();
+  if(section==='sources')drawSources();else if(section==='blog')drawBlog();else if(section==='sites')drawSites();else if(section==='submissions')drawSubmissions();else if(section==='categories')drawCategories();else if(section==='hot')drawHot();else if(section==='featured'||section==='friends')drawLinks();else if(section==='settings')drawSettings();else drawBackup();
 }
 function siteRows(){
   const allowed=categoryFilter==='all'?null:new Set([categoryFilter,...flat().filter(c=>c.parentId===categoryFilter).map(c=>c.id)]);
@@ -52,7 +55,7 @@ function drawSubmissions(){
   $('#workspace-body').innerHTML=`<div class="admin-toolbar"><label for="submission-filter">处理状态</label><select id="submission-filter">${selectOptions([['pending','待处理'],['accepted','已收录'],['rejected','已拒绝'],['all','全部投稿']],submissionFilter)}</select><span class="admin-tabs-hint">共 ${submissions.length} 条，待处理 ${submissions.filter(item=>item.status==='pending').length} 条</span></div>`+(items.length?`<div class="table-wrap submission-table"><table><thead><tr><th>投稿网站</th><th>简介 / 投稿人</th><th>建议分类</th><th>状态</th><th style="text-align:right">操作</th></tr></thead><tbody>${items.map(item=>`<tr><td>${siteCell(item)}<small class="submission-date">${new Date(item.createdAt).toLocaleString('zh-CN')}</small></td><td><div class="submission-description">${e(item.description||'（未填写简介）')}</div>${item.contact?`<small class="submission-contact">联系：${e(item.contact)}</small>`:''}</td><td>${item.status==='pending'?`<label class="sr-only" for="submission-category-${e(item.id)}">${e(item.name)} 的收录分类</label><select id="submission-category-${e(item.id)}" data-submission-category="${e(item.id)}"><option value="">选择收录分类</option>${categoryOptions(item.categoryId)}</select>`:`<span class="category-pill">${e(flat().find(c=>c.id===item.categoryId)?.name||item.categoryId||'—')}</span>`}</td><td><span class="submission-status ${e(item.status)}">${labels[item.status]}</span></td><td><div class="row-actions">${item.status==='pending'?`${actionButton('accept-submission',item.id,'收录','primary')}${actionButton('reject-submission',item.id,'拒绝')}`:''}${actionButton('delete-submission',item.id,'删除','delete')}</div></td></tr>`).join('')}</tbody></table></div>`:empty(submissionFilter==='pending'?'没有待处理投稿。':'此状态下没有投稿。'));
 }
 function drawSettings(){const ad={...defaultAd,...data.settings.ad};$('#workspace-body').innerHTML=`<form id="settings-form" class="settings-form"><h3>✎ 前台内容</h3><label>首页标语<input name="tagline" maxlength="100" value="${e(data.settings.tagline)}" required></label><label>站内公告<textarea name="announcement" maxlength="500" required>${e(data.settings.announcement)}</textarea></label><div class="form-grid"><label>热门推荐栏目名称<input name="hotTitle" maxlength="80" value="${e(data.content.hot.title)}" required></label><label>精选栏目名称<input name="featuredTitle" maxlength="80" value="${e(data.content.featured.title)}" required></label></div><h3>弹窗广告</h3><label><input name="adEnabled" type="checkbox" ${ad.enabled?'checked':''}> 开启首页弹窗广告</label><label>广告标题<input name="adTitle" maxlength="80" value="${e(ad.title)}"></label><label>广告正文<textarea name="adText" maxlength="500">${e(ad.text)}</textarea></label><label>图片路径<input name="adImage" maxlength="500" value="${e(ad.image)}"><small class="field-hint">使用 /assets/ 下的 PNG 或 SVG 图片路径；留空不显示图片。</small></label><label>跳转链接<input name="adUrl" type="url" maxlength="2000" value="${e(ad.url)}" placeholder="https://example.com"><small class="field-hint">留空则不显示跳转按钮。</small></label><label>跳转按钮文字<input name="adButton" maxlength="30" value="${e(ad.button)}"></label><p class="field-hint">关闭按钮始终可用；趣味按钮会躲开鼠标。“永不显示”适用于当前浏览器。</p><p class="form-error" id="settings-error" role="alert"></p><button class="primary" type="submit">▣ 保存设置</button><span class="save-note">保存后立即生效</span></form><form id="password-form" class="password-section"><h3>▣ 修改管理员密码</h3><div class="form-grid"><label>当前密码<input name="current" type="password" required maxlength="200" autocomplete="current-password"></label><label>新密码（至少 10 位）<input name="password" type="password" required minlength="10" maxlength="200" autocomplete="new-password"></label></div><p class="form-error" id="password-error" role="alert"></p><button type="submit">更新密码</button></form>`;}
-function drawBackup(){$('#workspace-body').innerHTML=`<div class="backup-grid"><div class="backup-card"><span class="backup-icon">▣ ↓</span><h3>导出完整备份</h3><p>下载全部网站、分类、热门推荐、精选、友情链接及站点设置。</p><a class="button" href="/api/admin/backup" download>↓ 下载 JSON 备份</a></div><div class="backup-card"><span class="backup-icon">▣ ↑</span><h3>从备份恢复</h3><p>选择本站导出的 JSON 文件。系统会先检查内容，并展示恢复范围。</p><button data-action="import">↑ 选择备份文件</button></div></div><p class="backup-note">恢复会替换当前目录与站点设置。管理员账号和浏览器收藏不包含在备份内，也不会被替换。每次保存前，服务器会自动保留上一版数据；当前会话也可以撤销最近一次修改。</p>`;}
+function drawBackup(){$('#workspace-body').innerHTML=`<div class="backup-grid"><div class="backup-card"><span class="backup-icon">▣ ↓</span><h3>导出完整备份</h3><p>下载全部网站、分类、博客文章（含草稿）、热门推荐、精选、友情链接、黑胶音源及站点设置。</p><a class="button" href="/api/admin/backup" download>↓ 下载 JSON 备份</a></div><div class="backup-card"><span class="backup-icon">▣ ↑</span><h3>从备份恢复</h3><p>选择本站导出的 JSON 文件。系统会先检查内容，并展示恢复范围。</p><button data-action="import">↑ 选择备份文件</button></div></div><p class="backup-note">恢复会替换当前目录与站点设置。管理员账号和浏览器收藏不包含在备份内，也不会被替换。每次保存前，服务器会自动保留上一版数据；当前会话也可以撤销最近一次修改。</p>`;}
 async function loadData(){const [nextData,nextSubmissions]=await Promise.all([api('/api/admin/data'),api('/api/admin/submissions')]);data=nextData;submissions=nextSubmissions.items;selected.clear();draw();}
 async function authenticate(){
   try{const auth=await api('/api/auth');setupRequired=auth.setupRequired;if(auth.authenticated){$('#admin-username').textContent=auth.username;await loadData();$('#auth-screen').hidden=true;$('#admin-screen').hidden=false;return;}
@@ -106,7 +109,7 @@ function openLink(id){const target=section,original=id!==undefined?(target==='fe
 function openHot(){const available=records().filter(s=>!data.content.hot.siteIds.includes(s.id));if(!available.length){showToast('暂无可添加的网站，请先在目录中添加网站');return;}
   showEditor('添加热门推荐',`<label>选择网站<select name="siteId">${available.map(s=>`<option value="${e(s.id)}">${e(s.name)} · ${e(s.categoryName)}${s.hidden?'（已隐藏）':''}</option>`).join('')}</select></label><p class="field-hint">推荐按此列表顺序展示。可在添加后使用上下箭头调整。</p>`,async form=>mutate(d=>{const id=form.get('siteId');if(!categoryRefs(d).some(c=>c.sites.some(s=>s.id===id)))throw new Error('网站不存在');if(!d.content.hot.siteIds.includes(id))d.content.hot.siteIds.push(id);},'推荐已添加'));
 }
-function add(){if(section==='sites')openSite();else if(section==='categories')openCategory();else if(section==='hot')openHot();else if(section==='featured'||section==='friends')openLink();}
+function add(){if(section==='sources')openSource();else if(section==='blog')openBlog();else if(section==='sites')openSite();else if(section==='categories')openCategory();else if(section==='hot')openHot();else if(section==='featured'||section==='friends')openLink();}
 function deleteItem(id){
   const target=section;let name,detail='';
   if(target==='sites')name=records().find(s=>s.id===id).name;
@@ -160,7 +163,11 @@ document.addEventListener('click',async event=>{
   const nav=event.target.closest('[data-section]');if(nav&&!busy){section=nav.dataset.section;page=1;query='';categoryFilter='all';statusFilter='all';selected.clear();draw();return;}
   const button=event.target.closest('[data-action]');if(!button||busy)return;const {action,id}=button.dataset;
   try{
-    if(action==='retry-auth')await authenticate();
+    if(action.startsWith('source-'))await sourceAction(action,id);
+    else if(action==='blog-edit')openBlog(id);
+    else if(action==='blog-toggle')await mutate(d=>{const p=d.blog.posts.find(p=>p.id===id);p.status=p.status==='published'?'draft':'published';},'文章状态已更新');
+    else if(action==='blog-delete')showConfirm('删除文章','确定删除这篇文章吗？保存后可撤销上一次操作。',()=>mutate(d=>{d.blog.posts=d.blog.posts.filter(p=>p.id!==id);},'文章已删除'));
+    else if(action==='retry-auth')await authenticate();
     else if(action==='page'){page=Number(id);updateSiteTable();}
     else if(action==='edit'){if(section==='sites')openSite(id);else if(section==='categories')openCategory(id);else openLink(id);}
     else if(action==='delete')deleteItem(id);
@@ -188,10 +195,52 @@ document.addEventListener('submit',async event=>{
 });
 $('#import-file').onchange=async event=>{
   const file=event.target.files[0];if(!file)return;
-  try{if(file.size>8*1024*1024)throw new Error('备份文件不能超过 8 MB');const backup=JSON.parse(await file.text());validateNavigation(backup.navigation);validatePageContent(backup.content,backup.navigation.categories);if(!backup.settings||typeof backup.settings.tagline!=='string'||typeof backup.settings.announcement!=='string')throw new Error('请使用本站导出的完整备份文件');const groups=flattenCategories(backup.navigation.categories),total=groups.reduce((sum,c)=>sum+c.sites.length,0);
-    showConfirm('恢复备份',`文件：${file.name}\n包含 ${total} 个网站、${groups.length} 个分类、${backup.content.featured.items.length} 个精选、${backup.content.friends.length} 个友链。\n\n确认后将替换当前全部目录与设置。`,async()=>save(backup,'备份已恢复，前台目录已更新'));
+  try{if(file.size>8*1024*1024)throw new Error('备份文件不能超过 8 MB');const backup=JSON.parse(await file.text());if(backup.musicSources!==undefined)validateMusicSources(backup.musicSources);validateBlog(backup.blog);validateNavigation(backup.navigation);validatePageContent(backup.content,backup.navigation.categories);if(!backup.settings||typeof backup.settings.tagline!=='string'||typeof backup.settings.announcement!=='string')throw new Error('请使用本站导出的完整备份文件');const groups=flattenCategories(backup.navigation.categories),total=groups.reduce((sum,c)=>sum+c.sites.length,0);
+    showConfirm('恢复备份',`文件：${file.name}\n包含 ${total} 个网站、${groups.length} 个分类、${backup.content.featured.items.length} 个精选、${backup.content.friends.length} 个友链；${backup.blog?backup.blog.posts.length+' 篇博客文章（含草稿）':'旧版备份不含博客，将保留当前文章'}；${backup.musicSources!==undefined?backup.musicSources.length+' 个黑胶音源':'旧版备份不含音源，将保留当前音源'}。\n\n确认后将替换当前全部目录与设置。`,async()=>save(backup,'备份已恢复，前台目录已更新'));
   }catch(error){showToast(`无法导入：${error.message}`);}
 };
+function drawBlog(){
+ const posts=data.blog?.posts||[];
+ $('#workspace-body').innerHTML=`<div class="admin-toolbar"><label>搜索文章 <input type="search" id="blog-search" placeholder="标题、分类或标签"></label><label>状态 <select id="blog-status"><option value="all">全部状态</option><option value="published">已发布</option><option value="draft">草稿</option></select></label><a href="/blog" target="_blank">打开博客 ↗</a></div><div id="blog-rows"></div>`;
+ function rows(){const q=$('#blog-search').value.trim().toLowerCase(),status=$('#blog-status').value;
+ const items=posts.filter(p=>(status==='all'||p.status===status)&&`${p.title} ${p.category} ${p.tags.join(' ')}`.toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
+ $('#blog-rows').innerHTML=items.length?`<div class="table-wrap"><table><thead><tr><th>文章</th><th>分类 / 日期</th><th>状态</th><th>操作</th></tr></thead><tbody>${items.map(p=>`<tr><td><strong>${e(p.title)}</strong><div class="field-hint">${e(p.tags.join(' · '))}</div></td><td>${e(p.category)}<br>${e(p.date)}</td><td>${p.status==='published'?'已发布':'草稿'}</td><td><div class="row-actions">${actionButton('blog-edit',p.id,'编辑')}${actionButton('blog-toggle',p.id,p.status==='published'?'转草稿':'发布')}${actionButton('blog-delete',p.id,'删除','delete')}</div></td></tr>`).join('')}</tbody></table></div>`:empty('尚无匹配文章，点击“新建文章”开始写作。');}
+ $('#blog-search').oninput=rows;$('#blog-status').onchange=rows;rows();
+}
+function openBlog(id){
+ const original=data.blog?.posts.find(p=>p.id===id),p=original||{title:'',date:new Date().toISOString().slice(0,10),category:'随笔',tags:[],summary:'',body:'',status:'draft',sourceUrl:''};
+ showEditor(original?'编辑文章':'新建文章',`<label>标题<input name="title" required maxlength="200" value="${e(p.title)}"></label><div class="form-grid"><label>日期<input name="date" type="date" required value="${e(p.date)}"></label><label>分类<input name="category" maxlength="100" value="${e(p.category)}" list="blog-categories"><datalist id="blog-categories">${[...new Set((data.blog?.posts||[]).map(p=>p.category))].map(c=>`<option value="${e(c)}">`).join('')}</datalist></label></div><label>标签（逗号分隔）<input name="tags" value="${e(p.tags.join(', '))}"></label><label>摘要<textarea name="summary" maxlength="500">${e(p.summary)}</textarea></label><label>正文（Markdown）<textarea name="body" id="blog-body" required maxlength="500000" rows="18">${e(p.body)}</textarea></label><button type="button" id="blog-preview-button">预览正文</button><div id="blog-preview" class="blog-preview" hidden></div><label>状态<select name="status"><option value="draft" ${p.status==='draft'?'selected':''}>草稿（仅后台可见）</option><option value="published" ${p.status==='published'?'selected':''}>发布到博客</option></select></label>`,async form=>{
+  const post={...p,id:id||`post-${crypto.randomUUID()}`,title:String(form.get('title')).trim(),date:String(form.get('date')),category:String(form.get('category')).trim()||'随笔',tags:[...new Set(String(form.get('tags')).split(/[,，]/).map(t=>t.trim()).filter(Boolean))],summary:String(form.get('summary')).trim(),body:String(form.get('body')).trim(),status:String(form.get('status'))};
+  if(!post.summary)post.summary=post.body.replace(/[#*`>]/g,'').slice(0,180);
+  validateBlog({posts:[post]});
+  await mutate(d=>{d.blog||={posts:[]};if(original)d.blog.posts[d.blog.posts.findIndex(x=>x.id===id)]=post;else d.blog.posts.push(post);},post.status==='published'?'文章已发布':'草稿已保存');
+ });
+ $('#blog-preview-button').onclick=()=>{const target=$('#blog-preview');target.hidden=!target.hidden;if(!target.hidden)renderMarkdown($('#blog-body').value,target);};
+}
+
 for(const dialog of document.querySelectorAll('dialog'))dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
 startClock();authenticate();
 document.querySelectorAll('a[href="/admin"]').forEach(link=>{link.href=window.location.pathname;});
+
+function musicSources(d=data){return d.musicSources??structuredClone(defaultMusicSources);}
+function drawSources(){
+ const list=musicSources();
+ $('#workspace-body').innerHTML=`<p class="section-intro">填写 LX 自定义音源的 JavaScript 直链。保存后，聆听室刷新或重新检测时生效；优先检查用户上次选择，再按此顺序检测启用的音源。最多 32 项。</p>`+(list.length?`<div class="table-wrap"><table><thead><tr><th>顺序</th><th>音源 / 脚本地址</th><th>状态</th><th>操作</th></tr></thead><tbody>${list.map((s,i)=>`<tr><td>${i+1}</td><td><strong>${e(s.name)}</strong><div class="cell-description" style="max-width:420px;overflow-wrap:anywhere">${e(s.url)}</div><small>${e(s.id)}</small></td><td><span class="status-badge ${s.enabled===false?'off':''}">${s.enabled===false?'已停用':'已启用'}</span></td><td><div class="row-actions">${actionButton('source-up',s.id,'↑','reorder',i===0)}${actionButton('source-down',s.id,'↓','reorder',i===list.length-1)}${actionButton('source-edit',s.id,'编辑')}${actionButton('source-toggle',s.id,s.enabled===false?'启用':'停用')}${actionButton('source-delete',s.id,'删除','delete')}</div></td></tr>`).join('')}</tbody></table></div>`:empty('暂无音源。点击「添加音源」配置网络播放；本地唱片仍可播放。'));
+}
+function openSource(id){
+ const original=musicSources().find(s=>s.id===id);
+ showEditor(original?'编辑音源':'添加音源',`<label>音源名称<input name="name" maxlength="80" required autofocus value="${e(original?.name||'')}" placeholder="例如：我的音乐源"></label><label>脚本地址<input name="url" type="url" maxlength="4000" required value="${e(original?.url||'')}" placeholder="https://example.com/latest.js"><small class="field-hint">填写可直接下载的 LX 自定义源脚本地址，而非网页链接。</small></label><label class="checkbox-label"><input name="enabled" type="checkbox" ${original?.enabled!==false?'checked':''}>启用音源</label>`,async form=>{
+   await mutate(d=>{const list=musicSources(d);const item={id:original?.id||`source-${crypto.randomUUID()}`,name:String(form.get('name')).trim(),url:String(form.get('url')).trim(),enabled:form.has('enabled')};const index=list.findIndex(s=>s.id===item.id);if(index>=0)list[index]=item;else list.push(item);d.musicSources=validateMusicSources(list);},'音源已保存');
+ });
+}
+async function sourceAction(action,id){
+ const source=musicSources().find(s=>s.id===id);if(!source)return;
+ if(action==='source-edit'){openSource(id);return;}
+ const change=()=>mutate(d=>{const list=musicSources(d),index=list.findIndex(s=>s.id===id);if(index<0)return;
+   if(action==='source-delete')list.splice(index,1);
+   else if(action==='source-toggle')list[index].enabled=list[index].enabled===false;
+   else{const next=index+(action==='source-up'?-1:1);if(next>=0&&next<list.length)[list[index],list[next]]=[list[next],list[index]];}
+   d.musicSources=validateMusicSources(list);
+ },'音源目录已更新');
+ if(action==='source-delete')showConfirm('删除音源',`确定删除「${source.name}」吗？不会删除唱片收藏，可撤销上一次保存。`,change);else await change();
+}

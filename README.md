@@ -45,6 +45,8 @@ ADMIN_ENABLED=1 ADMIN_PATH=/control-room npm run dev
 
 ## 后台
 
+- **黑胶音源**：添加、编辑名称和 LX 脚本直链、启用或停用、上下排序、删除，最多 32 项。聆听室刷新或重新检测后使用最新配置；优先尝试用户上次选择的有效音源，再按后台顺序检测。
+
 - **网站管理**：新增、编辑、删除、显示/隐藏、NEW 标记、移动分类、上下排序。
 - **批量管理**：当前页全选、跨页选择、批量显示/隐藏、移动、删除；切换筛选条件会清空选择。
 - **分类管理**：两级分类增删改、调整父目录、同级排序。删除分类前显示将删除的网站/子分类数量。
@@ -79,6 +81,22 @@ ADMIN_ENABLED=1 ADMIN_PATH=/control-room npm run dev
 
 如忘记管理员密码：先停止服务，妥善备份 `data/.private/account.json`，将该文件移出 `.private` 后重启服务，再在后台创建新账号。不要删除 `store.json`，网站数据无需重置。
 
+也可以使用命令行直接重置密码。请先停止正在运行的服务，然后执行命令并按提示输入两次新密码（输入内容不会回显）：
+
+```sh
+npm run reset-admin-password
+```
+
+数据目录不是默认的 `data` 时可指定 `--data-dir /path/to/data`；自动化场景可使用 `--password-stdin` 读取标准输入的两行相同密码。命令只更新 `.private/account.json` 中的密码哈希和盐，不改变管理员用户名或站点数据；完成后重新启动服务。
+
+如只想确认手头的密码是否正确，可执行：
+
+```sh
+npm run check-admin-password
+```
+
+它只输出“匹配”或“不匹配”，不会显示密码、哈希或随机盐；自动化场景可追加 `--password-stdin`，读取标准输入的第一行。
+
 ## 检查
 
 ```sh
@@ -99,6 +117,7 @@ npm run check
 - `ui.js` / `radio.js`：公共界面工具与本地 MP3 / 合成旋律电台。
 - `start-menu.js` / `minesweeper.js` / `snake.js`：Win98 开始菜单与附件小游戏。
 - `server.js`：本地 HTTP 服务、账号、会话、校验与文件持久化。
+- `scripts/reset-admin-password.mjs` / `scripts/check-admin-password.mjs` / `server/admin-account.js`：停止服务后从命令行重置或校验管理员密码及其账号文件。
 - `assets/layers/`：保留原项目的透明图片素材。
 
 目录来源信息保留在数据的 `source` 中。现有链接未逐一验证在线状态；站内热门推荐是人工整理，不代表实时访问排行。
@@ -170,7 +189,9 @@ node --test tests/cassette-sound.test.js tests/podcast.test.js tests/radio.test.
 
 ### 网络音源
 
-音源目录使用 [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的八个 `latest.js` 链接：Huibq、SixYin、Flower、LX、ikun、Grass、Juhe API、QDY。进入聆听室即自动检测：优先上次选中的音源，再按目录顺序尝试，选中并记住首个通过检测的音源。检测使用最多两首已收藏的网络歌曲，没有可用收藏时通过现有搜索接口取得检测曲目；必须完成脚本初始化、网易云平台和音质检查、播放地址解析，以及独立静音音频元素的 `canplay` 检查才算通过。检测不调用播放，不修改本地唱片或打断当前音频；每个音源最多检测 22 秒，单首曲目的解析和加载最多 7 秒。旋钮灯闪黄表示检测中，绿色表示通过，红色表示失败。展开机身天线旋钮可手动选择音源，电源图标可重新自动检测；手动选择会取消旧检测。服务端缓存脚本 15 分钟。支持按照 [LX 自定义源协议](https://lxmusic.toside.cn/desktop/custom-source) 的 `inited`、`request`、`musicUrl`、Buffer、MD5、AES、RSA 和 zlib 能力调用脚本。源更新提示不自动执行更新，也不弹出外部页面。
+默认音源目录使用 [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的八个 `latest.js` 链接：Huibq、SixYin、Flower、LX、ikun、Grass、Juhe API、QDY。进入聆听室即自动检测：优先上次选中的音源，再按目录顺序尝试，选中并记住首个通过检测的音源。检测使用最多两首已收藏的网络歌曲，没有可用收藏时通过现有搜索接口取得检测曲目；必须完成脚本初始化、网易云平台和音质检查、播放地址解析，以及独立静音音频元素的 `canplay` 检查才算通过。检测不调用播放，不修改本地唱片或打断当前音频；每个音源最多检测 22 秒，单首曲目的解析和加载最多 7 秒。旋钮灯闪黄表示检测中，绿色表示通过，红色表示失败。展开机身天线旋钮可手动选择音源，电源图标可重新自动检测；手动选择会取消旧检测。服务端缓存脚本 15 分钟。支持按照 [LX 自定义源协议](https://lxmusic.toside.cn/desktop/custom-source) 的 `inited`、`request`、`musicUrl`、Buffer、MD5、AES、RSA 和 zlib 能力调用脚本。源更新提示不自动执行更新，也不弹出外部页面。
+
+管理员可在「黑胶音源」中维护目录，脚本地址须为公网 HTTP / HTTPS 的 LX 自定义源 JavaScript 直链。配置保存在 `data/store.json` 的 `musicSources` 字段，并纳入备份与恢复；旧备份未包含该字段时保留现有配置。首次使用旧版数据时提供默认八个音源，主动删除全部音源或全部停用后不再自动补回，本地唱片仍可播放。脚本地址修改会使用新的服务端缓存条目，删除或停用后服务端拒绝继续获取该音源。
 
 这些脚本主要解析音乐播放地址，不提供歌曲搜索。独立搜索适配按照 LX 的网易云 EAPI 查询协议获取歌曲元数据，保留 `source/songmid/singer/albumId/types` 等字段后传给音源。只展示真实搜索结果；平台失败时显示错误，不以样例结果替代。
 
@@ -187,10 +208,28 @@ npm ci
 npm run build:music
 ```
 
-前端实现位于 `public/listening-room.html/css/js`、`public/music-source-selection.js`、`public/lx-client.js`、`public/lx-sandbox.html/js`；音源服务位于 `server/listening-service.js`。Worker 源码为 `scripts/lx-worker-entry.js`，构建产物为 `public/lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
+共享音源默认值与校验位于 `public/music-sources.js`。前端实现位于 `public/listening-room.html/css/js`、`public/music-source-selection.js`、`public/lx-client.js`、`public/lx-sandbox.html/js`；音源服务位于 `server/listening-service.js`。Worker 源码为 `scripts/lx-worker-entry.js`，构建产物为 `public/lx-worker.js`。使用下列命令执行音源契约、加密、网络限制和 HTTP 路由检查：
 
 ```sh
 node --test tests/music-source-selection.test.js tests/listening-controls.test.js tests/listening.test.js tests/server.test.js
 ```
 
 最近一次聆听室性能优化的上述 46 项检查通过；该轮未进行浏览器点击、截图或电脑操作测试。此前全项目检查记录有原有 `tests/pinball.test.js` 的「three drains end the game and require a new game」失败，与聆听室变更无关。
+
+## 个人博客 · tcmiku 的档案库
+
+首页菜单「个人博客」进入 `/blog`（亦支持 `/blog.html`）。新页面包含文章目录、标题/摘要/标签搜索、分类筛选、分页和 Markdown 文章阅读；手机端自适应。文章永久链接使用 `/blog?id=文章ID`。
+
+开启站长后台后，在「博客管理」中新增或编辑标题、日期、分类、标签、摘要及 Markdown 正文，支持正文预览、保存草稿、发布、转回草稿和删除。分类与标签随文章直接维护。草稿不会出现在公开接口中，也无法通过文章 ID 读取。保存沿用现有账号认证、原子写入、版本冲突检测、撤销和完整 JSON 备份。恢复不包含博客字段的旧版备份时保留当前博客；新版备份会替换博客（含草稿）。
+
+`data/blog-seed.json` 为从 https://tcmiku.github.io/ 迁入的 44 篇文章，保留正文、日期、分类、标签及原文链接。首次启动升级后的服务时，如果 `data/store.json` 尚无 `blog` 字段，会自动导入此种子。之后以后台维护的 `store.json` 为准，不重复覆盖文章。代码块和表格转换为 Markdown，图片保留原图床地址，加载仍依赖原图床；旧站评论、主题及追番页不在文章迁移范围内。部分历史文章的原图片链接可能已失效。
+
+`scripts/migrate-blog.py` 可重新生成可审阅的种子，使用 Python、curl、beautifulsoup4 与 markdownify；不会改写已在使用的 `store.json`。页面使用本地附带的 Marked（许可证见 `public/vendor/marked-LICENSE.md`），渲染后通过元素与 URL 白名单重建文章 DOM，阻止正文脚本与事件属性执行。
+
+验证：`node --test tests/blog.test.js tests/server.test.js`，覆盖 44 篇迁移完整性、草稿隔离、发布、删除、重启持久化、备份兼容、冲突写入及静态资源访问。
+
+博客视觉沿用旧站 Butterfly 布局与自定义配色：全屏 `top.jpg` 头图、`b.jpg` 背景、原头像、44 篇文章的原始封面、左右交错文章卡片、半透明圆角面板和渐变个人信息卡。分类与标签导航使用本地博客数据；追番和留言板链接继续指向旧站。主题图片沿用旧站的 GitHub 图床地址。后台管理与文章数据不受主题调整影响。
+
+博客小组件与动画也按旧站接入：初音 Live2D 看板娘、一言/原站标语循环打字、点击「miku / 超可爱 / 是不是」飘字、文章缩放入场、侧栏滑入、分类图片卡、归档、网站资讯、页脚徽章、滚动导航和右侧设置。设置可切换深浅色、侧栏、阅读模式及看板娘，主题和显示偏好保存在浏览器中；移动端默认不加载看板娘，系统减少动画设置会停用装饰动画。文章页支持目录定位、阅读进度、图片放大、代码折叠与复制。
+
+Live2D 脚本及模型按原站文件结构保存在 `public/live2dw/`，保留上游文件头，来源为原博客部署中的 `live2dw/`（运行库 https://github.com/xiazeyu/live2d-widget.js ）。服务只允许显式列出的资源文件，未开放整个目录。字幕的一言请求失败时回退到原站标语，未接入旧站第三方访客统计脚本。归档和文章数来自当前已发布文章。

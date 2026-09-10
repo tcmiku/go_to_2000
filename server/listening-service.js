@@ -3,11 +3,9 @@ import https from 'node:https';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { createCipheriv, createHash, randomBytes } from 'node:crypto';
+import { defaultMusicSources } from '../public/music-sources.js';
 
-export const sourceCatalog = ['huibq','sixyin','flower','lx','ikun','grass','juhe','qdy'].map(id => ({
-  id, name: {huibq:'Huibq',sixyin:'SixYin',flower:'Flower',lx:'LX',ikun:'ikun',grass:'Grass',juhe:'Juhe API',qdy:'QDY'}[id],
-  url: `https://raw.githubusercontent.com/pdone/lx-music-source/main/${id}/latest.js`,
-}));
+export const sourceCatalog = defaultMusicSources;
 const fail = (status, message) => Object.assign(new Error(message), {status});
 // Resolve and pin public addresses for every redirect; no connection to local services.
 export function isPublicAddress(address) {
@@ -81,7 +79,7 @@ export function normalizeSearchResult(body) {
 }
 const lyricText=value=>typeof value==='string'?value.slice(0,128000):'';
 const matchText=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]+/gu,'');
-export function createListeningService({request=publicRequest,readLocalLyrics=async()=>null}={}) {
+export function createListeningService({request=publicRequest,readLocalLyrics=async()=>null,getSources=()=>sourceCatalog}={}) {
   const scripts=new Map(),searches=new Map(),lyrics=new Map();let active=0;
   async function searchSongs(query,page=1){
     const key=`${query}:${page}`;
@@ -102,19 +100,21 @@ export function createListeningService({request=publicRequest,readLocalLyrics=as
     lyrics.set(id,{data,until:Date.now()+15*60*1000});return data;
   }
   return async function handle(route,url,input) {
-    if (route==='/api/listening/sources') return {sources:sourceCatalog};
+    if (route==='/api/listening/sources') return {sources:getSources().filter(item=>item.enabled!==false).map(({id,name})=>({id,name}))};
     if (active>=6) throw fail(429,'请求较多，请稍后再试');
     active++;
     try {
       if (route==='/api/listening/source') {
-        const source=sourceCatalog.find(item=>item.id===url.searchParams.get('id'));
+        const source=getSources().find(item=>item.enabled!==false&&item.id===url.searchParams.get('id'));
         if (!source) throw fail(400,'请选择列表中的音源');
-        if (scripts.get(source.id)?.until>Date.now()) return scripts.get(source.id).data;
+        const cacheKey=source.id+'\n'+source.url;
+        if (scripts.get(cacheKey)?.until>Date.now()) return {...scripts.get(cacheKey).data,...source};
         const result=await request(source.url);
         if (result.statusCode!==200 || typeof result.body!=='string' || !/@name\s/.test(result.body)) throw fail(502,'音源脚本暂时无法获取');
         const meta=key=>result.body.match(new RegExp(`@${key}\\s+([^\\r\\n]+)`))?.[1]?.trim()||'';
         const data={...source,script:result.body,version:meta('version'),author:meta('author'),description:meta('description')};
-        scripts.set(source.id,{data,until:Date.now()+15*60*1000});return data;
+        if(scripts.size>=64)scripts.delete(scripts.keys().next().value);
+        scripts.set(cacheKey,{data,until:Date.now()+15*60*1000});return data;
       }
       if (route==='/api/listening/search') {
         const query=(url.searchParams.get('q')||'').trim(),page=Math.max(1,Math.min(100,Number(url.searchParams.get('page'))||1));

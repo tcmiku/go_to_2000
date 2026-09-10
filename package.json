@@ -8,9 +8,11 @@
     "dev:admin": "node scripts/admin-server.mjs --watch",
     "start": "node server/server.js",
     "start:admin": "node scripts/admin-server.mjs",
+    "reset-admin-password": "node scripts/reset-admin-password.mjs",
+    "check-admin-password": "node scripts/check-admin-password.mjs",
     "check:data": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check public/cassette-room.js && node --check public/cassette-sound.js && node --check server/podcast-service.js && node --check public/listening-room.js && node --check server/listening-service.js && node --check public/lx-client.js && node --check public/lx-sandbox.js && node --check public/cd-wall.js && node --check public/app.js && node --check public/admin.js && node --check public/ui.js && node --check public/radio.js && node --check public/start-menu.js && node --check public/minesweeper.js && node --check public/snake.js && node --check public/management-data.js && node --check public/navigation-data.js && node --check server/server.js && npm run check:data && npm test",
+    "check": "node --check public/blog-widgets.js && node --check public/blog.js && node --check public/blog-render.js && node --check public/blog-data.js && node --check public/cassette-room.js && node --check public/cassette-sound.js && node --check server/admin-account.js && node --check scripts/reset-admin-password.mjs && node --check scripts/check-admin-password.mjs && node --check server/podcast-service.js && node --check public/music-sources.js && node --check public/listening-room.js && node --check server/listening-service.js && node --check public/lx-client.js && node --check public/lx-sandbox.js && node --check public/cd-wall.js && node --check public/app.js && node --check public/admin.js && node --check public/ui.js && node --check public/radio.js && node --check public/start-menu.js && node --check public/minesweeper.js && node --check public/snake.js && node --check public/management-data.js && node --check public/navigation-data.js && node --check server/server.js && npm run check:data && npm test",
     "build:music": "esbuild scripts/lx-worker-entry.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=public/lx-worker.js"
   },
   "devDependencies": {
@@ -19,5 +21,8 @@
     "esbuild": "^0.28.2",
     "fflate": "^0.8.3",
     "node-forge": "^1.4.0"
+  },
+  "dependencies": {
+    "marked": "^17.0.4"
   }
 }

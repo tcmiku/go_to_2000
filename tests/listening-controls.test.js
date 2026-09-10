@@ -52,6 +52,7 @@ async function player({reducedMotion=true,sourceIds=['huibq'],preferred='huibq',
     createLyricsProjection:options=>createLyricsProjection({...options,fetchLyrics:async()=>({ok:true,json:async()=>({lyric:''})}),isHidden:()=>document.hidden,reduced:()=>reducedMotion}),
     setTimeout:(fn)=>{const id=++timerId;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     fetch:async(url,options)=>{
+      if(url==='/api/listening/sources')return {ok:true,json:async()=>({sources:sourceIds.map(id=>({id,name:id}))})};
       if(url.startsWith('/api/listening/search')){searchCalls.push({url,signal:options.signal});return searchFetch?searchFetch(url,options):{ok:true,json:async()=>({total:0,tracks:[]})};}
       return {ok:true,json:async()=>({tracks:['One','Two','Three'].map(name=>({name,src:`/data/mp3/${name}.mp3`}))})};
     },
@@ -253,4 +254,14 @@ test('rapid index changes cancel previous leaf motion without delaying local fil
 test('reduced motion keeps catalogue open, close and index changes immediate',async()=>{
   const p=await player();p.$('#catalog-open').click();p.$('#catalog-shelf').click();p.windowEvents.keydown({key:'Escape'});
   assert.equal(p.$('#discover-dialog').hidden,true);assert.equal(p.animations.length,0);
+});
+
+test('an empty administrator source list keeps local playback available',async()=>{
+  const p=await player({sourceIds:[]});await p.settle();assert.equal(p.sourceCalls.length,0);assert.equal(p.$('#source-select').disabled,true);
+  assert.equal(p.$('.status-dot').classList.contains('failed'),true);p.$('#play-toggle').click();await p.settle();assert.equal(p.audio.paused,false);
+});
+
+test('a removed remembered source is replaced by the current administrator catalogue',async()=>{
+  const p=await player({sourceIds:['new-custom'],preferred:'deleted-source'});await p.settle();
+  assert.deepEqual(p.sourceCalls,['new-custom']);assert.equal(p.$('#source-select').value,'new-custom');assert.equal(p.saved.get('slow-records.preferences.v1').source,'new-custom');
 });

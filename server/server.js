@@ -1,7 +1,10 @@
+import { validateBlog } from '../public/blog-data.js';
 import http from 'node:http';
 import { createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { createListeningService } from './listening-service.js';
+import { createListeningService, isPublicAddress } from './listening-service.js';
+import { isIP } from 'node:net';
+import { defaultMusicSources, validateMusicSources } from '../public/music-sources.js';
 import { createPodcastService } from './podcast-service.js';
 import { validateAd } from '../public/retro-ad.js';
 import { readFile, writeFile, mkdir, rename, readdir, stat, lstat } from 'node:fs/promises';
@@ -16,10 +19,13 @@ const scrypt = promisify(scryptCallback);
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const publicRoot = path.join(root,'public');
 const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', announcement: '欢迎回来！这里总有一个值得收藏的好网站。' };
-const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
+const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.json':'application/json; charset=utf-8', '.moc':'application/octet-stream', '.mtn':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
 const publicFiles = new Set(['index.html','admin.html','robots.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 publicFiles.add('pinball.js');
+publicFiles.add('music-sources.js');
+["live2dw/lib/L2Dwidget.0.min.js", "live2dw/lib/L2Dwidget.min.js", "live2dw/assets/miku.physics.json", "live2dw/assets/miku.model.json", "live2dw/assets/mtn/miku_m_01.mtn", "live2dw/assets/mtn/miku_m_03.mtn", "live2dw/assets/mtn/miku_m_02.mtn", "live2dw/assets/mtn/miku_m_06.mtn", "live2dw/assets/mtn/miku_m_05.mtn", "live2dw/assets/mtn/miku_m_04.mtn", "live2dw/assets/mtn/miku_shake_01.mtn", "live2dw/assets/mtn/miku_idle_01.mtn", "live2dw/assets/moc/miku.moc", "live2dw/assets/moc/miku.2048/texture_00.png"].forEach(file=>publicFiles.add(file));
+['blog.html','blog.css','blog.js','blog-render.js','blog-data.js','blog-widgets.js','vendor/marked.js'].forEach(file=>publicFiles.add(file));
 publicFiles.add('lyrics.css');
 ['cassette-room.html','cassette-room.css','cassette-room.js','cassette-sound.js'].forEach(file=>publicFiles.add(file));
 ['listening-room.html','listening-room.css','listening-room.js','lyrics.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
@@ -61,7 +67,9 @@ export function validateStore(data) {
   }
   for (const c of flattenCategories(data.navigation.categories)) if(c.name.length>80) throw new Error('分类名称过长');
   const ad = validateAd(data.settings.ad);
-  return {navigation:data.navigation,content:data.content,settings:{tagline:data.settings.tagline,announcement:data.settings.announcement,ad}};
+  const musicSources=validateMusicSources(data.musicSources);
+  for(const source of musicSources){const host=new URL(source.url).hostname.replace(/^\[|\]$/g,'');if(isIP(host)&&!isPublicAddress(host))throw new Error('音源不能使用本机或内网地址');}
+  return {musicSources,blog:validateBlog(data.blog),navigation:data.navigation,content:data.content,settings:{tagline:data.settings.tagline,announcement:data.settings.announcement,ad}};
 }
 export async function createApp({dataDir = path.join(root,'data'), secureCookie = false, adminEnabled = true, adminPath = '/admin'} = {}) {
   adminEnabled=adminEnabled === true;
@@ -83,6 +91,10 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
     store={navigation:await readJSON('navigation.json'),content:await readJSON('page-content.json'),settings:defaultSettings,revision:1,updatedAt:new Date().toISOString()};
     validateStore(store);await atomic('store.json',store);
   }
+  if(!store.blog){
+    try{store.blog=validateBlog(await readJSON('blog-seed.json'));}catch(error){if(error.code!=='ENOENT')throw error;store.blog={posts:[]};}
+    await atomic('store.json',store);
+  }
   let visits={total:0,date:'',today:0};
   try {visits=await readJSON('.private/visits.json');if(!Number.isSafeInteger(visits.total)||visits.total<0||!Number.isSafeInteger(visits.today)||visits.today<0||typeof visits.date!=='string')throw new Error('访问统计数据无效');} catch(error) {if(error.code!=='ENOENT')throw error;}
   const visitDate=()=>new Date(Date.now()+8*60*60*1000).toISOString().slice(0,10);
@@ -99,9 +111,9 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
   function issue(res){for(const [key,s] of sessions)if(s.expires<Date.now()||s.absoluteExpires<Date.now())sessions.delete(key);const token=randomBytes(32).toString('hex');const now=Date.now();sessions.set(token,{username:account.username,expires:now+30*60*1000,absoluteExpires:now+8*60*60*1000});res.setHeader('Set-Cookie',`surfer_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${secureCookie?'; Secure':''}`);}
   async function body(req){let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>8*1024*1024)throw httpError(413,'数据不能超过 8 MB');chunks.push(chunk);}try{return JSON.parse(Buffer.concat(chunks).toString());}catch{throw httpError(400,'JSON 数据格式无效');}}
   function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}).end(JSON.stringify(value));}
-  function publicData(){const data=structuredClone(store);data.navigation.categories.forEach(c=>{c.sites=c.sites.filter(s=>!s.hidden);(c.children||[]).forEach(x=>x.sites=x.sites.filter(s=>!s.hidden));});const ids=new Set(flattenCategories(data.navigation.categories).flatMap(c=>c.sites.map(s=>s.id)));data.content.hot.siteIds=data.content.hot.siteIds.filter(id=>ids.has(id));data.content.featured.items=data.content.featured.items.filter(s=>!s.hidden);data.content.friends=data.content.friends.filter(s=>!s.hidden);return data;}
+  function publicData(){const data=structuredClone(store);delete data.blog;delete data.musicSources;data.navigation.categories.forEach(c=>{c.sites=c.sites.filter(s=>!s.hidden);(c.children||[]).forEach(x=>x.sites=x.sites.filter(s=>!s.hidden));});const ids=new Set(flattenCategories(data.navigation.categories).flatMap(c=>c.sites.map(s=>s.id)));data.content.hot.siteIds=data.content.hot.siteIds.filter(id=>ids.has(id));data.content.featured.items=data.content.featured.items.filter(s=>!s.hidden);data.content.friends=data.content.friends.filter(s=>!s.hidden);return data;}
   let publicStore, publicResponse;
-  const listeningService=createListeningService({readLocalLyrics:async src=>{
+  const listeningService=createListeningService({getSources:()=>store.musicSources??defaultMusicSources,readLocalLyrics:async src=>{
     const track=(await getRadioTracks()).find(track=>track.src===src);
     if(!track)throw httpError(404,'本地歌曲不存在');
     const filename=decodeURIComponent(track.src.slice('/data/mp3/'.length)).replace(/\.mp3$/i,'.lrc');
@@ -137,6 +149,13 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(req.method!==method)throw httpError(405,'请求方式不支持');
         return json(res,200,await listeningService(route,url,method==='POST'?await body(req):undefined));
       }
+      if(route==='/api/blog' && req.method==='GET'){
+        const posts=store.blog.posts.filter(p=>p.status==='published');
+        const id=url.searchParams.get('id');
+        if(id){const post=posts.find(p=>p.id===id);if(!post)throw httpError(404,'文章不存在或尚未发布');return json(res,200,post);}
+        return json(res,200,{posts:posts.map(({body,...post})=>post)});
+      }
+      if(route==='/blog'||route==='/blog.html'||adminRoute||route==='/admin.html'){res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https://v1.hitokoto.cn; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");}
       if(route==='/api/public' && ['GET','HEAD'].includes(req.method)){
         if(publicStore!==store){publicResponse=representation(JSON.stringify(publicData()),'application/json; charset=utf-8');publicStore=store;}
         return await sendRepresentation(req,res,publicResponse);
@@ -233,7 +252,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
           const input=await body(req);
           const saved=await locked(async()=>{
             if(input.revision!==store.revision)throw httpError(409,'其他窗口已更新数据，请重新加载后再修改');
-            let valid;try{valid=validateStore(input);}catch(error){throw httpError(400,error.message);}
+            let valid;try{valid=validateStore({...input,blog:input.blog??store.blog,musicSources:input.musicSources===undefined?store.musicSources:input.musicSources});}catch(error){throw httpError(400,error.message);}
             const next={...valid,revision:store.revision+1,updatedAt:new Date().toISOString()};
             await atomic('.private/previous-store.json',store);await atomic('store.json',next);store=next;return store;
           });return json(res,200,saved);
@@ -272,7 +291,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(req.method==='HEAD'||size===0)return res.end();
         return await pipeline(createReadStream(target,{start,end}),res);
       }
-      const filename=route==='/'?'index.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
+      const filename=route==='/'?'index.html':route==='/blog'?'blog.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const targetRoot=filename.startsWith('assets/')?root:publicRoot;

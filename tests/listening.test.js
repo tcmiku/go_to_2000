@@ -61,3 +61,13 @@ test('isolated LX runtime supports init, callback network, crypto and musicUrl',
   await context.onmessage({data:{kind:'network-result',id:network.id,response:{body:{url:'https://example.com/music.mp3'}}}});
   await resolve;assert.equal(messages.at(-1).url,'https://example.com/music.mp3');assert.equal(messages.at(-1).id,3);
 });
+
+test('managed sources invalidate edited script URLs and reject disabled or deleted entries',async()=>{
+  let catalog=[{id:'custom',name:'First',url:'https://example.com/a.js',enabled:true}],calls=[];
+  const service=createListeningService({getSources:()=>catalog,request:async url=>{calls.push(url);return {statusCode:200,body:'/** @name Test */\n'};}});
+  const url=new URL('http://localhost/api/listening/source?id=custom');
+  await service(url.pathname,url);await service(url.pathname,url);assert.equal(calls.length,1);
+  catalog=[{...catalog[0],url:'https://example.com/b.js',name:'Updated'}];const updated=await service(url.pathname,url);assert.equal(updated.name,'Updated');assert.equal(calls.length,2);
+  catalog[0].enabled=false;assert.deepEqual((await service('/api/listening/sources')).sources,[]);await assert.rejects(service(url.pathname,url),{status:400});
+  catalog=[];await assert.rejects(service(url.pathname,url),{status:400});assert.equal(calls.length,2);
+});

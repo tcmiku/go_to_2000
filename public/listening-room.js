@@ -49,7 +49,7 @@ if(Array.isArray(storageRecord))records=storageRecord.filter(validTrack).slice(0
 function announce(message){$('#playback-state').textContent=message;}
 function feedback(message){announce(message);$('.machine-display').classList.add('is-error');$('.machine-display').setAttribute('aria-description',message);$('#machine-status').textContent='!';clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>{$('.machine-display').classList.remove('is-error');updatePlayback();},6000);}
 const remember=()=>{if(!saveStorage(STORAGE,records))feedback('收藏未能保存');};
-function savePrefs(){saveStorage(PREFS,{volume:audio.volume,muted:audio.muted,source:$('#source-select').value,quality:$('#quality-select').value,lidOpen:!$('#turntable').classList.contains('lid-closed')});}
+function savePrefs(){saveStorage(PREFS,{volume:audio.volume,muted:audio.muted,source:$('#source-select').value||prefs.source||'',quality:$('#quality-select').value,lidOpen:!$('#turntable').classList.contains('lid-closed')});}
 function colors(track){let hash=0;for(const char of track.id)hash=(hash*31+char.charCodeAt(0))>>>0;return {colors:palette[hash%palette.length],pattern:hash%4};}
 function artwork(track){
   const {colors:[bg,ink,shape],pattern}=colors(track);let image='';
@@ -209,14 +209,23 @@ async function lowerTonearm(token){
 }
 async function ensureSource(){if(connecting)return connecting;const id=$('#source-select').value;if(connectedId===id&&lx.sources)return;return connectSource({automatic:true});}
 async function connectSource({automatic=false}={}){
-  const token=++sourceOperation,preferred=$('#source-select').value;
+  const token=++sourceOperation,preferred=$('#source-select').value||prefs.source;
   sourceController?.abort();lx.dispose();sourceController=new AbortController();const {signal}=sourceController;
-  const ids=automatic?[...$('#source-select').options].map(option=>option.value):[preferred];
   $('#source-status').textContent='…';$('#source-connect').disabled=true;$('#source-open').setAttribute('aria-busy','true');connectedId=null;
   $('.status-dot').classList.remove('connected','failed');$('.status-dot').classList.add('testing');
   const promise=(async()=>{
+    const response=await fetch('/api/listening/sources',{signal:AbortSignal.any([signal,AbortSignal.timeout(10000)])});
+    if(!response.ok)throw new Error('音源目录暂时无法读取');
+    const catalog=await response.json();signal.throwIfAborted();
+    if(!Array.isArray(catalog.sources))throw new Error('音源目录格式无效');
+    const sources=catalog.sources.filter(item=>item&&typeof item.id==='string'&&typeof item.name==='string');
+    $('#source-select').innerHTML=sources.map(item=>`<option value="${e(item.id)}">${e(item.name)}</option>`).join('');
+    $('#source-select').disabled=!sources.length;
+    const selected=sources.some(item=>item.id===preferred)?preferred:sources[0]?.id||'';$('#source-select').value=selected;
+    if(!sources.length)throw new Error('管理员尚未启用网络音源，本地唱片仍可播放');
+    const ids=automatic?sources.map(item=>item.id):[selected];
     const tracks=await loadProbeTracks(records,AbortSignal.any([signal,AbortSignal.timeout(10000)]));signal.throwIfAborted();
-    const id=await selectMusicSource({client:lx,ids,preferred,tracks,quality:$('#quality-select').value,signal,onAttempt:(_id,index,total)=>{
+    const id=await selectMusicSource({client:lx,ids,preferred:selected,tracks,quality:$('#quality-select').value,signal,onAttempt:(_id,index,total)=>{
       if(token===sourceOperation)$('#source-status').textContent=`… ${index}/${total}`;
     }});
     signal.throwIfAborted();if(token!==sourceOperation)return;

@@ -269,3 +269,86 @@ test('cassette room serves its assets, scopes media CSP and validates read-only 
   assert.equal((await app.req('/api/podcasts/search?q=')).status,400);
   assert.equal((await app.req('/api/podcasts/search','POST',{q:'test'})).status,405);
 });
+
+test('blog management persists drafts, publishes articles, protects writes and includes backups',async t=>{
+  const app=await instance(t);
+  assert.equal((await app.req('/api/admin/data')).status,401);
+  await app.req('/api/setup','POST',credentials);
+  const post={id:'post-test',title:'测试文章',date:'2026-09-09',category:'学习笔记',tags:['网络'],summary:'摘要',body:'# 正文\n\n文章内容',status:'draft',sourceUrl:''};
+  let data=(await app.req('/api/admin/data')).data;
+  data.blog={posts:[post]};
+  let saved=await app.req('/api/admin/data','PUT',data);assert.equal(saved.status,200);
+  assert.deepEqual((await app.req('/api/blog')).data,{posts:[]});
+  assert.equal((await app.req('/api/blog?id=post-test')).status,404);
+  assert.equal((await app.req('/api/public')).data.blog,undefined);
+  assert.equal((await app.req('/api/admin/backup')).data.blog.posts[0].status,'draft');
+  data=saved.data;data.blog.posts[0].status='published';
+  saved=await app.req('/api/admin/data','PUT',data);assert.equal(saved.status,200);
+  assert.equal((await app.req('/api/blog')).data.posts[0].body,undefined);
+  assert.equal((await app.req('/api/blog?id=post-test')).data.body,post.body);
+  assert.equal((await app.req('/api/admin/data','PUT',data)).status,409);
+  await app.restart();
+  assert.equal((await app.req('/api/blog?id=post-test')).data.title,post.title);
+  await app.req('/api/login','POST',credentials);
+  data=(await app.req('/api/admin/data')).data;
+  const invalid=structuredClone(data);invalid.blog.posts.push({...post});
+  assert.equal((await app.req('/api/admin/data','PUT',invalid)).status,400);
+  const badDate=structuredClone(data);badDate.blog.posts[0].date='2026-02-30';
+  assert.equal((await app.req('/api/admin/data','PUT',badDate)).status,400);
+  const oldBackup=structuredClone(data);delete oldBackup.blog;
+  saved=await app.req('/api/admin/data','PUT',oldBackup);assert.equal(saved.data.blog.posts.length,1);
+  data=saved.data;data.blog.posts=[];
+  assert.equal((await app.req('/api/admin/data','PUT',data)).status,200);
+  assert.equal((await app.req('/api/blog?id=post-test')).status,404);
+});
+test('blog routes and vendor renderer work with administration disabled',async t=>{
+ const app=await instance(t,{adminEnabled:false});
+ for(const route of ['/blog','/blog.html','/blog.js','/blog.css','/blog-render.js','/vendor/marked.js'])assert.equal((await fetch(app.base+route)).status,200,route);
+ assert.equal((await app.req('/api/admin/data')).status,404);
+ assert.equal((await app.req('/api/blog')).status,200);
+});
+
+test('blog widgets serve only explicit Live2D model assets and local scripts',async t=>{
+ const app=await instance(t,{adminEnabled:false});
+ for(const route of ['/blog-widgets.js','/live2dw/lib/L2Dwidget.min.js','/live2dw/lib/L2Dwidget.0.min.js','/live2dw/assets/miku.model.json','/live2dw/assets/moc/miku.moc','/live2dw/assets/moc/miku.2048/texture_00.png','/live2dw/assets/mtn/miku_idle_01.mtn']){
+   const r=await fetch(app.base+route);assert.equal(r.status,200,route);assert.ok((await r.arrayBuffer()).byteLength>100);
+ }
+ assert.equal((await fetch(app.base+'/live2dw/private.json')).status,404);
+ const model=await (await fetch(app.base+'/live2dw/assets/miku.model.json')).json();
+ for(const filename of [model.model,model.physics,...model.textures,...Object.values(model.motions).flat().map(m=>m.file)])assert.equal((await fetch(app.base+'/live2dw/assets/'+filename)).status,200,filename);
+});
+
+test('administrator music sources persist, reorder, disable, delete and survive legacy saves',async t=>{
+  const app=await instance(t);
+  assert.equal((await app.req('/api/listening/sources')).data.sources.length,8);
+  assert.equal((await app.req('/api/admin/data','PUT',{})).status,401);
+  await app.req('/api/setup','POST',credentials);
+  let store=(await app.req('/api/admin/data')).data;
+  const a={id:'custom-a',name:'Custom A',url:'https://example.com/a.js',enabled:true};
+  const b={id:'custom-b',name:'Custom B',url:'https://example.com/b.js',enabled:true};
+  let result=await app.req('/api/admin/data','PUT',{...store,musicSources:[a,b]});assert.equal(result.status,200);store=result.data;
+  assert.deepEqual((await app.req('/api/listening/sources')).data.sources,[{id:a.id,name:a.name},{id:b.id,name:b.name}]);
+  assert.equal((await app.req('/api/public')).data.musicSources,undefined);
+  const backup=(await app.req('/api/admin/backup')).data;assert.deepEqual(backup.musicSources,[a,b]);
+  result=await app.req('/api/admin/data','PUT',{...store,musicSources:[{...b,name:'Renamed',url:'https://example.com/new.js'},{...a,enabled:false}]});store=result.data;
+  assert.deepEqual((await app.req('/api/listening/sources')).data.sources,[{id:b.id,name:'Renamed'}]);
+  assert.equal((await app.req('/api/listening/source?id=custom-a')).status,400);
+  assert.equal((await app.req('/api/admin/data','PUT',backup)).status,409);
+  const legacy={...store};delete legacy.musicSources;result=await app.req('/api/admin/data','PUT',legacy);store=result.data;assert.equal(store.musicSources[0].name,'Renamed');
+  await app.restart();assert.deepEqual((await app.req('/api/listening/sources')).data.sources,[{id:b.id,name:'Renamed'}]);
+  await app.req('/api/login','POST',credentials);store=(await app.req('/api/admin/data')).data;
+  result=await app.req('/api/admin/data','PUT',{...store,musicSources:[]});assert.equal(result.status,200);
+  assert.deepEqual((await app.req('/api/listening/sources')).data.sources,[]);assert.equal((await app.req('/api/listening/source?id=custom-b')).status,400);
+  result=await app.req('/api/admin/data','PUT',{...backup,revision:result.data.revision});assert.equal(result.status,200);assert.deepEqual(result.data.musicSources,[a,b]);
+});
+
+test('invalid music source configurations and cross-origin writes never replace saved data',async t=>{
+  const app=await instance(t);await app.req('/api/setup','POST',credentials);const store=(await app.req('/api/admin/data')).data;
+  const source={id:'custom',name:'Test',url:'https://example.com/source.js',enabled:true};
+  const invalid=[null,[source,source],[{...source,name:''}],[{...source,enabled:'yes'}],[{...source,id:'../secret'}],Array.from({length:33},(_,i)=>({...source,id:`s${i}`}))];
+  for(const url of ['file:///tmp/source.js','http://127.0.0.1/a','http://[::1]/a','http://192.168.1.1/a','http://localhost/a','https://user:pass@example.com/a','https://example.com:3000/a'])invalid.push([{...source,url}]);
+  for(const musicSources of invalid)assert.equal((await app.req('/api/admin/data','PUT',{...store,musicSources})).status,400);
+  assert.equal((await app.req('/api/admin/data','PUT',{...store,musicSources:[source]},{Origin:'https://other.example'})).status,403);
+  assert.equal((await app.req('/api/admin/data')).data.revision,store.revision);
+  assert.equal((await fetch(app.base+'/music-sources.js')).status,200);
+});
