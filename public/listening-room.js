@@ -149,7 +149,7 @@ function updateTime(){
   if(timeDisplay.label!==label){seek.setAttribute('aria-valuetext',label);timeDisplay.label=label;}
   if(timeDisplay.angle!==angle){$('#tonearm').style.setProperty('--arm-angle',`${angle}deg`);timeDisplay.angle=angle;}
 }
-function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden){updateTime();lyrics.sync();}}
+function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden){updateTime();lyrics.sync();sharedPlayer?.sync();sharedPlayer?.unlock();}}
 document.addEventListener('visibilitychange',updateVisibility);
 function labelDisc(track){$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
 function displayTrack(track){current=track;$('#now-title').textContent=track.name;if(!deckTrack)labelDisc(track);}
@@ -240,8 +240,19 @@ async function connectSource({automatic=false}={}){
   $('#source-status').setAttribute('aria-label','检测音源');
   connecting=promise;return promise;
 }
+function loadSharedTrackMedia(track,url){
+  cancelPlayback();const token=operation;setBusy(true);$('.machine-display').classList.remove('is-error');setStatus('正在读取唱片','…');
+  audio.removeAttribute('src');audio.load();
+  if(location.hash==='#wall'){location.hash='room';route();}
+  setLid(true);$('#turntable').classList.remove('playing','paused','no-record');
+  displayTrack(track);deckTrack=track;labelDisc(track);syncSleeves();
+  audio.src=url;audio.load();lyrics.setTrack(track);
+  if(token!==operation)return;
+  setBusy(false);updatePlayback();updateTime();
+}
 async function playRecord(track,rect,remote=null){
   if(sharedMode&&!remote){sharedPlayer?.select(track);return;}
+  if(sharedMode&&remote&&(document.hidden||reduced())){loadSharedTrackMedia(track,remote.url);return;}
   const previous=deckTrack,needleDown=$('#turntable').classList.contains('playing')||$('#turntable').classList.contains('paused'),lidClosed=$('#turntable').classList.contains('lid-closed')||location.hash==='#wall';
   cancelPlayback();const token=operation;setBusy(true);$('.machine-display').classList.remove('is-error');setStatus('正在取出唱片','…');audio.removeAttribute('src');audio.load();updateTime();closeDrawer(false);
   if(location.hash==='#wall'){location.hash='room';route();}
@@ -376,8 +387,16 @@ window.addEventListener('keydown',event=>{
   if(event.code!=='Space'||event.repeat||activeDrawer||/INPUT|TEXTAREA|SELECT|BUTTON|A/.test(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider')return;
   event.preventDefault();$('#play-toggle').click();
 });
-window.addEventListener('pagehide',()=>{sharedPlayer?.reset();cancelCatalogMotions();$('#discover-dialog').hidden=activeDrawer?.id!=='discover-dialog';cancelSearch();cancelPlayback();sourceOperation++;sourceController?.abort();connecting=null;connectedId=null;lx.dispose();});
-window.addEventListener('pageshow',event=>{if(event.persisted&&!sharedMode)connectSource({automatic:true}).catch(()=>{});});
+window.addEventListener('pagehide',()=>{
+  cancelCatalogMotions();
+  // Shared mode must keep audio and player state for background tabs / bfcache.
+  if(sharedMode)return;
+  $('#discover-dialog').hidden=activeDrawer?.id!=='discover-dialog';cancelSearch();cancelPlayback();sourceOperation++;sourceController?.abort();connecting=null;connectedId=null;lx.dispose();
+});
+window.addEventListener('pageshow',event=>{
+  if(sharedMode){sharedPlayer?.sync();return;}
+  if(event.persisted)connectSource({automatic:true}).catch(()=>{});
+});
 async function init(){
   audio.volume=Number.isFinite(prefs.volume)?Math.max(0,Math.min(1,prefs.volume)):.65;audio.muted=prefs.muted===true;
   if([...$('#source-select').options].some(option=>option.value===prefs.source))$('#source-select').value=prefs.source;

@@ -30,3 +30,34 @@ test('clock compensation and drift correction respect paused and finished tracks
 
 
 test('mechanical stop is one atomic pause and rewind for every listener',()=>{const f=fixture();f.control('track',{track});f.tick(5000);const stopped=f.control('stop');assert.equal(stopped.position,0);assert.equal(stopped.playing,false);f.tick(1000);assert.equal(f.service('state',{room:f.first.room},f.second.token).position,0);});
+
+test('room subscriptions receive snapshots on control and leave until unsubscribed',()=>{
+  const f=fixture();
+  const received=[];
+  const unsubscribe=f.service.subscribe({room:f.first.room},f.second.token,snapshot=>received.push(snapshot));
+  assert.equal(received.length,1);
+  assert.equal(received[0].members.length,2);
+  f.control('track',{track});
+  assert.ok(received.at(-1).track);
+  assert.equal(received.at(-1).playing,true);
+  f.control('pause');
+  assert.equal(received.at(-1).playing,false);
+  f.service('leave',{room:f.first.room},f.second.token);
+  assert.equal(received.at(-1).members.length,1);
+  const before=received.length;
+  unsubscribe();
+  f.control('play');
+  assert.equal(received.length,before);
+});
+
+test('subscriptions require a live member token and refresh presence via state',()=>{
+  const f=fixture();
+  assert.throws(()=>f.service.subscribe({room:f.first.room},'bad-token',()=>{}),{status:401});
+  assert.throws(()=>f.service.subscribe({room:'ZZZZZZZZ'},f.first.token,()=>{}),{status:404});
+  f.service.subscribe({room:f.first.room},f.second.token,()=>{});
+  f.tick(40000);
+  f.service('state',{room:f.first.room},f.second.token);
+  f.tick(10000);
+  assert.equal(f.service('state',{room:f.first.room},f.second.token).members.length,1);
+  assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});
+});

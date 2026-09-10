@@ -149,6 +149,27 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(route==='/lx-sandbox.html') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src blob:; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; sandbox allow-scripts");
       }
+      if(route==='/api/together/stream'){
+        if(req.method!=='GET')throw httpError(405,'请求方式不支持');
+        const room=url.searchParams.get('room'),token=String(req.headers['x-room-token']||'');
+        try{togetherService('state',{room},token);}
+        catch(error){return json(res,error.status||400,{error:error.message});}
+        res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});
+        let closed=false;
+        const write=payload=>{if(!closed)res.write(`data: ${JSON.stringify(payload)}\n\n`);};
+        const unsubscribe=togetherService.subscribe({room},token,write);
+        const heartbeat=setInterval(()=>{
+          try{write(togetherService('state',{room},token));}
+          catch{cleanup();}
+        },15000);
+        function cleanup(){
+          if(closed)return;closed=true;clearInterval(heartbeat);unsubscribe();
+          try{res.end();}catch{}
+        }
+        req.on('close',cleanup);
+        req.on('error',cleanup);
+        return;
+      }
       if(route.startsWith('/api/together/')) {
         const action=route.slice('/api/together/'.length);
         if(req.method!==(action==='state'?'GET':'POST'))throw httpError(405,'请求方式不支持');
