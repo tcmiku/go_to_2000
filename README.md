@@ -249,3 +249,12 @@ Live2D 脚本及模型按原站文件结构保存在 `public/live2dw/`，保留�
 房间 1 小时无人请求后过期，成员断联 45 秒后移出；重启服务会清空房间。浏览器休眠或后台冻结后可能需要重新加入。公网多人使用需要把此 Node 服务部署在同一个可访问地址下，通过现有反向代理将 Host 转给 localhost；仅本机 localhost 预览链接不能供其他设备访问。多进程部署需保持所有房间请求落在同一进程，当前未使用共享数据库。外部音源失效时可重新点歌或选择其他音源。
 
 新增同步和 HTTP 测试：`tests/together.test.js`、`tests/server.test.js`；`npm run check` 包含新模块的语法检查。
+
+### 街角报刊亭
+
+入口：`/newsstand`（也可访问 `/newsstand.html`），首页菜单已加入链接。照片质感的旧蓝色报刊亭、可拿起的书刊、纸页详情、分类翻架、源名检索、本机收藏及灯光切换；移动端每架 9 本，桌面端每架 18 本，保留键盘焦点与减少动态效果偏好。
+
+- 从 [aoaostar/legado](https://github.com/aoaostar/legado) 全量源中按域名匹配 24 个书源，原始规则分别保存在 `public/newsstand-sources/`，展示目录为 `public/newsstand-catalog.json`。执行 `npm run sync:newsstand` 更新快照，匹配缺失时直接报错。
+- 「翻阅」打开源站；只有可安全转换的普通 GET 网页搜索才显示「找书」。不执行第三方规则里的 JavaScript、Java、POST 或 API 搜索，不是完整 Legado 阅读引擎，源站在线状态与内容由第三方决定。
+- 「当前书源」下载单个完整 JSON；「导入源合集」使用仓库公布的公开合集 URL 唤起已安装的 Legado，进入其导入选择流程。合集入口不依赖本地或私有预览 URL，桌面未安装 Legado 时可下载单个 JSON。
+- 书源数据来源和原作者字段原样保留。场景由内置 imagegen 生成，素材位于 `assets/art/newsstand-scene.png`，提示词记录在 `docs/newsstand-art.md`。封面图像为氛围设计，不表示源站的实际出版物封面。

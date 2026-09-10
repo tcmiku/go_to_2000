@@ -1,0 +1,272 @@
+{
+  "repository": "https://github.com/aoaostar/legado",
+  "bundle": "https://legado.aoaostar.com/sources/b778fe6b.json",
+  "syncedAt": "2026-09-10T07:21:58.046Z",
+  "upstreamCount": 3907,
+  "sources": [
+    {
+      "id": "duzhe",
+      "title": "读者",
+      "name": "读者",
+      "url": "https://www.52dzxy.com/",
+      "category": "literature",
+      "theme": "green",
+      "layout": "bold",
+      "art": 0,
+      "search": "#"
+    },
+    {
+      "id": "qidian",
+      "title": "起点中文",
+      "name": "起点中文",
+      "url": "https://www.qidian.com/",
+      "category": "novel",
+      "theme": "red",
+      "layout": "vertical",
+      "art": 1,
+      "search": "@js:url=baseUrl+\"/so/{{key}}.html,{'method':'GET','headers':{'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36','Referer':'https://www.qidian.com/'}}\";java.put('url',url);result=url;"
+    },
+    {
+      "id": "douban",
+      "title": "豆瓣阅读",
+      "name": "📚豆瓣阅读",
+      "url": "https://read.douban.com/",
+      "category": "literature",
+      "theme": "cream",
+      "layout": "bold",
+      "art": 2,
+      "search": "https://read.douban.com/j/search?start={{(page-1)*10}}&limit=10&query={{key}}\n@js:java.put('key',key);result"
+    },
+    {
+      "id": "kehuan",
+      "title": "科幻小说",
+      "name": "💡 科幻小说",
+      "url": "http://www.kehuan.net.cn/",
+      "category": "novel",
+      "theme": "blue",
+      "layout": "bold",
+      "art": 3,
+      "search": ""
+    },
+    {
+      "id": "jinjiang",
+      "title": "晋江文学",
+      "name": "🏷晋江文学",
+      "url": "https://m.jjwxc.net/channel/",
+      "category": "novel",
+      "theme": "pink",
+      "layout": "vertical",
+      "art": 4,
+      "search": "@js:\nif(/^##/.test(key)){\n\tresult = \"https://android.jjwxc.net/androidapi/search?versionCode=191&keyword={{key}}&type=1&page={{page}}&searchType=8&sortMode=DESC\"\n\t}else{\n\t\tresult = 'http://www.jjwxc.net/bookbase.php?searchkeywords={{key}}&page={{page}},{\"charset\": \"gbk\"}'\n\t\t}"
+    },
+    {
+      "id": "kuaikan",
+      "title": "快看漫画",
+      "name": "快看漫画M",
+      "url": "http://m.kuaikanmanhua.com/",
+      "category": "comic",
+      "theme": "yellow",
+      "layout": "bold",
+      "art": 5,
+      "search": "http://m.kuaikanmanhua.com/search/mini/topic/title_and_author?page={{page}}&size=24&q={{key}}"
+    },
+    {
+      "id": "hetushu",
+      "title": "和图书",
+      "name": "和图书",
+      "url": "https://hetushu.com/",
+      "category": "literature",
+      "theme": "mint",
+      "layout": "vertical",
+      "art": 6,
+      "search": "<js>if(java.ajax(baseUrl).match(/^<!DOCTYPE html><html lang=\"en-US\"><head><title>Just a moment...</)){java.longToast('请根据网页提示点击勾选「确认您是真人」来通过人机验证，如果无限循环请查看源注释说明。');java.startBrowserAwait(baseUrl,'人机验证');};</js>/search/?keyword={{key}}"
+    },
+    {
+      "id": "handian",
+      "title": "汉典古籍",
+      "name": "📚 汉典古籍",
+      "url": "https://gj.zdic.net/",
+      "category": "literature",
+      "theme": "cream",
+      "layout": "vertical",
+      "art": 7,
+      "search": ""
+    },
+    {
+      "id": "ximalaya",
+      "title": "喜马拉雅",
+      "name": "🎧喜马拉雅",
+      "url": "https://www.ximalaya.com/",
+      "category": "audio",
+      "theme": "red",
+      "layout": "bold",
+      "art": 8,
+      "search": "https://m.ximalaya.com/m-revision/page/search?kw={{key}}&core=all&page={{page}}&rows=5"
+    },
+    {
+      "id": "ttkan",
+      "title": "天天看小说",
+      "name": "天天看小说",
+      "url": "https://cn.ttkan.co/",
+      "category": "novel",
+      "theme": "yellow",
+      "layout": "vertical",
+      "art": 9,
+      "search": "/novel/search?q={{key}}"
+    },
+    {
+      "id": "bilibili",
+      "title": "哔哩漫画",
+      "name": "哔哩哔哩",
+      "url": "https://manga.bilibili.com/",
+      "category": "comic",
+      "theme": "blue",
+      "layout": "bold",
+      "art": 10,
+      "search": "<js>\n\nlet a={\"key_word\":key,\"page_num\":1,\"page_size\":9},\nc={\"Referer\":\"https://manga.bilibili.com/search?from=manga_homepage&keyword=\"+encodeURIComponent(key)}\nb={\n\"method\": \"POST\",\n\"body\": JSON.stringify(a),\n\"headers\": JSON.stringify(c)\n}\n\n\"/twirp/comic.v1.Comic/Search?device=pc&platform=web,\"+JSON.stringify(b)\n</js>"
+    },
+    {
+      "id": "hongxiu",
+      "title": "红袖添香",
+      "name": "红袖添香",
+      "url": "https://www.hongxiu.com/",
+      "category": "novel",
+      "theme": "pink",
+      "layout": "vertical",
+      "art": 11,
+      "search": "/so/{{key}}_0_{{page}}"
+    },
+    {
+      "id": "kuaishu",
+      "title": "快书网",
+      "name": "快书网",
+      "url": "https://www.kuaishu5.com/",
+      "category": "novel",
+      "theme": "green",
+      "layout": "bold",
+      "art": 12,
+      "search": "/search/?searchkey={{key}}"
+    },
+    {
+      "id": "manman",
+      "title": "漫漫漫画",
+      "name": "🎨 漫漫漫画 #Haxc",
+      "url": "https://www.manmanapp.com/",
+      "category": "comic",
+      "theme": "purple",
+      "layout": "bold",
+      "art": 13,
+      "search": "https://www.manmanapp.com/search/word-{{key}}.html"
+    },
+    {
+      "id": "lrts",
+      "title": "懒人听书",
+      "name": "📻 懒人听书",
+      "url": "https://m.lrts.me/",
+      "category": "audio",
+      "theme": "cream",
+      "layout": "vertical",
+      "art": 14,
+      "search": ""
+    },
+    {
+      "id": "ciweimao",
+      "title": "刺猬猫",
+      "name": "刺猬猫",
+      "url": "https://www.ciweimao.com/",
+      "category": "novel",
+      "theme": "yellow",
+      "layout": "bold",
+      "art": 15,
+      "search": "/get-search-book-list/0-0-0-0-0-0/全部/{{key}}/{{page}}"
+    },
+    {
+      "id": "qianbi",
+      "title": "铅笔小说",
+      "name": "铅笔小说",
+      "url": "https://www.23qb.com/",
+      "category": "novel",
+      "theme": "mint",
+      "layout": "vertical",
+      "art": 16,
+      "search": "/search.html?searchkey={{key}}"
+    },
+    {
+      "id": "wangyi",
+      "title": "网易云阅读",
+      "name": "💰网易云阅读[api]",
+      "url": "http://m.yuedu.163.com/",
+      "category": "literature",
+      "theme": "red",
+      "layout": "bold",
+      "art": 17,
+      "search": "/search/book/data.json?key={{key}}"
+    },
+    {
+      "id": "deqi",
+      "title": "得奇小说",
+      "name": "得奇小说网",
+      "url": "https://www.deqixs.com/",
+      "category": "novel",
+      "theme": "purple",
+      "layout": "vertical",
+      "art": 18,
+      "search": "/tag/?key={{key}}"
+    },
+    {
+      "id": "iqiyi",
+      "title": "爱奇艺漫画",
+      "name": "🎨爱奇艺漫画 ",
+      "url": "https://www.iqiyi.com/manhua",
+      "category": "comic",
+      "theme": "green",
+      "layout": "bold",
+      "art": 19,
+      "search": "https://www.iqiyi.com/manhua/search-keyword={{key}}_{{page}}"
+    },
+    {
+      "id": "ysts",
+      "title": "有声听书",
+      "name": "🎧 有声听书吧(修复)",
+      "url": "https://m.ysts8.net/",
+      "category": "audio",
+      "theme": "blue",
+      "layout": "vertical",
+      "art": 20,
+      "search": "https://m.ysts8.net/so.php?keyword={{key}}"
+    },
+    {
+      "id": "shuqi",
+      "title": "书旗小说",
+      "name": "💰书旗小说",
+      "url": "https://t.shuqi.com/",
+      "category": "novel",
+      "theme": "pink",
+      "layout": "bold",
+      "art": 0,
+      "search": "https://read.xiaoshuo1-sm.com/novel/i.php?do=is_search&isNewBind=0&tk=&imei=&sn=&channelId=&clientPatch=&clientVersion=&device=&deviceId=&utdid=&model=&osName=&osVersion=&umidToken=&appVersion=&app=&platform=3&ykToken=&ykuid=&shuqi_h5=&token=&user_id=8000000&q={{key}}&page=1&size=10&uid=8000000&filterMigu=1&ver=&p=3"
+    },
+    {
+      "id": "dbxsd",
+      "title": "独步小说",
+      "name": "独步小说网",
+      "url": "https://www.dbxsd.com/",
+      "category": "novel",
+      "theme": "cream",
+      "layout": "vertical",
+      "art": 1,
+      "search": "/plus/search.php?q={{key}}"
+    },
+    {
+      "id": "haokan",
+      "title": "好看漫画",
+      "name": "好看漫画",
+      "url": "https://www.9comic.cn/",
+      "category": "comic",
+      "theme": "yellow",
+      "layout": "bold",
+      "art": 2,
+      "search": "https://www.9comic.cn/comic22/so/comic?keyword={{key}}&p=&ver=2.0"
+    }
+  ]
+}

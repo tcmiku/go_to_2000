@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#152e2c"><title>街角报刊亭</title>
+<link rel="icon" href="/assets/favicons/surfer.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/newsstand.css"><script type="module" src="/newsstand.js"></script>
+</head>
+<body>
+<header class="street-header"><a class="home-link" href="/" aria-label="返回千禧冲浪站">←</a><span class="street-name">街角 · 报刊亭</span><time id="today"></time><button id="light-switch" class="icon-button" aria-label="切换灯光" aria-pressed="true">☀</button></header>
+<main>
+<section class="newsstand" aria-label="报刊亭">
+<div class="shop-sign"><span class="sign-small">书 报 杂 志</span><h1>街角报刊亭</h1><span class="open-tag">营业中</span></div>
+<div class="rack-area"><div id="racks" class="racks" aria-label="阅读源书架"></div><div id="empty" class="empty-slip" role="status" hidden>暂无书刊</div></div>
+<div class="counter"><nav class="category-tabs" aria-label="书刊分类"><button data-category="all" aria-pressed="true">全部</button><button data-category="literature" aria-pressed="false">文学</button><button data-category="novel" aria-pressed="false">小说</button><button data-category="comic" aria-pressed="false">漫画</button><button data-category="audio" aria-pressed="false">有声</button><button data-category="saved" aria-label="收藏的书刊" aria-pressed="false">♡</button></nav><div class="counter-bottom"><form id="source-search" role="search"><input id="source-query" type="search" placeholder="找书源" aria-label="查找书源" autocomplete="off"><button aria-label="搜索书源" class="search-button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></form><div class="pager"><button id="previous" aria-label="上一架">‹</button><output id="page-number" aria-live="polite">01 / 01</output><button id="next" aria-label="下一架">›</button></div></div></div>
+</section>
+</main>
+<footer class="street-footer"><span aria-hidden="true">·</span><a href="https://github.com/aoaostar/legado" target="_blank" rel="noopener noreferrer" aria-label="查看阅读源仓库">LEGADO ↗</a></footer>
+<dialog id="publication" aria-labelledby="publication-title"><button id="close-publication" class="close-paper" aria-label="放回书刊">×</button><div class="paper-spread"><div id="detail-cover" class="detail-cover"></div><section class="paper-page"><span id="detail-category" class="paper-category"></span><h2 id="publication-title"></h2><span id="source-name" class="source-name"></span><a id="source-domain" target="_blank" rel="noopener noreferrer"></a><div class="paper-rule"></div><form id="book-search" target="_blank"><label for="book-query" class="sr-only">书名或作者</label><input id="book-query" placeholder="书名 / 作者" autocomplete="off" maxlength="120"><button type="submit">找书 ↗</button></form><div class="paper-actions"><a id="read-source" class="read-link" target="_blank" rel="noopener noreferrer">翻阅 ↗</a><button id="save-source" aria-pressed="false">♡ 收藏</button><a id="import-source">导入源合集</a><button id="download-source" aria-label="下载当前阅读源">↓ 当前书源</button></div><div class="colophon"><span>街角报刊亭</span><a id="source-bundle" target="_blank" rel="noopener noreferrer">AOAOSTAR ↗</a></div></section></div></dialog>
+<div id="notice" class="notice" role="status" hidden></div>
+</body></html>

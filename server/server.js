@@ -23,6 +23,8 @@ const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', an
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.json':'application/json; charset=utf-8', '.moc':'application/octet-stream', '.mtn':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
 const publicFiles = new Set(['index.html','admin.html','robots.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
+['newsstand.html','newsstand.css','newsstand.js','newsstand-data.js','newsstand-catalog.json'].forEach(file=>publicFiles.add(file));
+['duzhe','qidian','douban','kehuan','jinjiang','kuaikan','hetushu','handian','ximalaya','ttkan','bilibili','hongxiu','kuaishu','manman','lrts','ciweimao','qianbi','wangyi','deqi','iqiyi','ysts','shuqi','dbxsd','haokan'].forEach(id=>publicFiles.add(`newsstand-sources/${id}.json`));
 publicFiles.add('pinball.js');
 publicFiles.add('music-sources.js');
 ["live2dw/lib/L2Dwidget.0.min.js", "live2dw/lib/L2Dwidget.min.js", "live2dw/assets/miku.physics.json", "live2dw/assets/miku.model.json", "live2dw/assets/mtn/miku_m_01.mtn", "live2dw/assets/mtn/miku_m_03.mtn", "live2dw/assets/mtn/miku_m_02.mtn", "live2dw/assets/mtn/miku_m_06.mtn", "live2dw/assets/mtn/miku_m_05.mtn", "live2dw/assets/mtn/miku_m_04.mtn", "live2dw/assets/mtn/miku_shake_01.mtn", "live2dw/assets/mtn/miku_idle_01.mtn", "live2dw/assets/moc/miku.moc", "live2dw/assets/moc/miku.2048/texture_00.png"].forEach(file=>publicFiles.add(file));
@@ -299,7 +301,7 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
         if(req.method==='HEAD'||size===0)return res.end();
         return await pipeline(createReadStream(target,{start,end}),res);
       }
-      const filename=route==='/'?'index.html':route==='/blog'?'blog.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':route==='/together'?'together.html':adminRoute?'admin.html':route.slice(1);
+      const filename=route==='/'?'index.html':route==='/newsstand'?'newsstand.html':route==='/blog'?'blog.html':route==='/cassette-room'?'cassette-room.html':route==='/listening-room'?'listening-room.html':route==='/together'?'together.html':adminRoute?'admin.html':route.slice(1);
       if(!adminEnabled && (filename==='admin.html'||filename==='admin.js'||filename==='admin.css'))throw httpError(404,'页面不存在');
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const targetRoot=filename.startsWith('assets/')?root:publicRoot;
