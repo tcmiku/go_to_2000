@@ -12,7 +12,7 @@
     "check-admin-password": "node scripts/check-admin-password.mjs",
     "check:data": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check public/newsstand.js && node --check public/newsstand-data.js && node --check scripts/sync-newsstand-sources.mjs && node --check public/together.js && node --check public/listening-shared.js && node --check public/together-sync.js && node --check server/together-service.js && node --check public/blog-widgets.js && node --check public/blog.js && node --check public/blog-render.js && node --check public/blog-data.js && node --check public/cassette-room.js && node --check public/cassette-sound.js && node --check server/admin-account.js && node --check scripts/reset-admin-password.mjs && node --check scripts/check-admin-password.mjs && node --check server/podcast-service.js && node --check public/music-sources.js && node --check public/listening-room.js && node --check server/listening-service.js && node --check public/lx-client.js && node --check public/lx-sandbox.js && node --check public/cd-wall.js && node --check public/app.js && node --check public/admin.js && node --check public/ui.js && node --check public/radio.js && node --check public/start-menu.js && node --check public/minesweeper.js && node --check public/snake.js && node --check public/management-data.js && node --check public/navigation-data.js && node --check server/server.js && npm run check:data && npm test",
+    "check": "node --check server/legado-rules.js && node --check server/newsstand-service.js && node --check public/newsstand.js && node --check public/newsstand-data.js && node --check scripts/sync-newsstand-sources.mjs && node --check public/together.js && node --check public/listening-shared.js && node --check public/together-sync.js && node --check server/together-service.js && node --check public/blog-widgets.js && node --check public/blog.js && node --check public/blog-render.js && node --check public/blog-data.js && node --check public/cassette-room.js && node --check public/cassette-sound.js && node --check server/admin-account.js && node --check scripts/reset-admin-password.mjs && node --check scripts/check-admin-password.mjs && node --check server/podcast-service.js && node --check public/music-sources.js && node --check public/listening-room.js && node --check server/listening-service.js && node --check public/lx-client.js && node --check public/lx-sandbox.js && node --check public/cd-wall.js && node --check public/app.js && node --check public/admin.js && node --check public/ui.js && node --check public/radio.js && node --check public/start-menu.js && node --check public/minesweeper.js && node --check public/snake.js && node --check public/management-data.js && node --check public/navigation-data.js && node --check server/server.js && npm run check:data && npm test",
     "build:music": "esbuild scripts/lx-worker-entry.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=public/lx-worker.js",
     "sync:newsstand": "node scripts/sync-newsstand-sources.mjs"
   },
@@ -24,6 +24,12 @@
     "node-forge": "^1.4.0"
   },
   "dependencies": {
-    "marked": "^17.0.4"
+    "@xmldom/xmldom": "^0.9.12",
+    "cheerio": "^1.2.0",
+    "iconv-lite": "^0.7.3",
+    "jsonpath-plus": "^10.4.0",
+    "marked": "^17.0.4",
+    "quickjs-emscripten": "^0.32.0",
+    "xpath": "^0.0.34"
   }
 }
