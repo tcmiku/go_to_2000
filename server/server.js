@@ -36,7 +36,7 @@ publicFiles.add('music-sources.js');
 publicFiles.add('lyrics.css');
 ['cassette-room.html','cassette-room.css','cassette-room.js','cassette-sound.js'].forEach(file=>publicFiles.add(file));
 ['listening-room.html','listening-room.css','listening-room.js','lyrics.js','music-source-selection.js','lx-client.js','lx-sandbox.html','lx-sandbox.js','lx-worker.js'].forEach(file=>publicFiles.add(file));
-['together.html','together.css','together.js','together-sync.js','listening-shared.js'].forEach(file=>publicFiles.add(file));
+['together.html','together.css','together.js','together-ipod.js','together-chat.js','together-chat.css','together-sync.js','listening-shared.js'].forEach(file=>publicFiles.add(file));
 const httpError = (status,message) => Object.assign(new Error(message),{status});
 const submissionStatuses = new Set(['pending','accepted','rejected']);
 function cleanText(value,max,label,{required=false}={}) {
@@ -187,8 +187,19 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       }
       if(route.startsWith('/api/together/')) {
         const action=route.slice('/api/together/'.length);
-        if(req.method!==(action==='state'?'GET':'POST'))throw httpError(405,'请求方式不支持');
-        return json(res,200,togetherService(action,action==='state'?{room:url.searchParams.get('room')}:await body(req),req.headers['x-room-token']));
+        if(action==='stream'){
+          if(req.method!=='GET')throw httpError(405,'请求方式不支持');
+          const input={room:url.searchParams.get('room')},token=req.headers['x-room-token'];
+          togetherService('state',input,token);
+          res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store','Connection':'keep-alive','X-Accel-Buffering':'no'});
+          const unsubscribe=togetherService.subscribe(input,token,data=>res.write(`data: ${JSON.stringify(data)}\n\n`));
+          const heartbeat=setInterval(()=>{try{togetherService('state',input,token);res.write(': keepalive\n\n');}catch{res.end();}},15000);
+          res.on('close',()=>{clearInterval(heartbeat);unsubscribe();});
+          return;
+        }
+        const read=action==='state'||action==='rooms';
+        if(req.method!==(read?'GET':'POST'))throw httpError(405,'请求方式不支持');
+        return json(res,200,togetherService(action,read?{room:url.searchParams.get('room')}:await body(req),req.headers['x-room-token']));
       }
       if(route.startsWith('/api/listening/')) {
         const method=route==='/api/listening/request'?'POST':'GET';

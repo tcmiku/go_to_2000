@@ -3,7 +3,31 @@ import assert from 'node:assert/strict';
 import { createTogetherService } from '../server/together-service.js';
 import { targetPosition, playbackCorrection } from '../public/together-sync.js';
 const track={id:'local:test',source:'local',name:'测试唱片',singer:'测试歌手',src:'/data/mp3/test.mp3',duration:180};
+test('lobby lists live rooms without member credentials or media URLs',()=>{
+  let time=100000;const service=createTogetherService({now:()=>time});
+  assert.deepEqual(service('rooms'),{rooms:[]});
+  const first=service('create',{name:'甲'}),second=service('create',{name:'乙'});
+  service('control',{room:first.room,revision:0,command:'track',track},first.token);
+  const rooms=service('rooms').rooms;
+  assert.equal(rooms.length,2);
+  assert.deepEqual(rooms.find(room=>room.room===first.room),{room:first.room,name:'甲',memberCount:1,playing:true,track:{name:track.name,singer:track.singer}});
+  service('leave',{room:second.room},second.token);
+  assert.equal(service('rooms').rooms.length,1);
+  time+=46000;assert.deepEqual(service('rooms'),{rooms:[]});
+});
 function fixture(){let time=100000;const service=createTogetherService({now:()=>time});const first=service('create',{name:'甲'});const second=service('join',{room:first.room,name:'乙'});return {service,first,second,tick:delta=>time+=delta,control:(command,extra={})=>service('control',{room:first.room,revision:service('state',{room:first.room},first.token).revision,command,...extra},first.token)};}
+test('room playlist is shared, deduplicated and editable without interrupting playback',()=>{
+  const f=fixture(),next={...track,id:'local:next',name:'下一首',src:'/data/mp3/next.mp3'};
+  const queued=f.control('enqueue',{track});assert.equal(queued.track,null);assert.equal(queued.playlist.length,1);
+  f.control('track',{track});f.tick(12000);
+  const result=f.control('enqueue',{track:next});assert.equal(result.playlist.length,2);assert.equal(result.track.id,track.id);assert.equal(result.position,12);assert.equal(result.playing,true);
+  f.control('enqueue',{track:next});assert.equal(f.service('state',{room:f.first.room},f.second.token).playlist.length,2);
+  const joined=f.service('join',{room:f.first.room,name:'丙'});assert.equal(joined.playlist[1].name,'下一首');
+  const removed=f.control('remove',{trackId:next.id});assert.equal(removed.playlist.length,1);assert.equal(removed.position,12);assert.equal(removed.playing,true);
+  assert.throws(()=>f.control('remove',{trackId:next.id}),{status:404});
+  const other=f.service('create',{name:'另一房间'});assert.deepEqual(other.playlist,[]);
+  assert.throws(()=>f.service('control',{room:f.first.room,revision:removed.revision,command:'enqueue',track},other.token),{status:401});
+});
 test('independent listeners share song, elapsed progress, pause, seek and resume',()=>{
   const f=fixture();f.control('track',{track});f.tick(12000);
   let state=f.service('state',{room:f.first.room},f.second.token);assert.equal(state.position,12);assert.equal(state.track.src,track.src);assert.equal(state.members.length,2);assert.equal(state.token,undefined);
@@ -42,8 +66,9 @@ test('room subscriptions receive snapshots on control and leave until unsubscrib
   assert.equal(received.at(-1).playing,true);
   f.control('pause');
   assert.equal(received.at(-1).playing,false);
+  const beforeLeaving=received.length;
   f.service('leave',{room:f.first.room},f.second.token);
-  assert.equal(received.at(-1).members.length,1);
+  assert.equal(received.length,beforeLeaving);
   const before=received.length;
   unsubscribe();
   f.control('play');
@@ -60,4 +85,42 @@ test('subscriptions require a live member token and refresh presence via state',
   f.tick(10000);
   assert.equal(f.service('state',{room:f.first.room},f.second.token).members.length,1);
   assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});
+});
+
+test('chat uses room identity, reaches listeners and does not alter playback revision',()=>{
+  const f=fixture(),received=[];f.control('track',{track});f.tick(3000);
+  f.service.subscribe({room:f.first.room},f.second.token,data=>received.push(data));
+  const result=f.service('message',{room:f.first.room,clientId:'test-message-0001',message:'  好久不见\n一起听歌  ',name:'冒充乙',memberId:f.second.memberId},f.first.token);
+  assert.equal(result.revision,1);assert.equal(result.position,3);assert.equal(result.playing,true);
+  assert.deepEqual(result.messages,[{id:1,memberId:f.first.memberId,name:'甲',body:'好久不见\n一起听歌',sentAt:103000,clientId:'test-message-0001'}]);
+  assert.deepEqual(received.at(-1).messages,result.messages);
+  const late=f.service('join',{room:f.first.room,name:'丙'});assert.deepEqual(late.messages,result.messages);
+  const duplicate=f.service('message',{room:f.first.room,clientId:'test-message-0001',message:'重复请求'},f.first.token);
+  assert.equal(duplicate.messages.length,1);assert.equal(duplicate.chatRevision,1);
+  assert.equal(f.control('pause').revision,2);
+});
+
+test('chat rejects outsiders, left listeners, invalid content and rapid sends',()=>{
+  const f=fixture(),other=f.service('create',{name:'其他房间'});
+  const input={room:f.first.room,clientId:'test-message-0002',message:'你好'};
+  assert.throws(()=>f.service('message',input,other.token),{status:401});
+  assert.throws(()=>f.service('state',{room:f.first.room},other.token),{status:401});
+  for(const message of ['', '   ', 'a'.repeat(1001), null, {}])assert.throws(()=>f.service('message',{...input,message},f.first.token),{status:400});
+  assert.throws(()=>f.service('message',{...input,clientId:'bad'},f.first.token),{status:400});
+  f.service('message',input,f.first.token);
+  assert.throws(()=>f.service('message',{...input,clientId:'test-message-0003'},f.first.token),{status:429});
+  const received=[];f.service.subscribe({room:f.first.room},f.second.token,data=>received.push(data));
+  f.service('leave',{room:f.first.room},f.second.token);f.tick(500);
+  f.service('message',{...input,clientId:'test-message-0003'},f.first.token);
+  assert.equal(received.length,1);
+  assert.throws(()=>f.service('message',input,f.second.token),{status:401});
+  assert.deepEqual(f.service('state',{room:other.room},other.token).messages,[]);
+  assert.equal(f.service('rooms').rooms.some(room=>Object.hasOwn(room,'messages')),false);
+});
+
+test('chat retains only the latest 100 messages in order',()=>{
+  const f=fixture();
+  for(let index=1;index<=105;index++){f.tick(500);f.service('message',{room:f.first.room,clientId:`test-message-${String(index).padStart(4,'0')}`,message:`消息 ${index}`},f.first.token);}
+  const state=f.service('state',{room:f.first.room},f.first.token);
+  assert.equal(state.messages.length,100);assert.equal(state.messages[0].id,6);assert.equal(state.messages.at(-1).id,105);assert.equal(state.chatRevision,105);assert.equal(state.revision,0);
 });

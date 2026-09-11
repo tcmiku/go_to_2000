@@ -5,16 +5,20 @@ export function createTogetherService({now=Date.now}={}) {
   const rooms=new Map();
   let nextSubscriberId=0;
   function clean(){for(const [id,room] of rooms){for(const [token,member] of room.members)if(now()-member.seen>45000)room.members.delete(token);if(!room.members.size&&now()-room.touched>45000)room.subscribers.clear();if(now()-room.touched>3600000)rooms.delete(id);}}
-  function snapshot(room){const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name}))};}
-  function notify(room){if(!room?.subscribers?.size)return;const payload=snapshot(room);for(const [id,emit] of room.subscribers){try{emit(payload);}catch{room.subscribers.delete(id);}}}
+  function snapshot(room){const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:room.messages.slice()};}
+  function notify(room){if(!room?.subscribers?.size)return;const payload=snapshot(room);for(const [id,subscriber] of room.subscribers){if(!room.members.has(subscriber.token)){room.subscribers.delete(id);continue;}try{subscriber.emit(payload);}catch{room.subscribers.delete(id);}}}
   function handle(action,input={},token='') {
     clean();
     if(!input||typeof input!=='object')throw fail(400,'房间请求无效');
+    if(action==='rooms')return {rooms:[...rooms.values()].filter(room=>room.members.size).sort((a,b)=>b.touched-a.touched).map(room=>{
+      const current=snapshot(room);
+      return {room:room.id,name:[...room.members.values()][0].name,memberCount:room.members.size,playing:current.playing,track:current.track?{name:current.track.name,singer:current.track.singer}:null};
+    })};
     let room;
     if(action==='create'){
       if(rooms.size>=300)throw fail(429,'房间已满，请稍后再试');
       let id;do{id=randomBytes(4).toString('hex').toUpperCase();}while(rooms.has(id));
-      room={id,members:new Map(),subscribers:new Map(),track:null,playing:false,position:0,updatedAt:now(),touched:now(),revision:0};rooms.set(id,room);
+      room={id,members:new Map(),subscribers:new Map(),track:null,playing:false,position:0,updatedAt:now(),touched:now(),revision:0,playlist:[],chatRevision:0,messages:[]};rooms.set(id,room);
     }else {room=rooms.get(text(input.room,8).toUpperCase());if(!room)throw fail(404,'房间不存在或已过期，请重新创建');}
     if(action==='create'||action==='join'){
       if(room.members.size>=20)throw fail(409,'房间已满（最多 20 人）');
@@ -27,10 +31,20 @@ export function createTogetherService({now=Date.now}={}) {
     member.seen=now();room.touched=now();
     if(action==='leave'){room.members.delete(token);notify(room);return {ok:true};}
     if(action==='state')return snapshot(room);
+    if(action==='message'){
+      if(typeof input.message!=='string'||!input.message.trim()||input.message.length>1000)throw fail(400,'消息须为 1—1000 字');
+      if(typeof input.clientId!=='string'||!/^[a-zA-Z0-9-]{16,64}$/.test(input.clientId))throw fail(400,'消息标识无效');
+      if(room.messages.some(message=>message.memberId===member.id&&message.clientId===input.clientId))return snapshot(room);
+      if(member.lastMessageAt!==undefined&&now()-member.lastMessageAt<500)throw fail(429,'发送太快，请稍后重试');
+      member.lastMessageAt=now();
+      room.messages.push({id:++room.chatRevision,memberId:member.id,name:member.name,body:input.message.trim(),sentAt:now(),clientId:input.clientId});
+      if(room.messages.length>100)room.messages.shift();
+      notify(room);return snapshot(room);
+    }
     if(action!=='control')throw fail(404,'房间接口不存在');
     if(input.revision!==room.revision)throw fail(409,'有人刚刚调整了播放，请同步后重试');
     const command=input.command;
-    if(command==='track'){
+    if(command==='track'||command==='enqueue'){
       const track=input.track;
       if(!track||!text(track.name,150)||!['local','wy'].includes(track.source)||!text(track.id,300))throw fail(400,'歌曲信息无效');
       const src=text(track.src,8192);
@@ -38,7 +52,17 @@ export function createTogetherService({now=Date.now}={}) {
         if(!/^\/data\/mp3\/[^/]+\.mp3$/i.test(src)||decodeURIComponent(src).includes('..')||decodeURIComponent(src).slice(10).includes('/'))throw fail(400,'本地歌曲地址无效');
       }else {let url;try{url=new URL(src);}catch{throw fail(400,'歌曲地址无效');}if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw fail(400,'歌曲地址无效');}
       const duration=Number(track.duration);if(!Number.isFinite(duration)||duration<=0||duration>86400)throw fail(400,'歌曲时长无效');
-      room.track={id:text(track.id,300),name:text(track.name,150),singer:text(track.singer,150),source:track.source,src,duration,...(track.source==='wy'&&/^[1-9]\d{0,19}$/.test(String(track.songmid))?{songmid:String(track.songmid)}:{})};room.position=0;room.playing=true;
+      const normalized={id:text(track.id,300),name:text(track.name,150),singer:text(track.singer,150),source:track.source,src,duration,...(track.source==='wy'&&/^[1-9]\d{0,19}$/.test(String(track.songmid))?{songmid:String(track.songmid)}:{})};
+      const index=room.playlist.findIndex(item=>item.id===normalized.id);
+      if(index<0&&room.playlist.length>=100)throw fail(409,'房间歌单已满（100 首）');
+      if(index<0)room.playlist.push(normalized);else room.playlist[index]=normalized;
+      if(command==='track'){room.track=normalized;room.position=0;room.playing=true;}
+      else if(room.playing)room.position=Math.min(room.track.duration,room.position+(now()-room.updatedAt)/1000);
+    }else if(command==='remove'){
+      const index=room.playlist.findIndex(item=>item.id===input.trackId);
+      if(index<0)throw fail(404,'歌曲不在房间歌单中');
+      room.playlist.splice(index,1);
+      if(room.playing)room.position=Math.min(room.track.duration,room.position+(now()-room.updatedAt)/1000);
     }else {
       if(!room.track)throw fail(400,'请先点一首歌');
       const position=Math.min(room.track.duration,room.position+(room.playing?(now()-room.updatedAt)/1000:0));
@@ -63,7 +87,7 @@ export function createTogetherService({now=Date.now}={}) {
     if(!member)throw fail(401,'连接已过期，请重新加入房间');
     member.seen=now();room.touched=now();
     const id=++nextSubscriberId;
-    room.subscribers.set(id,emit);
+    room.subscribers.set(id,{token,emit});
     emit(snapshot(room));
     return function unsubscribe(){room.subscribers.delete(id);};
   };

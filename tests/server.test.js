@@ -369,8 +369,10 @@ test('invalid music source configurations and cross-origin writes never replace 
 
 test('together page and room HTTP API share state across independent listeners',async t=>{
   const app=await instance(t,{adminEnabled:false});
-  for(const route of ['/together','/together.html','/together.js','/together.css','/together-sync.js','/listening-shared.js']){const response=await fetch(app.base+route);assert.equal(response.status,200,route);if(route.includes('html'))assert.match(response.headers.get('content-security-policy'),/media-src 'self' blob: https: http:/);}
+  for(const route of ['/together','/together.html','/together.js','/together-ipod.js','/together-chat.js','/together-chat.css','/together.css','/together-sync.js','/listening-shared.js']){const response=await fetch(app.base+route);assert.equal(response.status,200,route);if(route.includes('html'))assert.match(response.headers.get('content-security-policy'),/media-src 'self' blob: https: http:/);}
   const first=await app.req('/api/together/create','POST',{name:'甲'});assert.equal(first.status,200);
+  const lobby=await app.req('/api/together/rooms');assert.equal(lobby.status,200);assert.equal(lobby.data.rooms[0].room,first.data.room);assert.equal(lobby.data.rooms[0].memberCount,1);assert.equal(lobby.data.rooms[0].token,undefined);
+  assert.equal((await app.req('/api/together/rooms','POST',{})).status,405);
   const second=await app.req('/api/together/join','POST',{room:first.data.room,name:'乙'});assert.equal(second.status,200);
   const selected=await app.req('/api/together/control','POST',{room:first.data.room,revision:0,command:'track',track:{id:'local:test',name:'唱片',source:'local',src:'/data/mp3/test.mp3',duration:180}},{'X-Room-Token':first.data.token});assert.equal(selected.status,200);
   const state=await app.req('/api/together/state?room='+first.data.room,'GET',undefined,{'X-Room-Token':second.data.token});assert.equal(state.data.track.name,'唱片');assert.equal(state.data.playing,true);assert.equal(state.data.members.length,2);
@@ -412,6 +414,11 @@ test('together stream rejects bad credentials and pushes control updates to subs
   const updated=await readEvent();
   assert.equal(updated.track.name,'流式唱片');
   assert.equal(updated.playing,true);
+  const chat=await app.req('/api/together/message','POST',{room:first.data.room,clientId:'http-chat-test-0001',message:'在听了！'},{'X-Room-Token':first.data.token});
+  assert.equal(chat.status,200);assert.equal(chat.data.revision,updated.revision);
+  const chatted=await readEvent();assert.equal(chatted.messages[0].body,'在听了！');assert.equal(chatted.messages[0].name,'甲');
+  assert.equal((await app.req('/api/together/message','POST',{room:first.data.room,clientId:'http-chat-test-0002',message:'未入房'})).status,401);
+  assert.equal((await app.req('/api/together/message')).status,405);
   controller.abort();
   await reader.cancel().catch(()=>{});
 });
