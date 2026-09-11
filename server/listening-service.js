@@ -54,7 +54,7 @@ export async function publicRequest(input, options={}, redirects=0) {
       const maxBytes=Math.min(8*1024*1024,Math.max(1024,Number(options.maxBytes)||2*1024*1024));
       res.on('data',chunk=>{size+=chunk.length;if(size>maxBytes){res.destroy();reject(fail(502,'音源响应过大'));}else chunks.push(chunk);});
       res.on('error',()=>reject(fail(502,'音源连接中断')));
-      res.on('end',()=>{const text=Buffer.concat(chunks).toString('utf8');let body=text;try {body=JSON.parse(text);}catch {}resolve({statusCode:res.statusCode,headers:Object.fromEntries(Object.entries(res.headers).filter(([key])=>key!=='set-cookie')),body});});
+      res.on('end',()=>{const bytes=Buffer.concat(chunks),text=bytes.toString('utf8');let body=text;try {body=JSON.parse(text);}catch {}resolve({statusCode:res.statusCode,headers:Object.fromEntries(Object.entries(res.headers).filter(([key])=>key!=='set-cookie')),body,...(options.raw?{bytes,url:url.href}:{})});});
     });
     const timer=setTimeout(()=>req.destroy(fail(504,'音源连接超时，请尝试其他音源')),Math.min(20000,Math.max(1000,Number(options.timeout)||15000)));
     req.on('close',()=>clearTimeout(timer));req.on('error',error=>reject(error.status?error:fail(502,'音源暂时无法连接，请尝试其他音源')));

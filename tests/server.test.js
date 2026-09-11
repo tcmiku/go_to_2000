@@ -22,6 +22,20 @@ async function instance(t,options={}){
   }};
 }
 const credentials={username:'site-owner',password:'test-only-password-2026'};
+
+test('newsstand exposes source definitions and validates method, source and public network boundary',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  const catalog=await app.req('/api/newsstand/sources');assert.equal(catalog.status,200);assert.ok(catalog.data.sources.length>2000);assert.ok(catalog.data.catalog.upstreamCount>=3907);assert.equal(catalog.data.sources.find(source=>source.id==='hongxiu').searchable,true);
+  assert.equal((await app.req('/api/newsstand/search')).status,405);
+  assert.equal((await app.req('/api/newsstand/search','POST',{sourceId:'missing',query:'书'})).status,404);
+  assert.equal((await app.req('/api/newsstand/book','POST',{sourceId:'hongxiu',bookUrl:'http://127.0.0.1/private'})).status,403);
+  assert.equal((await app.req('/api/newsstand/search','POST',{sourceId:'hongxiu',query:'书'},{Origin:'https://evil.example'})).status,403);
+  assert.equal((await app.req('/api/newsstand/search-all','POST',{query:''})).status,400);
+  assert.equal((await app.req('/api/newsstand/search-all','POST',{query:'书'},{Origin:'https://evil.example'})).status,403);
+  const imported=catalog.data.sources.find(source=>source.id.startsWith('lg-'));
+  const definition=await app.req(`/api/newsstand/source/${imported.id}`);assert.equal(definition.status,200);assert.equal(definition.data[0].bookSourceName,imported.name);
+  const html=await fetch(app.base+'/newsstand').then(response=>response.text());assert.match(html,/我的书架/);assert.match(html,/chapter-content/);assert.doesNotMatch(html,/id="read-source"/);
+});
 test('visit totals persist, count concurrent visits and keep reads uncounted',async t=>{
   const app=await instance(t,{adminEnabled:false});
   assert.deepEqual((await app.req('/api/visits')).data,{total:0,today:0,visitors:0});

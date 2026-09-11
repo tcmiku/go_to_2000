@@ -7,6 +7,10 @@ import { createListeningService, isPublicAddress } from './listening-service.js'
 import { isIP } from 'node:net';
 import { defaultMusicSources, validateMusicSources } from '../public/music-sources.js';
 import { createPodcastService } from './podcast-service.js';
+import { createNewsstandService } from './newsstand-service.js';
+import { createAllSourceSearch } from './newsstand-search.js';
+import { loadSourceCatalog } from './newsstand-catalog.js';
+import { once } from 'node:events';
 import { validateAd } from '../public/retro-ad.js';
 import { readFile, writeFile, mkdir, rename, readdir, stat, lstat } from 'node:fs/promises';
 import { representation, notModified, sendRepresentation } from './http-cache.js';
@@ -126,6 +130,8 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
     catch(error){if(error.code==='ENOENT')return null;throw error;}
   }});
   const podcastService=createPodcastService();
+  const newsstandService=createNewsstandService();
+  const allSourceSearch=createAllSourceSearch();
   const togetherService=createTogetherService();
   return http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -148,6 +154,36 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       }
       if(route==='/lx-sandbox.html') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src blob:; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; sandbox allow-scripts");
+      }
+      if(route.startsWith('/api/newsstand/')) {
+        const action=route.slice('/api/newsstand/'.length);
+        if(action.startsWith('source/')){
+          if(req.method!=='GET')throw httpError(405,'请求方式不支持');
+          const id=action.slice('source/'.length),catalog=await loadSourceCatalog(),source=catalog.sources.get(id);
+          if(!source)throw httpError(404,'书源不存在');
+          res.setHeader('Content-Disposition',`attachment; filename="${id}.json"`);
+          return json(res,200,[source]);
+        }
+        if(action==='search-all'){
+          if(req.method!=='POST')throw httpError(405,'请求方式不支持');
+          const input=await body(req),controller=new AbortController(),abort=()=>controller.abort();
+          res.once('close',abort);
+          try{
+            await allSourceSearch(input,{signal:controller.signal,onEvent:async event=>{
+              if(controller.signal.aborted)return;
+              if(!res.headersSent)res.writeHead(200,{'Content-Type':'application/x-ndjson; charset=utf-8','Cache-Control':'no-store','X-Accel-Buffering':'no'});
+              if(!res.write(JSON.stringify(event)+'\n'))await once(res,'drain',{signal:controller.signal});
+            }});
+            if(!res.destroyed)res.end();
+          }catch(error){
+            if(controller.signal.aborted)return;
+            if(!res.headersSent)throw error;
+            res.end(JSON.stringify({type:'error',error:error.status?error.message:'搜索中断，请重试'})+'\n');
+          }finally{res.off('close',abort);}
+          return;
+        }
+        if(req.method!==(action==='sources'?'GET':'POST'))throw httpError(405,'请求方式不支持');
+        return json(res,200,await newsstandService(action,action==='sources'?{}:await body(req)));
       }
       if(route.startsWith('/api/together/')) {
         const action=route.slice('/api/together/'.length);

@@ -252,9 +252,13 @@ Live2D 脚本及模型按原站文件结构保存在 `public/live2dw/`，保留�
 
 ### 街角报刊亭
 
-入口：`/newsstand`（也可访问 `/newsstand.html`），首页菜单已加入链接。照片质感的旧蓝色报刊亭、可拿起的书刊、纸页详情、分类翻架、源名检索、本机收藏及灯光切换；移动端每架 9 本，桌面端每架 18 本，保留键盘焦点与减少动态效果偏好。
+入口：`/newsstand`（也可访问 `/newsstand.html`）。保留报刊亭场景与灯光切换，书架仅展示用户主动加入的书籍，初始为空；移动端每架 9 本，桌面端每架 18 本。
 
 - 从 [aoaostar/legado](https://github.com/aoaostar/legado) 全量源中按域名匹配 24 个书源，原始规则分别保存在 `public/newsstand-sources/`，展示目录为 `public/newsstand-catalog.json`。执行 `npm run sync:newsstand` 更新快照，匹配缺失时直接报错。
-- 「翻阅」打开源站；只有可安全转换的普通 GET 网页搜索才显示「找书」。不执行第三方规则里的 JavaScript、Java、POST 或 API 搜索，不是完整 Legado 阅读引擎，源站在线状态与内容由第三方决定。
-- 「当前书源」下载单个完整 JSON；「导入源合集」使用仓库公布的公开合集 URL 唤起已安装的 Legado，进入其导入选择流程。合集入口不依赖本地或私有预览 URL，桌面未安装 Legado 时可下载单个 JSON。
-- 书源数据来源和原作者字段原样保留。场景由内置 imagegen 生成，素材位于 `assets/art/newsstand-scene.png`，提示词记录在 `docs/newsstand-art.md`。封面图像为氛围设计，不表示源站的实际出版物封面。
+- 「找书」选择具体文字书源，执行源内 `searchUrl / ruleSearch / ruleExplore / ruleBookInfo / ruleToc / ruleContent`，在站内完成搜索、发现、详情、目录和正文阅读，也支持粘贴书籍详情网址。「当前书源」仍可下载对应的完整 JSON。
+- 点击「放上书架」才保存书籍；搜索、查看详情、试读不会自动加书。书架和最近阅读章节保存在当前浏览器的 `newsstand:books:v1`，旧版的书源收藏不迁入书架。可移除书籍、按书名/作者筛选、切换章节及调整字号。
+- 服务端 `server/legado-rules.js` 支持 CSS / `class.id.tag` 风格链、索引、XPath、JSONPath、正则替换、正则列表、`|| / &&`、URL 模板、GET/POST、请求头和中文编码。`@js:` / `<js>` 使用有时间与内存限制的 QuickJS WASM；提供 `java.get/put/getString/getStringList/md5Encode/base64Decode`，不开放 Node、文件系统或任意脚本网络访问。
+- 兼容范围是文字源的上述规则，并非完整 Android 运行时：Java 包、登录/Cookie、`java.ajax`、资源嗅探、页面脚本、漫画和音频阅读暂不支持；失败会在当前步骤显示原因。`webView: true` 的地址先尝试公开 HTML，不能运行所需网页脚本或完成登录。源站故障、规则过期或付费内容不可读时需换源。
+- 请求通过已有的公开网络代理校验地址、DNS 与重定向，拒绝内网；目录分页去重并分批加载，正文合并续页。所有源站正文均作为纯文本显示。API 为 `GET /api/newsstand/sources` 与 `POST /api/newsstand/{search,explore,book,toc,content}`。
+- 验证：`node --test tests/legado.test.js tests/newsstand.test.js tests/server.test.js`。测试使用真实的快书网规则解析固定 HTML，还覆盖 POST/JSON、GBK、目录/正文续页、脚本超时与书架隔离。另已用红袖真实源完成搜书、目录、免费正文、刷新续读、移除书籍和手机布局验证；不保证所有上游源在线。
+- 场景由内置 imagegen 生成，素材位于 `assets/art/newsstand-scene.png`，提示词记录在 `docs/newsstand-art.md`。架上封面使用书名与作者排版，不表示实际出版物封面。
