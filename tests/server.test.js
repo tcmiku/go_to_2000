@@ -378,3 +378,40 @@ test('together page and room HTTP API share state across independent listeners',
   assert.equal((await app.req('/api/together/create','POST',{}, {Origin:'https://evil.example'})).status,403);
   assert.equal((await app.req('/api/together/create')).status,405);
 });
+
+test('together stream rejects bad credentials and pushes control updates to subscribers',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  const first=await app.req('/api/together/create','POST',{name:'甲'});
+  const bad=await app.req(`/api/together/stream?room=${first.data.room}`,'GET',undefined,{'X-Room-Token':'nope'});
+  assert.equal(bad.status,401);
+  const missing=await app.req('/api/together/stream?room=ZZZZZZZZ','GET',undefined,{'X-Room-Token':first.data.token});
+  assert.equal(missing.status,404);
+  const controller=new AbortController();
+  t.after(()=>controller.abort());
+  const stream=await fetch(`${app.base}/api/together/stream?room=${first.data.room}`,{headers:{'X-Room-Token':first.data.token},signal:controller.signal});
+  assert.equal(stream.status,200);
+  assert.match(stream.headers.get('content-type'),/text\/event-stream/);
+  const reader=stream.body.getReader();
+  const decoder=new TextDecoder();
+  let buffer='';
+  const readEvent=async()=>{
+    while(!buffer.includes('\n\n')){
+      const {done,value}=await reader.read();
+      if(done)throw new Error('stream ended');
+      buffer+=decoder.decode(value,{stream:true});
+    }
+    const split=buffer.indexOf('\n\n');
+    const chunk=buffer.slice(0,split);
+    buffer=buffer.slice(split+2);
+    const line=chunk.split('\n').find(item=>item.startsWith('data: '));
+    return JSON.parse(line.slice(6));
+  };
+  const initial=await readEvent();
+  assert.equal(initial.room,first.data.room);
+  await app.req('/api/together/control','POST',{room:first.data.room,revision:initial.revision,command:'track',track:{id:'local:test',name:'流式唱片',source:'local',src:'/data/mp3/test.mp3',duration:180}},{'X-Room-Token':first.data.token});
+  const updated=await readEvent();
+  assert.equal(updated.track.name,'流式唱片');
+  assert.equal(updated.playing,true);
+  controller.abort();
+  await reader.cancel().catch(()=>{});
+});
