@@ -23,7 +23,7 @@ export function createTogetherService({now=Date.now}={}) {
       if(!room.members.size&&time-room.touched>24*60*60*1000)rooms.delete(id);
     }
   }
-  function snapshot(room){settleVote(room);const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:structuredClone(room.messages)};}
+  function snapshot(room){settleVote(room);const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,ownerId:room.ownerId,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:structuredClone(room.messages)};}
   function notify(room){if(!room?.subscribers?.size)return;const payload=snapshot(room);for(const [id,subscriber] of room.subscribers){if(!room.members.has(subscriber.token)){room.subscribers.delete(id);continue;}try{subscriber.emit(payload);}catch{room.subscribers.delete(id);}}}
   function handle(action,input={},token='') {
     clean();
@@ -41,6 +41,7 @@ export function createTogetherService({now=Date.now}={}) {
     if(action==='create'||action==='join'){
       if(room.members.size>=20)throw fail(409,'房间已满（最多 20 人）');
       const memberToken=randomBytes(24).toString('hex'),id=randomBytes(6).toString('hex');
+      if(action==='create')room.ownerId=id;
       room.members.set(memberToken,{id,name:text(input.name,20)||'听友',seen:now()});room.touched=now();
       notify(room);
       return {...snapshot(room),token:memberToken,memberId:id};
@@ -71,6 +72,7 @@ export function createTogetherService({now=Date.now}={}) {
     if(action!=='control')throw fail(404,'房间接口不存在');
     if(input.revision!==room.revision)throw fail(409,'有人刚刚调整了播放，请同步后重试');
     const command=input.command;
+    if(['play','pause','stop'].includes(command)&&member.id!==room.ownerId)throw fail(403,'只有房间创建者可以控制播放和暂停');
     if(command==='track'||command==='enqueue'){
       const track=input.track;
       if(!track||!text(track.name,150)||!['local','wy'].includes(track.source)||!text(track.id,300))throw fail(400,'歌曲信息无效');

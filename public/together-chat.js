@@ -31,7 +31,7 @@ export function createRoomChat({getSession,send,vote}) {
     const newRoom=room!==state.room;if(newRoom){reset();room=state.room;}
     online=true;updateControls();
     $('#qq-room-title').textContent=`一起听 · ${state.room}`;
-    $('#qq-identity').textContent=state.members.find(member=>member.id===current.memberId)?.name||'在线';
+    $('#qq-identity').textContent=(state.members.find(member=>member.id===current.memberId)?.name||'在线')+(state.ownerId===current.memberId?' · 房主':'');
     $('#qq-song').textContent=state.track?`${state.playing?'正在播放':'已暂停'} · ${state.track.name}`:'—';
     $('#qq-member-count').textContent=state.members.length;
     const members=state.members.map(member=>`<li><span class="qq-avatar" aria-hidden="true">${e(member.name.slice(0,1))}</span><span>${e(member.name)}${member.id===current.memberId?' (我)':''}</span><i aria-label="在线"></i></li>`).join('');
@@ -50,9 +50,10 @@ export function createRoomChat({getSession,send,vote}) {
       row.innerHTML=`<header><b>${e(message.name)}</b><time>${e(formatTime(message.sentAt))}</time></header><p>${e(message.body)}</p>`;
       if(message.vote){
         const v=message.vote,yes=Object.values(v.ballots).filter(Boolean).length,no=Object.values(v.ballots).filter(x=>!x).length;
-        const disabled=v.status!=='pending'||!v.eligible.includes(current.memberId)||Object.hasOwn(v.ballots,current.memberId);
+        const voted=Object.hasOwn(v.ballots,current.memberId),eligible=v.eligible.includes(current.memberId);
+        const disabled=v.status!=='pending'||!eligible||voted;
         row.classList.add('qq-vote');
-        row.innerHTML+=`<p>同意 ${yes} · 反对 ${no} · 需 ${v.required} 票同意</p><small>${v.status==='pending'?`30 秒内过半通过 · 截止 ${e(formatTime(v.expiresAt))}`:({approved:'已通过',rejected:'未通过',expired:'已超时'}[v.status])}</small><div class="qq-vote-actions"><button data-vote="${e(v.id)}" data-approve="true" ${disabled?'disabled':''}>同意切歌</button><button data-vote="${e(v.id)}" data-approve="false" ${disabled?'disabled':''}>继续听</button></div>`;
+        row.innerHTML+=`<div class="qq-vote-actions" role="group" aria-label="切歌投票"><button data-vote="${e(v.id)}" data-approve="true" ${disabled?'disabled':''}>同意切歌</button><button data-vote="${e(v.id)}" data-approve="false" ${disabled?'disabled':''}>继续听</button></div><p>同意 ${yes} · 反对 ${no} · 需 ${v.required} 票同意</p><small>${v.status==='pending'?`${voted?(v.ballots[current.memberId]?'你已同意 · ':'你已选择继续听 · '):!eligible?'加入前发起的投票 · ':''}截止 ${e(formatTime(v.expiresAt))}`:({approved:'已通过',rejected:'未通过',expired:'已超时'}[v.status])}</small>`;
       }
       const old=log.querySelector(`[data-message-id="${message.id}"]`);if(old)old.replaceWith(row);else log.append(row);
     }

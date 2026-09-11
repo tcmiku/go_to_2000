@@ -4,7 +4,7 @@ import { LXClient } from './lx-client.js';
 import { loadProbeTracks, selectMusicSource } from './music-source-selection.js';
 import { createLyricsProjection } from './lyrics.js';
 
-export function createIPod({notice,getRoom,enqueue,remove}) {
+export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) {
   const $=s=>document.querySelector(s),audio=$('#audio'),lx=new LXClient();
   const prefs=readStorage('slow-records.preferences.v1',{})||{},stored=readStorage('slow-records.collection.v1',[]);
   let favorites=Array.isArray(stored)?stored.filter(t=>t&&typeof t.id==='string'&&typeof t.name==='string'):[],playlist=[];
@@ -75,6 +75,9 @@ export function createIPod({notice,getRoom,enqueue,remove}) {
     $('#play-toggle').setAttribute('aria-pressed',String(playing));$('#play-toggle').setAttribute('aria-label',playing?'暂停':'播放');$('#play-indicator').textContent=playing?'▶':'Ⅱ';$('#play-indicator').setAttribute('aria-label',playing?'正在播放':'已暂停');
     const saved=favorites.some(t=>t.id===track?.id);$('#favorite-track').textContent=saved?'✓ 已收藏':'＋ 收藏';$('#favorite-track').disabled=!track;$('#favorite-track').setAttribute('aria-pressed',String(saved));
     lyrics.sync();$('#lyrics-empty').hidden=!$('#lyrics').hidden;
+    for(const id of ['room-play','now-play','play-toggle','stop']){
+      const button=$('#'+id),restricted=!!getRoom()&&!canControl();button.disabled=restricted||(id!=='play-toggle'&&!track);button.title=restricted?'仅房间创建者可控制播放和暂停':'';
+    }
   }
   async function loadSources(){
     const response=await fetch('/api/listening/sources',{signal:AbortSignal.timeout(10000)}),data=await response.json();if(!response.ok)throw new Error(data.error||'音源加载失败');

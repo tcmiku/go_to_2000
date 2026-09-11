@@ -1,7 +1,7 @@
 import { escapeHTML as e } from './ui.js';
 import { targetPosition } from './together-sync.js';
 import { createIPod } from './together-ipod.js';
-import { createRoomChat } from './together-chat.js';
+import { createRoomChat } from './together-chat.js?v=vote-buttons-2';
 const $=s=>document.querySelector(s);
 let player=null,session=null,state=null,anchor=0,pollTimer,connected=false,operation=0,selectionController=null;
 let streamController=null,streamRetryTimer=null,streamDelay=500,streamHealthy=false;
@@ -117,6 +117,7 @@ async function enter(action){
 function reset(){operation++;selectionController?.abort();stopStream();session=null;saveSession();state=null;clearTimeout(pollTimer);player?.reset();chat.reset();$('#enable-audio').hidden=true;$('#room-info').hidden=true;$('#shared-title').textContent='未在播放';$('#shared-status').textContent='—';connection(false,'未加入');ipod.updateRoom(null);ipod.show('lobby');}
 let controlQueue=Promise.resolve();
 function control(command,extra={}){
+  if(['play','pause','stop'].includes(command)&&state?.ownerId!==session?.memberId){notice('只有房间创建者可以控制播放和暂停');return Promise.resolve();}
   operation++;selectionController?.abort();const current=session;
   controlQueue=controlQueue.then(async()=>{
     if(session!==current||!session||!connected)return;
@@ -136,7 +137,7 @@ async function select(track,enqueue=false){
   }catch(error){if(session===current&&version===operation){notice(error.message);if(error.status===409)await poll();}}
 }
 const chat=createRoomChat({getSession:()=>session,vote:async input=>{const current=session;const result=await request('vote',input,current);if(session===current)accept(result);},send:async(input,current)=>{const result=await request('message',input,current);if(session===current)accept(result);}});
-const ipod=createIPod({notice,getRoom:()=>session?.room,enqueue:track=>select(track,true),remove:trackId=>control('remove',{trackId})});
+const ipod=createIPod({notice,getRoom:()=>session?.room,canControl:()=>!!session&&state?.ownerId===session.memberId,enqueue:track=>select(track,true),remove:trackId=>control('remove',{trackId})});
 player=ipod.player;player.connect({select,control,notice,audioBlocked:value=>{$('#enable-audio').hidden=!value;}});sendState();
 $('#room-form').onsubmit=event=>{event.preventDefault();enter($('#room-form').dataset.action||'join');};
 $('#leave').onclick=()=>{const current=session;reset();history.replaceState(null,'',location.pathname);request('leave',{},current).then(()=>ipod.refreshRooms()).catch(()=>{});notice('已离开房间');};

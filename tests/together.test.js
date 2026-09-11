@@ -87,9 +87,12 @@ test('independent listeners share song, elapsed progress, pause, seek and resume
   f.control('seek',{position:65});f.control('play');f.tick(1000);assert.equal(f.service('state',{room:f.first.room},f.second.token).position,66);
   const late=f.service('join',{room:f.first.room,name:'后来的人'});assert.equal(late.position,66);assert.equal(late.members.length,3);
 });
-test('stale commands cannot overwrite newer selections and all listeners may control',()=>{
+test('stale commands cannot overwrite newer selections and only the creator controls playback',()=>{
   const f=fixture();f.control('track',{track});assert.throws(()=>f.service('control',{room:f.first.room,revision:0,command:'pause'},f.second.token),{status:409});
-  const updated=f.service('control',{room:f.first.room,revision:1,command:'pause'},f.second.token);assert.equal(updated.playing,false);
+  for(const command of ['play','pause','stop'])assert.throws(()=>f.service('control',{room:f.first.room,revision:1,command,ownerId:f.second.memberId},f.second.token),{status:403});
+  const updated=f.control('pause');assert.equal(updated.playing,false);assert.equal(updated.ownerId,f.first.memberId);
+  assert.equal(f.control('play').playing,true);
+  assert.equal(f.control('stop').playing,false);
   assert.throws(()=>f.control('seek',{position:Infinity}),{status:400});assert.throws(()=>f.control('seek',{position:181}),{status:400});
 });
 test('rooms enforce membership, isolation, safe media and expiration',()=>{
