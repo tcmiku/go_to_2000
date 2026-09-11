@@ -4,6 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { createDecipheriv, createHash } from 'node:crypto';
 import vm from 'node:vm';
 import { createListeningService, isPublicAddress, normalizeSearchResult, eapiParams, publicRequest, sourceCatalog } from '../server/listening-service.js';
+test('bundled source scripts fall back to the same repository CDN when raw GitHub fails',async()=>{
+  const calls=[],service=createListeningService({request:async url=>{calls.push(url);if(url.includes('raw.githubusercontent.com'))throw new Error('DNS unavailable');return {statusCode:200,body:'/** @name CDN fixture */'};}});
+  const url=new URL('http://localhost/api/listening/source?id=huibq');
+  assert.match((await service(url.pathname,url)).script,/CDN fixture/);
+  assert.deepEqual(calls,[sourceCatalog[0].url,'https://cdn.jsdelivr.net/gh/pdone/lx-music-source@main/huibq/latest.js']);
+  await service(url.pathname,url);assert.equal(calls.length,2);
+});
 
 test('music network bridge blocks private addresses, mapped loopback and reserved ranges',async()=>{
   for(const value of ['127.0.0.1','10.4.1.2','172.16.2.1','192.168.1.1','169.254.169.254','100.64.2.1','0.0.0.0','::1','::ffff:127.0.0.1','fd00::1','fe80::1','2001:db8::1','2002:7f00:1::','198.19.1.2','203.0.113.1'])assert.equal(isPublicAddress(value),false,value);

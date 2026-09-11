@@ -3,6 +3,56 @@ import assert from 'node:assert/strict';
 import { createTogetherService } from '../server/together-service.js';
 import { targetPosition, playbackCorrection } from '../public/together-sync.js';
 const track={id:'local:test',source:'local',name:'测试唱片',singer:'测试歌手',src:'/data/mp3/test.mp3',duration:180};
+test('open streams keep a room alive across delayed heartbeats and long background periods',()=>{
+  const f=fixture();f.control('track',{track});
+  const unsubscribe=f.service.subscribe({room:f.first.room},f.first.token,()=>{});
+  f.tick(2*24*60*60*1000);
+  const lobby=f.service('rooms').rooms;
+  assert.equal(lobby.length,1);assert.equal(lobby[0].memberCount,1);
+  assert.equal(f.service('state',{room:f.first.room},f.first.token).playlist[0].id,track.id);
+  unsubscribe();f.tick(4*60*1000);
+  assert.equal(f.service('state',{room:f.first.room},f.first.token).members[0].id,f.first.memberId);
+  f.tick(5*60*1000+1);
+  assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});
+  assert.equal(f.service('rooms').rooms[0].memberCount,0);
+  const returned=f.service('join',{room:f.first.room,name:'回来的人'});
+  assert.equal(returned.playlist[0].id,track.id);
+});
+test('leaving revokes stream presence and a disconnected room eventually expires',()=>{
+  const f=fixture();f.service.subscribe({room:f.first.room},f.first.token,()=>{});
+  f.service('leave',{room:f.first.room},f.first.token);
+  assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});
+  f.tick(24*60*60*1000+1);assert.deepEqual(f.service('rooms'),{rooms:[]});
+});
+test('manual song changes require a majority and broadcast the result without duplicate votes',()=>{
+  const f=fixture();f.control('track',{track});f.tick(3000);
+  const next={...track,id:'local:next',name:'下一首'};
+  const proposed=f.control('track',{track:next}),v=proposed.messages[0].vote;
+  assert.equal(proposed.track.id,track.id);assert.equal(proposed.position,3);assert.equal(v.required,2);
+  const received=[];f.service.subscribe({room:f.first.room},f.second.token,s=>received.push(s));
+  assert.throws(()=>f.control('track',{track:next}),{status:409});
+  const input={room:f.first.room,voteId:v.id,approve:true};
+  assert.equal(f.service('vote',input,f.first.token).messages[0].vote.status,'pending');
+  const result=f.service('vote',input,f.second.token);
+  assert.equal(result.track.id,next.id);assert.equal(result.position,0);assert.equal(result.messages[0].vote.status,'approved');
+  assert.equal(received.at(-1).track.id,next.id);assert.equal(v.status,'pending');
+  assert.throws(()=>f.service('vote',input,f.second.token),{status:409});
+});
+test('votes reject or expire without switching and cannot be influenced by newcomers or outsiders',()=>{
+  const f=fixture();f.control('track',{track});
+  let result=f.control('track',{track:{...track,id:'other'}}),v=result.messages[0].vote;
+  const late=f.service('join',{room:f.first.room,name:'丙'}),other=f.service('create');
+  const input={room:f.first.room,voteId:v.id,approve:true};
+  assert.throws(()=>f.service('vote',input,late.token),{status:403});
+  assert.throws(()=>f.service('vote',input,other.token),{status:401});
+  result=f.service('vote',{...input,approve:false},f.second.token);
+  assert.equal(result.messages[0].vote.status,'rejected');assert.equal(result.track.id,track.id);
+  result=f.control('track',{track:{...track,id:'third'}});v=result.messages.findLast(m=>m.vote).vote;
+  f.tick(30001);result=f.service('state',{room:f.first.room},f.first.token);
+  assert.equal(result.messages.findLast(m=>m.vote).vote.status,'expired');assert.equal(result.track.id,track.id);
+  assert.throws(()=>f.service('vote',{...input,voteId:v.id},f.second.token),{status:409});
+});
+test('a solo listener can change songs immediately',()=>{const service=createTogetherService(),member=service('create');service('control',{room:member.room,revision:0,command:'track',track},member.token);const result=service('control',{room:member.room,revision:1,command:'track',track:{...track,id:'second'}},member.token);assert.equal(result.track.id,'second');assert.deepEqual(result.messages,[]);});
 test('lobby lists live rooms without member credentials or media URLs',()=>{
   let time=100000;const service=createTogetherService({now:()=>time});
   assert.deepEqual(service('rooms'),{rooms:[]});
@@ -12,8 +62,10 @@ test('lobby lists live rooms without member credentials or media URLs',()=>{
   assert.equal(rooms.length,2);
   assert.deepEqual(rooms.find(room=>room.room===first.room),{room:first.room,name:'甲',memberCount:1,playing:true,track:{name:track.name,singer:track.singer}});
   service('leave',{room:second.room},second.token);
-  assert.equal(service('rooms').rooms.length,1);
-  time+=46000;assert.deepEqual(service('rooms'),{rooms:[]});
+  assert.equal(service('rooms').rooms.length,2);
+  assert.equal(service('rooms').rooms.find(room=>room.room===second.room).memberCount,0);
+  time+=5*60*1000+1;assert.equal(service('rooms').rooms.length,2);
+  time+=24*60*60*1000;assert.deepEqual(service('rooms'),{rooms:[]});
 });
 function fixture(){let time=100000;const service=createTogetherService({now:()=>time});const first=service('create',{name:'甲'});const second=service('join',{room:first.room,name:'乙'});return {service,first,second,tick:delta=>time+=delta,control:(command,extra={})=>service('control',{room:first.room,revision:service('state',{room:first.room},first.token).revision,command,...extra},first.token)};}
 test('room playlist is shared, deduplicated and editable without interrupting playback',()=>{
@@ -44,7 +96,7 @@ test('rooms enforce membership, isolation, safe media and expiration',()=>{
   const f=fixture(),other=f.service('create');assert.throws(()=>f.service('state',{room:f.first.room},other.token),{status:401});
   for(const src of ['javascript:alert(1)','/data/mp3/../private.mp3','/data/mp3/%2fprivate.mp3'])assert.throws(()=>f.control('track',{track:{...track,src}}),{status:400});
   f.service('leave',{room:f.first.room},f.second.token);assert.equal(f.service('state',{room:f.first.room},f.first.token).members.length,1);
-  f.tick(46000);assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});f.tick(3600000);assert.throws(()=>f.service('join',{room:f.first.room}),{status:404});
+  f.tick(5*60*1000+1);assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});f.tick(24*60*60*1000);assert.throws(()=>f.service('join',{room:f.first.room}),{status:404});
 });
 test('playback clamps at end and replay starts at zero',()=>{const f=fixture();f.control('track',{track});f.tick(20000);f.control('seek',{position:179});f.tick(2000);assert.equal(f.service('state',{room:f.first.room},f.second.token).position,180);assert.equal(f.control('play').position,0);});
 test('clock compensation and drift correction respect paused and finished tracks',()=>{
@@ -80,9 +132,9 @@ test('subscriptions require a live member token and refresh presence via state',
   assert.throws(()=>f.service.subscribe({room:f.first.room},'bad-token',()=>{}),{status:401});
   assert.throws(()=>f.service.subscribe({room:'ZZZZZZZZ'},f.first.token,()=>{}),{status:404});
   f.service.subscribe({room:f.first.room},f.second.token,()=>{});
-  f.tick(40000);
+  f.tick(4*60*1000);
   f.service('state',{room:f.first.room},f.second.token);
-  f.tick(10000);
+  f.tick(2*60*1000);
   assert.equal(f.service('state',{room:f.first.room},f.second.token).members.length,1);
   assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});
 });

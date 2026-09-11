@@ -99,9 +99,20 @@ export function createIPod({notice,getRoom,enqueue,remove}) {
     load:track=>{lyrics.reset();audio.src=track.src;audio.load();lyrics.setTrack(track);},
     clear:()=>{lyrics.reset();audio.pause();audio.removeAttribute('src');audio.load();},
     resolveTrack:async(track,signal)=>{
-      let src=track.src;
-      if(track.source!=='local'){if(!lx.sources||sourceId!==$('#source-select').value)await connectSource();signal.throwIfAborted();src=await lx.resolve(track,$('#quality-select').value,signal);}
-      signal.throwIfAborted();const duration=await readAudioDuration(src,AbortSignal.any([signal,AbortSignal.timeout(15000)]));return {...track,src,duration};
+      if(track.source==='local'){const duration=await readAudioDuration(track.src,AbortSignal.any([signal,AbortSignal.timeout(15000)]));return {...track,duration};}
+      if(connecting)await connecting.catch(()=>{});
+      signal.throwIfAborted();
+      let resolved;
+      const probe=async(src,{signal})=>{const duration=await readAudioDuration(src,signal);resolved={...track,src,duration};};
+      if(lx.sources&&sourceId===$('#source-select').value){
+        try{const attempt=AbortSignal.any([signal,AbortSignal.timeout(12000)]);await probe(await lx.resolve(track,$('#quality-select').value,attempt),{signal:attempt});return resolved;}catch{signal.throwIfAborted();}
+      }
+      const sources=await loadSources();
+      $('#source-connect').disabled=true;$('#source-select').disabled=true;
+      try{
+        sourceId=await selectMusicSource({client:lx,ids:sources.map(s=>s.id),preferred:$('#source-select').value,tracks:[track],quality:$('#quality-select').value,signal,probe,trackTimeout:12000,onAttempt:(id,index,total)=>notice(`正在尝试音源 ${index}/${total} · ${sources.find(s=>s.id===id)?.name||id}`)});
+        $('#source-select').value=sourceId;savePrefs();return resolved;
+      }finally{$('#source-connect').disabled=false;$('#source-select').disabled=false;}
     },refresh,
   });
   function setVolume(value){audio.volume=Math.max(0,Math.min(1,value));$('#volume').value=Math.round(audio.volume*100);$('#volume-value').textContent=`${Math.round(audio.volume*100)}%`;savePrefs();if(view==='now')notice(`音量 ${Math.round(audio.volume*100)}%`);}

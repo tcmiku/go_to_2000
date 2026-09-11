@@ -6,6 +6,11 @@ const $=s=>document.querySelector(s);
 let player=null,session=null,state=null,anchor=0,pollTimer,connected=false,operation=0,selectionController=null;
 let streamController=null,streamRetryTimer=null,streamDelay=500,streamHealthy=false;
 let noticeTimer,entering=false;
+const sessionKey='together.session.v1';
+function saveSession(){try{if(session)sessionStorage.setItem(sessionKey,JSON.stringify(session));else sessionStorage.removeItem(sessionKey);}catch{}}
+function showRoom(){
+  $('#room-info').hidden=false;ipod.updateRoom(session.room);ipod.show('room');$('#active-code').textContent=session.room;$('#room-code').value=session.room;history.replaceState(null,'','#'+session.room);
+}
 const notice=message=>{clearTimeout(noticeTimer);$('#notice').textContent=message;$('#notice').hidden=!message;noticeTimer=setTimeout(()=>{$('#notice').hidden=true;},4500);};
 function sendState(){
   if(!player)return;
@@ -103,13 +108,13 @@ async function enter(action){
   try{
     const result=await request(action,{room:code,name},null);
     session={room:result.data.room,token:result.data.token,memberId:result.data.memberId};state=null;
-    $('#room-info').hidden=false;ipod.updateRoom(session.room);ipod.show('room');$('#active-code').textContent=session.room;$('#room-code').value=session.room;history.replaceState(null,'','#'+session.room);
+    saveSession();showRoom();
     accept(result);
     clearTimeout(pollTimer);pollTimer=setTimeout(poll,1000);
     void openStream();
   }catch(error){notice(error.message);}finally{entering=false;$('#new-room').disabled=false;for(const button of $('#room-form').querySelectorAll('button'))button.disabled=false;}
 }
-function reset(){operation++;selectionController?.abort();stopStream();session=null;state=null;clearTimeout(pollTimer);player?.reset();chat.reset();$('#enable-audio').hidden=true;$('#room-info').hidden=true;$('#shared-title').textContent='未在播放';$('#shared-status').textContent='—';connection(false,'未加入');ipod.updateRoom(null);ipod.show('lobby');}
+function reset(){operation++;selectionController?.abort();stopStream();session=null;saveSession();state=null;clearTimeout(pollTimer);player?.reset();chat.reset();$('#enable-audio').hidden=true;$('#room-info').hidden=true;$('#shared-title').textContent='未在播放';$('#shared-status').textContent='—';connection(false,'未加入');ipod.updateRoom(null);ipod.show('lobby');}
 let controlQueue=Promise.resolve();
 function control(command,extra={}){
   operation++;selectionController?.abort();const current=session;
@@ -127,10 +132,10 @@ async function select(track,enqueue=false){
   try{
     const resolved=await player.resolve(track,signal);if(session!==current||version!==operation)return;
     const result=await request('control',{command:enqueue?'enqueue':'track',revision,track:resolved},current);
-    if(session===current&&version===operation){accept(result);notice(enqueue?'已加入房间歌单':'');}
+    if(session===current&&version===operation){accept(result);notice(enqueue?'已加入房间歌单':result.data.messages?.some(message=>message.vote?.status==='pending')?'切歌投票已发到聊天室，过半同意后切换':'');}
   }catch(error){if(session===current&&version===operation){notice(error.message);if(error.status===409)await poll();}}
 }
-const chat=createRoomChat({getSession:()=>session,send:async(input,current)=>{const result=await request('message',input,current);if(session===current)accept(result);}});
+const chat=createRoomChat({getSession:()=>session,vote:async input=>{const current=session;const result=await request('vote',input,current);if(session===current)accept(result);},send:async(input,current)=>{const result=await request('message',input,current);if(session===current)accept(result);}});
 const ipod=createIPod({notice,getRoom:()=>session?.room,enqueue:track=>select(track,true),remove:trackId=>control('remove',{trackId})});
 player=ipod.player;player.connect({select,control,notice,audioBlocked:value=>{$('#enable-audio').hidden=!value;}});sendState();
 $('#room-form').onsubmit=event=>{event.preventDefault();enter($('#room-form').dataset.action||'join');};
@@ -138,6 +143,12 @@ $('#leave').onclick=()=>{const current=session;reset();history.replaceState(null
 $('#invite').onclick=async()=>{if(!session)return;const url=new URL(location.href);url.hash=session.room;try{await navigator.clipboard.writeText(url.href);notice('邀请链接已复制');}catch{$('#invite-url').hidden=false;$('#invite-url').value=url.href;$('#invite-url').focus();$('#invite-url').select();}};
 $('#enable-audio').onclick=()=>player?.unlock();
 function openInvitation(){const code=location.hash.slice(1).toUpperCase();if(!session&&/^[A-F0-9]{8}$/.test(code))ipod.show('join',{code});}
+try{
+  const saved=JSON.parse(sessionStorage.getItem(sessionKey)||'null'),code=location.hash.slice(1).toUpperCase();
+  if(saved&&/^[A-F0-9]{8}$/.test(saved.room)&&/^[a-f0-9]{48}$/.test(saved.token)&&/^[a-f0-9]{12}$/.test(saved.memberId)&&(!code||code===saved.room)){
+    session=saved;showRoom();connection(false,'正在恢复房间');void poll();void openStream();
+  }
+}catch{}
 openInvitation();window.addEventListener('hashchange',openInvitation);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)catchUp();});
 window.addEventListener('online',()=>{catchUp();if(session&&!streamController)void openStream();});

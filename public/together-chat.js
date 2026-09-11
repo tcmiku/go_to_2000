@@ -1,6 +1,6 @@
 import { escapeHTML as e } from './ui.js';
 
-export function createRoomChat({getSession,send}) {
+export function createRoomChat({getSession,send,vote}) {
   const $=s=>document.querySelector(s),log=$('#qq-messages'),input=$('#qq-input');
   let room=null,revision=-1,online=false,sending=false,pending=null,unread=0,minimized=false,powered=true;
   const formatTime=value=>new Date(value).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
@@ -44,9 +44,17 @@ export function createRoomChat({getSession,send}) {
     log.querySelector('.qq-empty')?.remove();
     const ids=new Set(messages.map(message=>String(message.id)));
     for(const node of log.querySelectorAll('[data-message-id]'))if(!ids.has(node.dataset.messageId))node.remove();
-    for(const message of fresh){
+    for(const message of messages){
+      if(!message.vote&&log.querySelector(`[data-message-id="${message.id}"]`))continue;
       const row=document.createElement('article');row.className='qq-message'+(message.memberId===current.memberId?' own':'');row.dataset.messageId=String(message.id);
-      row.innerHTML=`<header><b>${e(message.name)}</b><time>${e(formatTime(message.sentAt))}</time></header><p>${e(message.body)}</p>`;log.append(row);
+      row.innerHTML=`<header><b>${e(message.name)}</b><time>${e(formatTime(message.sentAt))}</time></header><p>${e(message.body)}</p>`;
+      if(message.vote){
+        const v=message.vote,yes=Object.values(v.ballots).filter(Boolean).length,no=Object.values(v.ballots).filter(x=>!x).length;
+        const disabled=v.status!=='pending'||!v.eligible.includes(current.memberId)||Object.hasOwn(v.ballots,current.memberId);
+        row.classList.add('qq-vote');
+        row.innerHTML+=`<p>同意 ${yes} · 反对 ${no} · 需 ${v.required} 票同意</p><small>${v.status==='pending'?`30 秒内过半通过 · 截止 ${e(formatTime(v.expiresAt))}`:({approved:'已通过',rejected:'未通过',expired:'已超时'}[v.status])}</small><div class="qq-vote-actions"><button data-vote="${e(v.id)}" data-approve="true" ${disabled?'disabled':''}>同意切歌</button><button data-vote="${e(v.id)}" data-approve="false" ${disabled?'disabled':''}>继续听</button></div>`;
+      }
+      const old=log.querySelector(`[data-message-id="${message.id}"]`);if(old)old.replaceWith(row);else log.append(row);
     }
     if(newRoom||(atBottom&&!minimized&&powered)){scrollLatest();}
     else if(previous>=0){unread+=fresh.filter(message=>message.memberId!==current.memberId).length;updateUnread();}
@@ -63,6 +71,7 @@ export function createRoomChat({getSession,send}) {
     finally{if(getSession()===current){sending=false;updateControls();}}
   }
   $('#qq-form').onsubmit=event=>{event.preventDefault();void submit();};
+  log.addEventListener('click',async event=>{const button=event.target.closest('[data-vote]');if(!button||button.disabled||!online)return;button.disabled=true;try{await vote({voteId:button.dataset.vote,approve:button.dataset.approve==='true'});$('#qq-error').textContent='';}catch(error){$('#qq-error').textContent=error.message;button.disabled=false;}});
   $('#keyboard-send').onclick=()=>void submit();
   input.addEventListener('input',updateControls);
   input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){event.preventDefault();void submit();}});

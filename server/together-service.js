@@ -4,21 +4,39 @@ const text=(value,max)=>typeof value==='string'?value.trim().slice(0,max):'';
 export function createTogetherService({now=Date.now}={}) {
   const rooms=new Map();
   let nextSubscriberId=0;
-  function clean(){for(const [id,room] of rooms){for(const [token,member] of room.members)if(now()-member.seen>45000)room.members.delete(token);if(!room.members.size&&now()-room.touched>45000)room.subscribers.clear();if(now()-room.touched>3600000)rooms.delete(id);}}
-  function snapshot(room){const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:room.messages.slice()};}
+  function system(room,body,vote){room.messages.push({id:++room.chatRevision,memberId:'system',name:'房间通知',body,sentAt:now(),...(vote?{vote}: {})});if(room.messages.length>100)room.messages.shift();}
+  function finishVote(room,status){
+    const vote=room.vote;if(!vote||vote.status!=='pending')return;
+    vote.status=status;room.chatRevision++;
+    if(status==='approved'){room.track=vote.track;room.position=0;room.playing=true;room.updatedAt=now();room.revision++;}
+    system(room,status==='approved'?`投票通过，正在播放《${vote.track.name}》`:status==='rejected'?'切歌投票未通过，继续当前歌曲。':'切歌投票已超时，继续当前歌曲。');
+  }
+  function settleVote(room){const v=room.vote;if(v?.status!=='pending')return;if(now()>=v.expiresAt){finishVote(room,'expired');return;}const yes=Object.values(v.ballots).filter(Boolean).length,no=Object.values(v.ballots).filter(x=>!x).length;if(yes>=v.required)finishVote(room,'approved');else if(no>v.eligible.length-v.required)finishVote(room,'rejected');}
+  function clean(){
+    const time=now();
+    for(const [id,room] of rooms){
+      const connected=new Set([...room.subscribers.values()].map(subscriber=>subscriber.token));
+      for(const [token,member] of room.members){
+        if(connected.has(token)){member.seen=time;room.touched=time;}
+        else if(time-member.seen>5*60*1000)room.members.delete(token);
+      }
+      if(!room.members.size&&time-room.touched>24*60*60*1000)rooms.delete(id);
+    }
+  }
+  function snapshot(room){settleVote(room);const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:structuredClone(room.messages)};}
   function notify(room){if(!room?.subscribers?.size)return;const payload=snapshot(room);for(const [id,subscriber] of room.subscribers){if(!room.members.has(subscriber.token)){room.subscribers.delete(id);continue;}try{subscriber.emit(payload);}catch{room.subscribers.delete(id);}}}
   function handle(action,input={},token='') {
     clean();
     if(!input||typeof input!=='object')throw fail(400,'房间请求无效');
-    if(action==='rooms')return {rooms:[...rooms.values()].filter(room=>room.members.size).sort((a,b)=>b.touched-a.touched).map(room=>{
+    if(action==='rooms')return {rooms:[...rooms.values()].sort((a,b)=>b.touched-a.touched).map(room=>{
       const current=snapshot(room);
-      return {room:room.id,name:[...room.members.values()][0].name,memberCount:room.members.size,playing:current.playing,track:current.track?{name:current.track.name,singer:current.track.singer}:null};
+      return {room:room.id,name:room.name,memberCount:room.members.size,playing:current.playing,track:current.track?{name:current.track.name,singer:current.track.singer}:null};
     })};
     let room;
     if(action==='create'){
       if(rooms.size>=300)throw fail(429,'房间已满，请稍后再试');
       let id;do{id=randomBytes(4).toString('hex').toUpperCase();}while(rooms.has(id));
-      room={id,members:new Map(),subscribers:new Map(),track:null,playing:false,position:0,updatedAt:now(),touched:now(),revision:0,playlist:[],chatRevision:0,messages:[]};rooms.set(id,room);
+      room={id,name:text(input.name,20)||'听友',members:new Map(),subscribers:new Map(),track:null,playing:false,position:0,updatedAt:now(),touched:now(),revision:0,playlist:[],chatRevision:0,messages:[]};rooms.set(id,room);
     }else {room=rooms.get(text(input.room,8).toUpperCase());if(!room)throw fail(404,'房间不存在或已过期，请重新创建');}
     if(action==='create'||action==='join'){
       if(room.members.size>=20)throw fail(409,'房间已满（最多 20 人）');
@@ -29,8 +47,17 @@ export function createTogetherService({now=Date.now}={}) {
     }
     const member=room.members.get(token);if(!member)throw fail(401,'连接已过期，请重新加入房间');
     member.seen=now();room.touched=now();
-    if(action==='leave'){room.members.delete(token);notify(room);return {ok:true};}
+    if(action==='leave'){room.members.delete(token);for(const [id,subscriber] of room.subscribers)if(subscriber.token===token)room.subscribers.delete(id);notify(room);return {ok:true};}
     if(action==='state')return snapshot(room);
+    settleVote(room);
+    if(action==='vote'){
+      const vote=room.vote;
+      if(!vote||vote.id!==input.voteId||vote.status!=='pending')throw fail(409,'投票已结束，请同步聊天室');
+      if(!vote.eligible.includes(member.id))throw fail(403,'仅发起投票时在房间的成员可参与');
+      if(typeof input.approve!=='boolean')throw fail(400,'请选择同意或反对');
+      if(Object.hasOwn(vote.ballots,member.id))return snapshot(room);
+      vote.ballots[member.id]=input.approve;room.chatRevision++;settleVote(room);notify(room);return snapshot(room);
+    }
     if(action==='message'){
       if(typeof input.message!=='string'||!input.message.trim()||input.message.length>1000)throw fail(400,'消息须为 1—1000 字');
       if(typeof input.clientId!=='string'||!/^[a-zA-Z0-9-]{16,64}$/.test(input.clientId))throw fail(400,'消息标识无效');
@@ -54,8 +81,15 @@ export function createTogetherService({now=Date.now}={}) {
       const duration=Number(track.duration);if(!Number.isFinite(duration)||duration<=0||duration>86400)throw fail(400,'歌曲时长无效');
       const normalized={id:text(track.id,300),name:text(track.name,150),singer:text(track.singer,150),source:track.source,src,duration,...(track.source==='wy'&&/^[1-9]\d{0,19}$/.test(String(track.songmid))?{songmid:String(track.songmid)}:{})};
       const index=room.playlist.findIndex(item=>item.id===normalized.id);
+      if(command==='track'&&room.vote?.status==='pending')throw fail(409,'已有切歌投票，请先在聊天室投票');
       if(index<0&&room.playlist.length>=100)throw fail(409,'房间歌单已满（100 首）');
       if(index<0)room.playlist.push(normalized);else room.playlist[index]=normalized;
+      if(command==='track'&&room.track&&room.members.size>1){
+        const eligible=[...room.members.values()].map(item=>item.id);
+        room.vote={id:randomBytes(12).toString('hex'),track:normalized,eligible,required:Math.floor(eligible.length/2)+1,ballots:{[member.id]:true},expiresAt:now()+30000,status:'pending'};
+        system(room,`${member.name} 提议切换到《${normalized.name}》`,room.vote);
+        notify(room);return snapshot(room);
+      }
       if(command==='track'){room.track=normalized;room.position=0;room.playing=true;}
       else if(room.playing)room.position=Math.min(room.track.duration,room.position+(now()-room.updatedAt)/1000);
     }else if(command==='remove'){
@@ -89,7 +123,7 @@ export function createTogetherService({now=Date.now}={}) {
     const id=++nextSubscriberId;
     room.subscribers.set(id,{token,emit});
     emit(snapshot(room));
-    return function unsubscribe(){room.subscribers.delete(id);};
+    return function unsubscribe(){if(room.subscribers.delete(id)&&room.members.has(token)){room.members.get(token).seen=now();room.touched=now();}};
   };
   return handle;
 }

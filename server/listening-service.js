@@ -109,7 +109,13 @@ export function createListeningService({request=publicRequest,readLocalLyrics=as
         if (!source) throw fail(400,'请选择列表中的音源');
         const cacheKey=source.id+'\n'+source.url;
         if (scripts.get(cacheKey)?.until>Date.now()) return {...scripts.get(cacheKey).data,...source};
-        const result=await request(source.url);
+        let result;
+        try{result=await request(source.url);}catch(error){
+          if(!source.url.startsWith('https://raw.githubusercontent.com/pdone/lx-music-source/main/'))throw error;
+        }
+        if((!result||result.statusCode!==200)&&source.url.startsWith('https://raw.githubusercontent.com/pdone/lx-music-source/main/')){
+          result=await request(source.url.replace('https://raw.githubusercontent.com/pdone/lx-music-source/main/','https://cdn.jsdelivr.net/gh/pdone/lx-music-source@main/'));
+        }
         if (result.statusCode!==200 || typeof result.body!=='string' || !/@name\s/.test(result.body)) throw fail(502,'音源脚本暂时无法获取');
         const meta=key=>result.body.match(new RegExp(`@${key}\\s+([^\\r\\n]+)`))?.[1]?.trim()||'';
         const data={...source,script:result.body,version:meta('version'),author:meta('author'),description:meta('description')};
