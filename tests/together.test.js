@@ -102,6 +102,19 @@ test('rooms enforce membership, isolation, safe media and expiration',()=>{
   f.tick(5*60*1000+1);assert.throws(()=>f.service('state',{room:f.first.room},f.first.token),{status:401});f.tick(24*60*60*1000);assert.throws(()=>f.service('join',{room:f.first.room}),{status:404});
 });
 test('playback clamps at end and replay starts at zero',()=>{const f=fixture();f.control('track',{track});f.tick(20000);f.control('seek',{position:179});f.tick(2000);assert.equal(f.service('state',{room:f.first.room},f.second.token).position,180);assert.equal(f.control('play').position,0);});
+test('finished songs advance to the next queued track without a vote',()=>{
+  const f=fixture(),next={...track,id:'local:next',name:'下一首'};
+  f.control('track',{track});f.control('enqueue',{track:next});f.tick(181000);
+  const state=f.service('state',{room:f.first.room},f.second.token);
+  assert.equal(state.track.id,next.id);assert.equal(state.position,0);assert.equal(state.playing,true);
+  assert.equal(state.messages.some(message=>message.vote),false);
+});
+test('a new song selected after playback has ended starts immediately',()=>{
+  const f=fixture(),next={...track,id:'local:next',name:'下一首'};
+  f.control('track',{track});f.tick(181000);
+  const result=f.control('track',{track:next});
+  assert.equal(result.track.id,next.id);assert.equal(result.playing,true);assert.equal(result.messages.some(message=>message.vote),false);
+});
 test('clock compensation and drift correction respect paused and finished tracks',()=>{
   const state={track,position:40,playing:true};assert.equal(targetPosition(state,1200),41.2);assert.equal(targetPosition({...state,playing:false},1200),40);assert.equal(targetPosition(state,200000),180);
   assert.deepEqual(playbackCorrection(30,40),{seek:40,rate:1});assert.deepEqual(playbackCorrection(39.5,40),{seek:null,rate:1.03});assert.deepEqual(playbackCorrection(40.5,40),{seek:null,rate:.97});assert.deepEqual(playbackCorrection(40,40),{seek:null,rate:1});

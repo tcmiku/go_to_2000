@@ -26,6 +26,9 @@ test('blocked audio can be enabled locally without pausing the room',async()=>{
   const f=fixture();f.audio.play=async()=>{throw Object.assign(new Error('gesture required'),{name:'NotAllowedError'});};await f.player.setState(f.state(1));await Promise.resolve();
   f.audio.play=async()=>{f.audio.paused=false;};f.player.toggle();await Promise.resolve();assert.equal(f.audio.paused,false);assert.equal(f.commands.length,0);
 });
+test('finished shared playback requests one automatic room advance',async()=>{
+  const f=fixture();let ended=0;f.player.connect({control:()=>{},select:()=>{},ended:()=>ended++});await f.player.setState(f.state(1));f.tick(170000);f.player.sync();f.player.sync();assert.equal(ended,1);
+});
 test('disconnection prevents selection and playback; reconnection resumes latest position',async()=>{
   const f=fixture();f.player.select(track);assert.equal(f.selections.length,0);await f.player.setState(f.state(1));f.player.setConnected(false);f.tick(5000);f.player.sync();assert.equal(f.audio.paused,true);f.player.select(track);assert.equal(f.selections.length,0);
   await f.player.setState(f.state(1,{position:15}));assert.equal(f.audio.currentTime,15);assert.equal(f.audio.paused,false);f.player.select(track);assert.equal(f.selections.length,1);

@@ -138,7 +138,7 @@ async function select(track,enqueue=false){
 }
 const chat=createRoomChat({getSession:()=>session,vote:async input=>{const current=session;const result=await request('vote',input,current);if(session===current)accept(result);},send:async(input,current)=>{const result=await request('message',input,current);if(session===current)accept(result);}});
 const ipod=createIPod({notice,getRoom:()=>session?.room,canControl:()=>!!session&&state?.ownerId===session.memberId,enqueue:track=>select(track,true),remove:trackId=>control('remove',{trackId})});
-player=ipod.player;player.connect({select,control,notice,audioBlocked:value=>{$('#enable-audio').hidden=!value;}});sendState();
+player=ipod.player;player.connect({select,control,notice,ended:()=>control('advance'),audioBlocked:value=>{$('#enable-audio').hidden=!value;}});sendState();
 $('#room-form').onsubmit=event=>{event.preventDefault();enter($('#room-form').dataset.action||'join');};
 $('#leave').onclick=()=>{const current=session;reset();history.replaceState(null,'',location.pathname);request('leave',{},current).then(()=>ipod.refreshRooms()).catch(()=>{});notice('已离开房间');};
 $('#invite').onclick=async()=>{if(!session)return;const url=new URL(location.href);url.hash=session.room;try{await navigator.clipboard.writeText(url.href);notice('邀请链接已复制');}catch{$('#invite-url').hidden=false;$('#invite-url').value=url.href;$('#invite-url').focus();$('#invite-url').select();}};
