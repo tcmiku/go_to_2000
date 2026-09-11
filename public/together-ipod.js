@@ -123,6 +123,8 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
   $('#volume').value=Math.round(audio.volume*100);$('#volume-value').textContent=`${$('#volume').value}%`;
   if(['128k','320k','flac'].includes(prefs.quality))$('#quality-select').value=prefs.quality;
   $('#volume').oninput=()=>setVolume(Number($('#volume').value)/100);$('#quality-select').onchange=savePrefs;
+  $('#volume-down').onclick=()=>setVolume((Math.round(audio.volume*100)-5)/100);
+  $('#volume-up').onclick=()=>setVolume((Math.round(audio.volume*100)+5)/100);
   $('#source-connect').onclick=()=>connectSource().then(()=>notice('音源已连接')).catch(error=>notice(error.message));
   $('#source-select').onchange=()=>connectSource(false).then(()=>notice('音源已连接')).catch(error=>notice(error.message));
   $('#play-toggle').onclick=()=>player.track?player.toggle():show(getRoom()?'music':'lobby');
