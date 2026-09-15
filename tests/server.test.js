@@ -284,52 +284,10 @@ test('cassette room serves its assets, scopes media CSP and validates read-only 
   assert.equal((await app.req('/api/podcasts/search','POST',{q:'test'})).status,405);
 });
 
-test('blog management persists drafts, publishes articles, protects writes and includes backups',async t=>{
-  const app=await instance(t);
-  assert.equal((await app.req('/api/admin/data')).status,401);
-  await app.req('/api/setup','POST',credentials);
-  const post={id:'post-test',title:'测试文章',date:'2026-09-09',category:'学习笔记',tags:['网络'],summary:'摘要',body:'# 正文\n\n文章内容',status:'draft',sourceUrl:''};
-  let data=(await app.req('/api/admin/data')).data;
-  data.blog={posts:[post]};
-  let saved=await app.req('/api/admin/data','PUT',data);assert.equal(saved.status,200);
-  assert.deepEqual((await app.req('/api/blog')).data,{posts:[]});
-  assert.equal((await app.req('/api/blog?id=post-test')).status,404);
-  assert.equal((await app.req('/api/public')).data.blog,undefined);
-  assert.equal((await app.req('/api/admin/backup')).data.blog.posts[0].status,'draft');
-  data=saved.data;data.blog.posts[0].status='published';
-  saved=await app.req('/api/admin/data','PUT',data);assert.equal(saved.status,200);
-  assert.equal((await app.req('/api/blog')).data.posts[0].body,undefined);
-  assert.equal((await app.req('/api/blog?id=post-test')).data.body,post.body);
-  assert.equal((await app.req('/api/admin/data','PUT',data)).status,409);
-  await app.restart();
-  assert.equal((await app.req('/api/blog?id=post-test')).data.title,post.title);
-  await app.req('/api/login','POST',credentials);
-  data=(await app.req('/api/admin/data')).data;
-  const invalid=structuredClone(data);invalid.blog.posts.push({...post});
-  assert.equal((await app.req('/api/admin/data','PUT',invalid)).status,400);
-  const badDate=structuredClone(data);badDate.blog.posts[0].date='2026-02-30';
-  assert.equal((await app.req('/api/admin/data','PUT',badDate)).status,400);
-  const oldBackup=structuredClone(data);delete oldBackup.blog;
-  saved=await app.req('/api/admin/data','PUT',oldBackup);assert.equal(saved.data.blog.posts.length,1);
-  data=saved.data;data.blog.posts=[];
-  assert.equal((await app.req('/api/admin/data','PUT',data)).status,200);
-  assert.equal((await app.req('/api/blog?id=post-test')).status,404);
-});
-test('blog routes and vendor renderer work with administration disabled',async t=>{
+test('removed personal blog routes and assets are unavailable',async t=>{
  const app=await instance(t,{adminEnabled:false});
- for(const route of ['/blog','/blog.html','/blog.js','/blog.css','/blog-render.js','/vendor/marked.js'])assert.equal((await fetch(app.base+route)).status,200,route);
- assert.equal((await app.req('/api/admin/data')).status,404);
- assert.equal((await app.req('/api/blog')).status,200);
-});
-
-test('blog widgets serve only explicit Live2D model assets and local scripts',async t=>{
- const app=await instance(t,{adminEnabled:false});
- for(const route of ['/blog-widgets.js','/live2dw/lib/L2Dwidget.min.js','/live2dw/lib/L2Dwidget.0.min.js','/live2dw/assets/miku.model.json','/live2dw/assets/moc/miku.moc','/live2dw/assets/moc/miku.2048/texture_00.png','/live2dw/assets/mtn/miku_idle_01.mtn']){
-   const r=await fetch(app.base+route);assert.equal(r.status,200,route);assert.ok((await r.arrayBuffer()).byteLength>100);
- }
- assert.equal((await fetch(app.base+'/live2dw/private.json')).status,404);
- const model=await (await fetch(app.base+'/live2dw/assets/miku.model.json')).json();
- for(const filename of [model.model,model.physics,...model.textures,...Object.values(model.motions).flat().map(m=>m.file)])assert.equal((await fetch(app.base+'/live2dw/assets/'+filename)).status,200,filename);
+ for(const route of ['/blog','/blog.html','/blog.js','/blog.css','/blog-render.js','/blog-widgets.js','/vendor/marked.js','/live2dw/assets/miku.model.json'])assert.equal((await fetch(app.base+route)).status,404,route);
+ assert.equal((await app.req('/api/blog')).status,404);
 });
 
 test('administrator music sources persist, reorder, disable, delete and survive legacy saves',async t=>{
