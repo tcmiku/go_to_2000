@@ -3,7 +3,7 @@ import { targetPosition, playbackCorrection } from './together-sync.js';
 // Transport adapter for the original listening-room player. The room page owns
 // membership and HTTP; this adapter owns only media timing and the shared deck.
 export function createSharedListeningPlayer({audio,load,clear,resolveTrack,refresh,onNotice=()=>{},now=()=>performance.now()}) {
-  let transport=null,state=null,anchor=0,key='',generation=0,loading=false,connected=false,blocked=false,starting=false,forceSeek=false;
+  let transport=null,state=null,anchor=0,key='',generation=0,loading=false,connected=false,blocked=false,starting=false,forceSeek=false,finishNotified=false;
   function notify(message){onNotice(message);transport?.notice?.(message);}
   async function start(){
     if(starting)return;starting=true;const token=generation;
@@ -14,11 +14,15 @@ export function createSharedListeningPlayer({audio,load,clear,resolveTrack,refre
   function sync(){
     if(!connected||!state?.track||loading)return;
     const position=targetPosition(state,now()-anchor),finished=position>=state.track.duration;
+    if(!finished)finishNotified=false;
     if(audio.readyState>=1){
       const correction=playbackCorrection(audio.currentTime,position);
       if(forceSeek||correction.seek!==null){audio.currentTime=Math.min(position,Number.isFinite(audio.duration)?audio.duration:position);forceSeek=false;}
       audio.playbackRate=correction.rate;
-      if(!state.playing||finished)audio.pause();else if(audio.paused&&!blocked)void start();
+      if(!state.playing||finished){
+        if(finished&&state.playing&&!finishNotified){finishNotified=true;transport?.ended?.();}
+        audio.pause();
+      }else if(audio.paused&&!blocked)void start();
     }
     refresh();
   }
@@ -28,6 +32,7 @@ export function createSharedListeningPlayer({audio,load,clear,resolveTrack,refre
     async setState(value){
       if(!value){api.reset();return;}
       const revised=state?.revision!==value.revision;
+      if(revised)finishNotified=false;
       forceSeek ||= revised;state=value;anchor=now();connected=true;
       const next=value.track?value.track.id+'\n'+value.track.src:'';
       if(next!==key||(revised&&audio.error)){
@@ -38,13 +43,14 @@ export function createSharedListeningPlayer({audio,load,clear,resolveTrack,refre
       }else sync();
     },
     select(track){if(!connected){notify('请先创建或加入房间。');return;}transport?.select?.(track);},
-    command(command,extra={}){if(!connected){notify('请先创建或加入房间。');return;}transport?.control?.(command,extra);},
+    command(command,extra={}){if(!connected){notify('请先创建或加入房间。');return;}return transport?.control?.(command,extra);},
     toggle(){if(blocked&&state?.playing){api.unlock();return;}api.command(state?.playing?'pause':'play');},
     unlock(){if(!connected||!state?.track)return;blocked=false;if(!loading&&audio.readyState>=1){audio.currentTime=targetPosition(state,now()-anchor);if(state.playing)void start();}},
     resolve:resolveTrack,
     sync,
-    reset(){generation++;state=null;key='';loading=false;connected=false;blocked=false;starting=false;forceSeek=false;audio.playbackRate=1;clear();transport?.audioBlocked?.(false);},
+    reset(){generation++;state=null;key='';loading=false;connected=false;blocked=false;starting=false;forceSeek=false;finishNotified=false;audio.playbackRate=1;clear();transport?.audioBlocked?.(false);},
     get track(){return state?.track||null;},
+    get playing(){return !!state?.playing;},
     get ready(){return connected;},
   };
   for(const event of ['loadedmetadata','canplay'])audio.addEventListener(event,sync);

@@ -12,6 +12,17 @@ export function createTogetherService({now=Date.now}={}) {
     system(room,status==='approved'?`投票通过，正在播放《${vote.track.name}》`:status==='rejected'?'切歌投票未通过，继续当前歌曲。':'切歌投票已超时，继续当前歌曲。');
   }
   function settleVote(room){const v=room.vote;if(v?.status!=='pending')return;if(now()>=v.expiresAt){finishVote(room,'expired');return;}const yes=Object.values(v.ballots).filter(Boolean).length,no=Object.values(v.ballots).filter(x=>!x).length;if(yes>=v.required)finishVote(room,'approved');else if(no>v.eligible.length-v.required)finishVote(room,'rejected');}
+  function advanceIfFinished(room,at=now()){
+    if(!room.playing||!room.track)return false;
+    const position=room.position+(at-room.updatedAt)/1000;
+    if(position<room.track.duration)return false;
+    const index=room.playlist.findIndex(item=>item.id===room.track.id),next=index>=0?room.playlist[index+1]:room.playlist[0];
+    if(next){room.track=next;room.position=0;room.playing=true;}
+    else {room.position=room.track.duration;room.playing=false;}
+    if(room.vote?.status==='pending'){room.vote.status='expired';room.chatRevision++;}
+    room.updatedAt=at;room.revision++;
+    return true;
+  }
   function clean(){
     const time=now();
     for(const [id,room] of rooms){
@@ -23,7 +34,7 @@ export function createTogetherService({now=Date.now}={}) {
       if(!room.members.size&&time-room.touched>24*60*60*1000)rooms.delete(id);
     }
   }
-  function snapshot(room){settleVote(room);const serverTime=now();if(room.playing&&room.track&&room.position+(serverTime-room.updatedAt)/1000>=room.track.duration){room.position=room.track.duration;room.playing=false;room.updatedAt=serverTime;room.revision++;}return {room:room.id,ownerId:room.ownerId,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:structuredClone(room.messages)};}
+  function snapshot(room){settleVote(room);const serverTime=now();advanceIfFinished(room,serverTime);return {room:room.id,ownerId:room.ownerId,revision:room.revision,serverTime,track:room.track,playing:room.playing,position:Math.min(room.track?.duration||Infinity,room.position+(room.playing?(serverTime-room.updatedAt)/1000:0)),members:[...room.members.values()].map(({id,name})=>({id,name})),playlist:room.playlist.slice(),chatRevision:room.chatRevision,messages:structuredClone(room.messages)};}
   function notify(room){if(!room?.subscribers?.size)return;const payload=snapshot(room);for(const [id,subscriber] of room.subscribers){if(!room.members.has(subscriber.token)){room.subscribers.delete(id);continue;}try{subscriber.emit(payload);}catch{room.subscribers.delete(id);}}}
   function handle(action,input={},token='') {
     clean();
@@ -86,7 +97,7 @@ export function createTogetherService({now=Date.now}={}) {
       if(command==='track'&&room.vote?.status==='pending')throw fail(409,'已有切歌投票，请先在聊天室投票');
       if(index<0&&room.playlist.length>=100)throw fail(409,'房间歌单已满（100 首）');
       if(index<0)room.playlist.push(normalized);else room.playlist[index]=normalized;
-      if(command==='track'&&room.track&&room.members.size>1){
+      if(command==='track'&&room.track&&room.playing&&room.members.size>1){
         const eligible=[...room.members.values()].map(item=>item.id);
         room.vote={id:randomBytes(12).toString('hex'),track:normalized,eligible,required:Math.floor(eligible.length/2)+1,ballots:{[member.id]:true},expiresAt:now()+30000,status:'pending'};
         system(room,`${member.name} 提议切换到《${normalized.name}》`,room.vote);
@@ -94,6 +105,9 @@ export function createTogetherService({now=Date.now}={}) {
       }
       if(command==='track'){room.track=normalized;room.position=0;room.playing=true;}
       else if(room.playing)room.position=Math.min(room.track.duration,room.position+(now()-room.updatedAt)/1000);
+    }else if(command==='advance'){
+      if(!advanceIfFinished(room))return snapshot(room);
+      const result=snapshot(room);notify(room);return result;
     }else if(command==='remove'){
       const index=room.playlist.findIndex(item=>item.id===input.trackId);
       if(index<0)throw fail(404,'歌曲不在房间歌单中');
