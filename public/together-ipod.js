@@ -13,12 +13,15 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
   const lyrics=createLyricsProjection({audio,root:$('#lyrics')});
   const time=value=>`${Math.floor(Math.max(0,value||0)/60)}:${String(Math.floor(Math.max(0,value||0)%60)).padStart(2,'0')}`;
   const savePrefs=()=>saveStorage('slow-records.preferences.v1',{...prefs,volume:audio.volume,quality:$('#quality-select').value,source:$('#source-select').value});
-  function candidates(){return [...$(`[data-screen="${view}"]`).querySelectorAll('button:not(:disabled),a,input,select')].filter(node=>node.getClientRects().length);}
+  function candidates(){return [...$(`[data-screen="${view}"]`).querySelectorAll('button:not(:disabled):not(.song-save):not(.song-enqueue),a,input:not(:disabled),select:not(:disabled)')].filter(node=>node.getClientRects().length);}
+  const selections=new Map();
+  const selectionKey=node=>node?.id||JSON.stringify(node?.dataset||{});
   function highlight(node,scroll=false){
     selected?.classList.remove('selected');selected=node;selected?.classList.add('selected');
-    if(scroll&&selected){const panel=$(`[data-screen="${view}"]`),box=selected.getBoundingClientRect(),bounds=panel.getBoundingClientRect();if(box.top<bounds.top)panel.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)panel.scrollTop+=box.bottom-bounds.bottom;}
+    if(selected)selections.set(view,selectionKey(selected));
+    if(scroll&&selected)selected.scrollIntoView({block:'nearest',inline:'nearest'});
   }
-  function syncSelection(){const nodes=candidates();if(!nodes.includes(selected))highlight(nodes.find(n=>n.matches('.room-item,.song-main,.menu-row'))||nodes[0]);}
+  function syncSelection(){const nodes=candidates();if(!nodes.includes(selected))highlight(nodes.find(n=>selectionKey(n)===selections.get(view))||nodes.find(n=>n.matches('.room-item,.song-main,.menu-row'))||nodes[0]);}
   function count(){if(view==='lobby')return;if(view==='music')$('#screen-count').textContent=`${results.length} 首`;else $('#screen-count').textContent='一起听';}
   const navigation=[];
   function show(next,{action='join',code='',returning=false}={}){
@@ -26,7 +29,7 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
     if(next==='join'&&getRoom())next='room';
     if(next==='menu')navigation.length=0;
     else if(next!==view&&!returning)navigation.push(view);
-    if(next==='join'){
+    if(next==='join'&&!returning){
       const creating=action==='create';
       $('#room-form').dataset.action=action;$('#nickname').value='';$('#room-code').value=code;
       $('#room-code-field').hidden=creating;$('#room-code').disabled=creating;
@@ -36,20 +39,20 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
     view=next;for(const node of document.querySelectorAll('[data-screen]'))node.hidden=node.dataset.screen!==next;
     $('#screen-title').textContent=titles[next];$('#notice').hidden=true;syncSelection();count();
     if(next==='lobby')void refreshRooms();
-    if(next==='music')void search();
+    if(next==='music'&&!returning)void search();
     if(next==='settings'&&$('#source-select').options.length===1)void loadSources().catch(error=>notice(error.message));
   }
   function move(delta){
-    if(view==='now'){setVolume(audio.volume+delta*.04);return;}
+    if(view==='now'||view==='lyrics'){setVolume(audio.volume+delta*.05);return;}
     const nodes=candidates();if(!nodes.length)return;
-    const index=nodes.indexOf(selected);highlight(nodes[(Math.max(0,index)+delta+nodes.length)%nodes.length],true);
+    const index=nodes.indexOf(selected);highlight(nodes[Math.max(0,Math.min(nodes.length-1,index<0?0:index+delta))],true);
   }
-  function confirm(){if(view==='now'){show('lyrics');return;}if(selected?.matches('input,select'))selected.focus();else selected?.click();}
-  function back(){let previous=navigation.pop();while(previous==='join'&&getRoom())previous=navigation.pop();show(previous||(view==='menu'?'lobby':'menu'),{returning:true});}
+  function confirm(){if(view==='now'){show('lyrics');return;}if(view==='lyrics'){back();return;}syncSelection();if(selected?.matches('input,select'))selected.focus();else selected?.click();}
+  function back(){if(view==='menu')return;let previous=navigation.pop();while(previous==='join'&&getRoom())previous=navigation.pop();show(previous||'menu',{returning:true});}
   $('#screen-back').onclick=back;$('#screen-home').onclick=()=>show('menu');$('#wheel-menu').onclick=back;$('#wheel-select').onclick=confirm;
   for(const node of document.querySelectorAll('[data-view]'))node.onclick=()=>show(node.dataset.view);
   $('#screen').addEventListener('focusin',event=>{if(event.target.closest('[data-screen]'))highlight(event.target);});
-  $('#screen').addEventListener('pointerover',event=>{const node=event.target.closest('.menu-row,.room-item,.song-main');if(node)highlight(node);});
+  $('#screen').addEventListener('pointerdown',event=>{const node=event.target.closest('.menu-row,.room-item,.song-main');if(node)highlight(node);});
   async function refreshRooms(){
     if(roomsLoading)return;roomsLoading=true;$('#room-list').setAttribute('aria-busy','true');$('#refresh-rooms').disabled=true;
     try{
@@ -135,9 +138,10 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
   $('#stop').onclick=()=>player.command('stop');$('#seek').oninput=()=>{seeking=true;};
   $('#seek').onchange=()=>{seeking=false;if(player.track)player.command('seek',{position:Number($('#seek').value)/1000*player.track.duration});};
   $('#seek').onblur=$('#seek').onpointercancel=()=>{seeking=false;};
-  function choose(track){if(!getRoom()){show('join');notice('尚未加入房间');return;}show('now');player.select(track);}
-  function adjacent(delta){if(view!=='now'&&view!=='lyrics'&&view!=='room'){move(delta);return;}const pool=playlist;if(!pool.length){show('music');return;}const index=pool.findIndex(t=>t.id===player.track?.id);choose(pool[(index+(index<0?1:delta)+pool.length)%pool.length]);}
+  function choose(track){if(!track)return;if(!getRoom()){show('join');notice('尚未加入房间');return;}show('now');if(track.id!==player.track?.id)player.select(track);}
+  function adjacent(delta){const pool=playlist;if(!pool.length){show(getRoom()?'music':'lobby');notice('请先加入房间并添加歌曲');return;}const index=pool.findIndex(t=>t.id===player.track?.id);choose(pool[(index+(index<0?1:delta)+pool.length)%pool.length]);}
   $('#previous-track').onclick=()=>adjacent(-1);$('#next-track').onclick=()=>adjacent(1);
+  $('#previous-track').setAttribute('aria-label','上一首');$('#next-track').setAttribute('aria-label','下一首');
   function toggleFavorite(track){
     if(!track)return;const index=favorites.findIndex(t=>t.id===track.id);
     if(index>=0)favorites.splice(index,1);else if(favorites.length<500)favorites.push(track);else{notice('收藏已满');return;}
@@ -183,8 +187,8 @@ export function createIPod({notice,getRoom,enqueue,remove,canControl=()=>true}) 
     const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
     if(event.key==='Escape'){event.preventDefault();back();return;}if(typing)return;
     if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();move(event.key==='ArrowDown'?1:-1);}
-    else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();adjacent(event.key==='ArrowLeft'?-1:1);}
-    else if(event.key==='Enter'&&(!document.activeElement?.matches('button,a')||document.activeElement.closest('.click-wheel'))){event.preventDefault();confirm();}
+    else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();if(view==='now'||view==='lyrics')adjacent(event.key==='ArrowLeft'?-1:1);else if(event.key==='ArrowLeft')back();else confirm();}
+    else if(event.key==='Enter'&&(document.activeElement!==selected||document.activeElement.closest('.click-wheel'))){event.preventDefault();confirm();}
     else if(event.code==='Space'&&(!document.activeElement?.matches('button,a')||document.activeElement.closest('.click-wheel'))){event.preventDefault();$('#play-toggle').click();}
   });
   for(const event of ['timeupdate','play','pause','loadedmetadata','emptied'])audio.addEventListener(event,refresh);

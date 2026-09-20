@@ -14,6 +14,7 @@ const palette=[['#777b63','#f2e3bf','#b6a16f'],['#b4a58a','#303f3a','#617b6d'],[
 const prefs=readStorage(PREFS,{})||{};
 let records=[],localTracks=[],current=null,deckTrack=null,busy=false,operation=0,flight=null,connectedId=null,connecting=null,sourceOperation=0,loadingLocal=true;
 const flightAnimations=new Set();
+const playbackDelays=new Set();
 let sourceController=null;
 let backgroundMarkupKey=null,collectionMarkupKey=null;
 const timeDisplay={};
@@ -149,21 +150,35 @@ function updateTime(){
   if(timeDisplay.label!==label){seek.setAttribute('aria-valuetext',label);timeDisplay.label=label;}
   if(timeDisplay.angle!==angle){$('#tonearm').style.setProperty('--arm-angle',`${angle}deg`);timeDisplay.angle=angle;}
 }
-function updateVisibility(){document.body.classList.toggle('is-backgrounded',!!document.hidden);if(!document.hidden){updateTime();lyrics.sync();sharedPlayer?.sync();sharedPlayer?.unlock();}}
+function updateVisibility(){
+  document.body.classList.toggle('is-backgrounded',!!document.hidden);
+  if(document.hidden){
+    // Hidden documents may stop advancing animation timelines and throttle timers.
+    // Finish visual work so it cannot hold up the next audio track.
+    for(const animation of flightAnimations)animation.finish();
+    for(const finish of playbackDelays)finish();
+  }else{updateTime();lyrics.sync();sharedPlayer?.sync();sharedPlayer?.unlock();}
+}
 document.addEventListener('visibilitychange',updateVisibility);
 function labelDisc(track){$('#record-label').style.backgroundColor=colors(track).colors[0];$('#disc-title').textContent=track.name.slice(0,14);}
 function displayTrack(track){current=track;$('#now-title').textContent=track.name;if(!deckTrack)labelDisc(track);}
-const delay=ms=>new Promise(resolve=>setTimeout(resolve,reduced()?0:ms));
+const delay=ms=>{
+  if(document.hidden)return Promise.resolve();
+  return new Promise(resolve=>{
+    const finish=()=>{clearTimeout(timer);playbackDelays.delete(finish);resolve();};
+    const timer=setTimeout(finish,reduced()?0:ms);playbackDelays.add(finish);
+  });
+};
 function sleeveFor(track){return [...document.querySelectorAll('[data-sleeve]')].find(node=>node.dataset.sleeve===track.id);}
 async function moveRecordPart(node,frames,duration,token){
-  if(token!==operation)return;
+  if(token!==operation||document.hidden)return;
   const animation=node.animate(frames,{duration,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
   flightAnimations.add(animation);
   try{await animation.finished;}catch(error){if(token===operation)throw error;}
   finally{flightAnimations.delete(animation);}
 }
 async function flyRecord(track,rect,token,returning=false){
-  if(reduced())return;
+  if(reduced()||document.hidden)return;
   const shelf=sleeveFor(track),start=rect||shelf?.getBoundingClientRect()||$('#background-wall').getBoundingClientRect();
   const size=Math.min(180,innerWidth*.32),sx=start.x+start.width/2-size/2,sy=start.y+start.height/2-size/2;
   const x=innerWidth/2-size*.83,y=Math.min(innerHeight*.23,220);
@@ -200,6 +215,7 @@ async function flyRecord(track,rect,token,returning=false){
 }
 function cancelPlayback(){
   operation++;lyrics.reset();audio.pause();
+  for(const finish of playbackDelays)finish();
   for(const animation of flightAnimations)animation.cancel();flightAnimations.clear();
   if(flight){flight.remove();flight=null;}
   for(const sleeve of document.querySelectorAll('.sleeve-in-hand'))sleeve.classList.remove('sleeve-in-hand');

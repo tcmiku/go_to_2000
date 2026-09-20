@@ -252,7 +252,7 @@ Live2D 脚本及模型按原站文件结构保存在 `public/live2dw/`，保留�
 
 ### 街角报刊亭
 
-入口：`/newsstand`（也可访问 `/newsstand.html`）。保留报刊亭场景与灯光切换，书架仅展示用户主动加入的书籍，初始为空；移动端每架 9 本，桌面端每架 18 本。
+入口：`/newsstand`（也可访问 `/newsstand.html`）。采用无背景图片的独立书架布局，保留灯光切换，书架仅展示用户主动加入的书籍，初始为空；移动端每架 9 本，桌面端每架 18 本。
 
 - 从 [aoaostar/legado](https://github.com/aoaostar/legado) 全量源中按域名匹配 24 个书源，原始规则分别保存在 `public/newsstand-sources/`，展示目录为 `public/newsstand-catalog.json`。执行 `npm run sync:newsstand` 更新快照，匹配缺失时直接报错。
 - 「找书」选择具体文字书源，执行源内 `searchUrl / ruleSearch / ruleExplore / ruleBookInfo / ruleToc / ruleContent`，在站内完成搜索、发现、详情、目录和正文阅读，也支持粘贴书籍详情网址。「当前书源」仍可下载对应的完整 JSON。
@@ -261,4 +261,6 @@ Live2D 脚本及模型按原站文件结构保存在 `public/live2dw/`，保留�
 - 兼容范围是文字源的上述规则，并非完整 Android 运行时：Java 包、登录/Cookie、`java.ajax`、资源嗅探、页面脚本、漫画和音频阅读暂不支持；失败会在当前步骤显示原因。`webView: true` 的地址先尝试公开 HTML，不能运行所需网页脚本或完成登录。源站故障、规则过期或付费内容不可读时需换源。
 - 请求通过已有的公开网络代理校验地址、DNS 与重定向，拒绝内网；目录分页去重并分批加载，正文合并续页。所有源站正文均作为纯文本显示。API 为 `GET /api/newsstand/sources` 与 `POST /api/newsstand/{search,explore,book,toc,content}`。
 - 验证：`node --test tests/legado.test.js tests/newsstand.test.js tests/server.test.js`。测试使用真实的快书网规则解析固定 HTML，还覆盖 POST/JSON、GBK、目录/正文续页、脚本超时与书架隔离。另已用红袖真实源完成搜书、目录、免费正文、刷新续读、移除书籍和手机布局验证；不保证所有上游源在线。
-- 场景由内置 imagegen 生成，素材位于 `assets/art/newsstand-scene.png`，提示词记录在 `docs/newsstand-art.md`。架上封面使用书名与作者排版，不表示实际出版物封面。
+- 页面不再请求或展示背景图片。旧素材 `assets/art/newsstand-scene.png` 仅保留存档。架上封面使用书名与作者排版，不表示实际出版物封面。
+- 搜索切换和关闭会取消旧请求并丢弃迟到结果；目录去重，每次显示 120 章；目录及正文失败可重试。移除后可在 8 秒内撤销；阅读保存章节内滚动比例，并记住字号。筛选无结果时可清除筛选。
+- 交互回归：`node --test tests/newsstand-interactions.test.js tests/newsstand.test.js tests/newsstand-search.test.js tests/legado.test.js`，共 19 项通过；全项目检查仍存在原有弹球 drain 测试失败。

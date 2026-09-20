@@ -127,6 +127,44 @@ test('media failure during cueing cancels delayed playback and resets the motor'
   assert.equal(p.$('#turntable-stage').getAttribute('aria-busy'),'false');
 });
 
+test('hidden automatic track changes play repeatedly without advancing timers or animations',async()=>{
+  const p=await player({reducedMotion:false});p.$('#play-toggle').click();await p.settle();
+  p.document.hidden=true;p.documentEvents.visibilitychange();
+  const animationCount=p.animations.length;
+  for(const name of ['Two','Three','One']){
+    p.audio.paused=true;p.audio.emit('ended');
+    for(let i=0;i<4;i++)await p.flush();
+    assert.equal(p.audio.src,`/data/mp3/${name}.mp3`);assert.equal(p.audio.paused,false);
+    assert.equal(p.$('#turntable-stage').getAttribute('aria-busy'),'false');
+    assert.equal(p.animations.length,animationCount);assert.equal(p.overlays.size,0);
+  }
+  p.document.hidden=false;p.documentEvents.visibilitychange();
+  assert.equal(p.$('#disc-title').textContent,'One');assert.equal(p.audio.paused,false);
+});
+
+test('minimizing during record transfer or tonearm delay releases playback without a clock tick',async()=>{
+  for(const phase of ['transfer','tonearm']){
+    const p=await player({reducedMotion:false});p.$('#play-toggle').click();await p.flush();
+    if(phase==='tonearm'){
+      for(let i=0;i<4;i++){for(const animation of p.animations)animation.finish();await p.flush();}
+      assert.equal(p.$('#turntable').classList.contains('motor-starting'),true);
+    }else assert.equal(p.animations.some(a=>a.pending),true);
+    p.document.hidden=true;p.documentEvents.visibilitychange();
+    for(let i=0;i<6;i++)await p.flush();
+    assert.equal(p.audio.paused,false,phase);assert.equal(p.overlays.size,0);
+    assert.equal(p.animations.some(a=>a.pending),false);
+    assert.equal(p.$('#turntable-stage').getAttribute('aria-busy'),'false');
+  }
+});
+
+test('stop immediately after minimizing still cancels the pending track',async()=>{
+  const p=await player({reducedMotion:false});p.$('#play-toggle').click();await p.flush();
+  p.document.hidden=true;p.documentEvents.visibilitychange();p.$('#stop-button').click();
+  for(let i=0;i<6;i++)await p.flush();
+  assert.equal(p.audio.paused,true);assert.equal(p.overlays.size,0);
+  assert.equal(p.$('#turntable-stage').getAttribute('aria-busy'),'false');
+});
+
 test('entry checks the remembered source and selects a fallback without starting playback',async()=>{
   const p=await player({sourceIds:['huibq','sixyin','flower'],preferred:'sixyin',sourceProbe:async url=>{if(url.includes('sixyin'))throw new Error('unplayable');}});await p.settle();
   assert.deepEqual(p.sourceCalls,['sixyin','huibq']);assert.equal(p.$('#source-select').value,'huibq');
