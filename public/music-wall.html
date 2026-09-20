@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#e6e9e1">
+  <title>音乐墙 · 千禧冲浪站</title><link rel="icon" href="/assets/favicons/vinyl.svg"><link rel="stylesheet" href="/music-wall.css"><script type="module" src="/music-wall.js"></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-disc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M5.5 12A6.5 6.5 0 0 1 12 5.5M18.5 12a6.5 6.5 0 0 1-6.5 6.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m5 5 11 7-11 7Z" fill="currentColor" stroke="none"/><path d="M19 5v14"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m19 5-11 7 11 7Z" fill="currentColor" stroke="none"/><path d="M5 5v14"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4ZM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-muted" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4ZM16 9l6 6m0-6-6 6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 3-2 4-4m4-4c1-2 2-4 4-4h3m-4-4 4 4-4 4"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4M21 6H7a4 4 0 0 0-4 4m4 12-4-4 4-4m-4 4h14a4 4 0 0 0 4-4"/></symbol>
+    <symbol id="i-source" viewBox="0 0 24 24"><path d="M6 4v16M12 4v16M18 4v16M3 8h6m0 8h6m0-6h6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h8m5-6 5 3-5 3Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></symbol>
+    <symbol id="i-retry" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-1 7M20 3v7h-7"/></symbol>
+  </defs></svg>
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="wordmark" href="/music-wall.html" aria-label="音乐墙"><svg><use href="#i-disc"/></svg><h1>音乐墙<span class="wordmark-dot"></span></h1></a>
+    <nav id="collections" class="glass collection-tabs" aria-label="唱片收藏"><button class="active" data-collection="all" aria-pressed="true">全部</button><button data-collection="local" aria-pressed="false">本地</button><button data-collection="discover" aria-pressed="false">发现</button></nav>
+    <div class="header-actions"><button id="playlist-open" class="icon-button" aria-label="歌单" title="歌单"><svg><use href="#i-list"/></svg></button><button id="search-open" class="icon-button" aria-label="搜索音乐"><svg><use href="#i-search"/></svg></button><button id="source-open" class="icon-button" aria-label="音源设置"><svg><use href="#i-source"/></svg><i id="source-led"></i></button><button id="import-open" class="glass import-button"><svg><use href="#i-plus"/></svg><span>导入歌单</span></button></div>
+  </header>
+  <main id="wall-main">
+    <div class="wall-heading" hidden><span id="collection-name">全部唱片</span><span id="album-count"></span></div>
+    <section id="album-wall" class="album-wall" aria-label="专辑画布" tabindex="0" aria-busy="true"></section>
+    <div id="wall-state" class="wall-state" role="status" hidden></div>
+    <button id="wall-retry" class="glass retry-button" hidden>重试</button>
+  </main>
+  <div class="glass canvas-controls" aria-label="画布缩放"><button id="canvas-out" aria-label="缩小画布">−</button><button id="canvas-reset" aria-label="重置画布">100%</button><button id="canvas-in" aria-label="放大画布">+</button></div>
+  <aside id="mini-player" class="glass mini-player" aria-label="正在播放" hidden>
+    <button id="mini-open" class="mini-track"><span id="mini-art" class="mini-art"></span><span><b id="mini-title"></b><small id="mini-singer"></small></span></button>
+    <div class="mini-controls"><button class="icon-button" data-action="previous" aria-label="上一首"><svg><use href="#i-prev"/></svg></button><button class="icon-button" data-action="play" aria-label="播放"><svg><use href="#i-play"/></svg></button><button class="icon-button" data-action="next" aria-label="下一首"><svg><use href="#i-next"/></svg></button></div>
+    <button id="mini-queue" class="icon-button" aria-label="播放队列"><svg><use href="#i-list"/></svg></button><button id="mini-expand" class="icon-button" aria-label="展开播放器"><svg><use href="#i-up"/></svg></button><span id="mini-progress"></span>
+  </aside>
+  <dialog id="player-dialog" class="glass player-dialog" aria-label="音乐播放器">
+    <div id="player-tint" class="player-tint" aria-hidden="true"></div>
+    <button class="icon-button dialog-close" data-close aria-label="收起播放器" autofocus><svg><use href="#i-close"/></svg></button>
+    <section class="album-panel"><div id="player-art" class="player-art"></div><div class="album-meta"><h2 id="album-title"></h2><p id="album-singer"></p></div><select id="album-tracks" aria-label="专辑曲目" hidden></select></section>
+    <section class="listening-panel"><div class="track-heading"><h2 id="track-title"></h2><p id="track-singer"></p><button id="player-queue" class="icon-button" aria-label="播放队列"><svg><use href="#i-list"/></svg></button></div>
+      <div id="lyrics-window" class="lyrics-window" aria-label="歌词"><div id="lyrics-lines" class="lyrics-lines"></div><span id="lyrics-state"></span></div>
+      <div class="transport"><p id="play-error" role="status" hidden></p><input id="seek" type="range" min="0" max="1000" value="0" aria-label="播放进度" disabled><div class="time-row"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+        <div class="playback-buttons"><button id="shuffle" class="icon-button" aria-label="随机播放" aria-pressed="false"><svg><use href="#i-shuffle"/></svg></button><button class="icon-button" data-action="previous" aria-label="上一首"><svg><use href="#i-prev"/></svg></button><button id="main-play" class="glass play-button" data-action="play" aria-label="播放"><svg><use href="#i-play"/></svg><i class="spinner" hidden></i></button><button class="icon-button" data-action="next" aria-label="下一首"><svg><use href="#i-next"/></svg></button><button id="repeat" class="icon-button" aria-label="单曲循环" aria-pressed="false"><svg><use href="#i-repeat"/></svg></button></div>
+        <div class="volume-row"><button id="mute" class="icon-button" aria-label="静音" aria-pressed="false"><svg><use href="#i-volume"/></svg></button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.65" aria-label="音量"></div>
+      </div>
+    </section>
+  </dialog>
+  <dialog id="playlist-dialog" class="glass playlist-dialog" aria-labelledby="playlist-title">
+    <button class="icon-button dialog-close" data-close aria-label="关闭歌单"><svg><use href="#i-close"/></svg></button>
+    <div class="playlist-heading"><h2 id="playlist-title">歌单</h2><span id="playlist-count"></span></div>
+    <select id="playlist-select" aria-label="选择歌单"></select>
+    <div class="playlist-toolbar"><button id="playlist-play" class="glass playlist-play"><svg><use href="#i-play"/></svg>顺序播放</button><select id="playlist-mode" aria-label="播放模式"><option value="sequence">顺序播放</option><option value="shuffle">随机播放</option><option value="repeat">单曲循环</option></select><button id="playlist-add-current" class="icon-button" aria-label="加入当前歌曲" title="加入当前歌曲"><svg><use href="#i-plus"/></svg></button><button id="playlist-create" class="playlist-create">新建</button></div>
+    <form id="playlist-create-form" hidden><label for="playlist-name">歌单名称</label><div class="input-row"><input id="playlist-name" type="text" maxlength="80" required autocomplete="off"><button class="submit-button" aria-label="创建歌单"><svg><use href="#i-arrow"/></svg></button></div></form>
+    <p id="playlist-notice" role="status" hidden></p><div id="playlist-tracks" class="playlist-tracks" aria-label="歌单曲目"></div>
+  </dialog>
+  <dialog id="import-dialog" class="glass small-dialog" aria-labelledby="import-title"><button class="icon-button dialog-close" data-close aria-label="关闭"><svg><use href="#i-close"/></svg></button><h2 id="import-title">网易云歌单</h2><form id="import-form"><label for="playlist-input">歌单链接 / ID</label><div class="input-row"><input id="playlist-input" type="text" required maxlength="2000" autocomplete="off" autofocus><button id="import-submit" class="submit-button" aria-label="导入"><svg><use href="#i-arrow"/></svg></button></div><p id="import-error" class="form-error" role="status" hidden></p></form></dialog>
+  <dialog id="search-dialog" class="glass search-dialog" aria-label="搜索音乐"><button class="icon-button dialog-close" data-close aria-label="关闭"><svg><use href="#i-close"/></svg></button><form id="search-form"><svg><use href="#i-search"/></svg><input id="search-input" aria-label="歌曲、歌手或专辑" placeholder="歌曲、歌手或专辑" maxlength="100" autocomplete="off" autofocus><button type="submit" class="search-submit">搜索</button></form><div id="search-results" aria-live="polite"></div><button id="search-more" class="glass retry-button" hidden>更多</button></dialog>
+  <dialog id="source-dialog" class="glass small-dialog" aria-labelledby="source-title"><button class="icon-button dialog-close" data-close aria-label="关闭"><svg><use href="#i-close"/></svg></button><h2 id="source-title">音源</h2><label for="source-select">音源</label><select id="source-select"><option value="">自动</option></select><label for="quality-select">音质</label><select id="quality-select"><option value="128k">标准</option><option value="320k">高品质</option><option value="flac">无损</option></select><div class="source-bottom"><span id="source-state" role="status"></span><button id="source-retry" class="icon-button" aria-label="重新检测音源"><svg><use href="#i-retry"/></svg></button></div></dialog>
+  <div id="toast" class="glass toast" role="status" hidden></div><audio id="audio" preload="metadata"></audio>
+</body>
+</html>

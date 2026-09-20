@@ -23,6 +23,18 @@ async function instance(t,options={}){
 }
 const credentials={username:'site-owner',password:'test-only-password-2026'};
 
+test('music canvas pages expose sandboxed music capabilities and validate playlist requests',async t=>{
+  const app=await instance(t,{adminEnabled:false});
+  for(const route of ['/music-wall','/music-wall.html']){
+    const response=await fetch(app.base+route);assert.equal(response.status,200);
+    assert.match(response.headers.get('content-security-policy'),/media-src 'self' blob: https: http:/);
+    assert.match(await response.text(),/id="album-wall"/);
+  }
+  for(const route of ['/music-wall.js','/music-wall-data.js','/music-wall-canvas.js','/music-wall.css'])assert.equal((await fetch(app.base+route)).status,200);
+  assert.equal((await app.req('/api/listening/playlist?input=invalid')).status,400);
+  assert.equal((await app.req('/api/listening/playlist','POST',{input:'42'})).status,405);
+});
+
 test('newsstand exposes source definitions and validates method, source and public network boundary',async t=>{
   const app=await instance(t,{adminEnabled:false});
   const catalog=await app.req('/api/newsstand/sources');assert.equal(catalog.status,200);assert.ok(catalog.data.sources.length>2000);assert.ok(catalog.data.catalog.upstreamCount>=3907);assert.equal(catalog.data.sources.find(source=>source.id==='hongxiu').searchable,true);
