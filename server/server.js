@@ -26,7 +26,7 @@ const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const publicRoot = path.join(root,'public');
 const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', announcement: '欢迎回来！这里总有一个值得收藏的好网站。' };
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.json':'application/json; charset=utf-8', '.moc':'application/octet-stream', '.mtn':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
-const publicFiles = new Set(['index.html','directory.html','admin.html','robots.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
+const publicFiles = new Set(['index.html','directory.html','admin.html','robots.txt','ads.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 ['newsstand.html','newsstand.css','newsstand.js','newsstand-data.js','newsstand-catalog.json'].forEach(file=>publicFiles.add(file));
 ['duzhe','qidian','douban','kehuan','jinjiang','kuaikan','hetushu','handian','ximalaya','ttkan','bilibili','hongxiu','kuaishu','manman','lrts','ciweimao','qianbi','wangyi','deqi','iqiyi','ysts','shuqi','dbxsd','haokan'].forEach(id=>publicFiles.add(`newsstand-sources/${id}.json`));
