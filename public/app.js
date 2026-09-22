@@ -4,6 +4,21 @@ import './radio.js';
 import './start-menu.js';
 import './window-manager.js';
 import { showRetroAd } from './retro-ad.js';
+// Initialize only once the sidebar is visible and has a usable layout width.
+// Keep initialization external so the homepage CSP need not allow inline scripts.
+const sidebarAd = document.querySelector('#google-ad-slot .adsbygoogle');
+if (sidebarAd) {
+  let requested = false;
+  const observer = new ResizeObserver(() => {
+    if (requested || sidebarAd.getBoundingClientRect().width <= 0) return;
+    requested = true;
+    observer.disconnect();
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
+    catch (error) { console.warn('AdSense 广告初始化失败', error); }
+  });
+  observer.observe(sidebarAd);
+}
+
 let categories = [], content, settings = {}, view = 'all', page = 1, loaded = false, revision = null, loading = false;
 const visitPanel=document.createElement('section');
 visitPanel.className='window visit-window';
