@@ -1,3 +1,4 @@
+import { renderSearchPage } from './search-pages.js';
 import http from 'node:http';
 import { createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
@@ -25,7 +26,7 @@ const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const publicRoot = path.join(root,'public');
 const defaultSettings = { tagline: '互联网很大，一起慢慢冲浪。', announcement: '欢迎回来！这里总有一个值得收藏的好网站。' };
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.json':'application/json; charset=utf-8', '.moc':'application/octet-stream', '.mtn':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml', '.mp3':'audio/mpeg' };
-const publicFiles = new Set(['index.html','admin.html','robots.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
+const publicFiles = new Set(['index.html','directory.html','admin.html','robots.txt','sitemap.xml','styles.css','admin.css','app.js','admin.js','ui.js','radio.js','start-menu.js','window-manager.js','retro-ad.js','minesweeper.js','snake.js','navigation-data.js','management-data.js']);
 ['cd-wall.html','cd-wall.css','cd-case.css','cd-wall.js','cd-sound.js'].forEach(file=>publicFiles.add(file));
 ['newsstand.html','newsstand.css','newsstand.js','newsstand-data.js','newsstand-catalog.json'].forEach(file=>publicFiles.add(file));
 ['duzhe','qidian','douban','kehuan','jinjiang','kuaikan','hetushu','handian','ximalaya','ttkan','bilibili','hongxiu','kuaishu','manman','lrts','ciweimao','qianbi','wangyi','deqi','iqiyi','ysts','shuqi','dbxsd','haokan'].forEach(id=>publicFiles.add(`newsstand-sources/${id}.json`));
@@ -351,6 +352,10 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(!publicFiles.has(filename)&&!/^assets\/(?:[\w-]+\/)*[\w.-]+\.(?:png|svg)$/.test(filename))throw httpError(404,'页面不存在');
       const targetRoot=filename.startsWith('assets/')?root:publicRoot;
       const target=path.resolve(targetRoot,filename);if(!target.startsWith(targetRoot+path.sep))throw httpError(404,'页面不存在');
+      if(filename==='index.html'||filename==='directory.html'){
+        const html=renderSearchPage(await readFile(target,'utf8'),publicData(),{directory:filename==='directory.html',params:new URL(req.url,'http://localhost').searchParams});
+        return await sendRepresentation(req,res,representation(html,types['.html']));
+      }
       const info=await stat(target),etag=`W/"${info.size}-${info.mtimeMs}-${info.ctimeMs}"`;
       if(notModified(req,res,etag))return;
       return await sendRepresentation(req,res,representation(await readFile(target),types[path.extname(filename)],etag));

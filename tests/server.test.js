@@ -392,3 +392,35 @@ test('together stream rejects bad credentials and pushes control updates to subs
   controller.abort();
   await reader.cancel().catch(()=>{});
 });
+
+test('search pages expose live public links, safe structured data and updated cache validators',async t=>{
+  const app=await instance(t);
+  const first=await fetch(app.base+'/');
+  const etag=first.headers.get('etag');
+  assert.match(await first.text(),/href="https:\/\/one.example.com"/);
+  assert.equal((await fetch(app.base+'/',{headers:{'If-None-Match':etag}})).status,304);
+  const directory=await fetch(app.base+'/directory.html');
+  const html=await directory.text();
+  assert.equal(directory.status,200);
+  assert.match(html,/href="https:\/\/two.example.com"/);
+  const schema=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+  assert.equal(schema['@graph'][1].url,'https://nav.tcmiku.cc.cd/directory.html');
+  await setup(app);
+  const data=(await app.req('/api/admin/data')).data;
+  data.navigation.categories[0].sites[0].hidden=true;
+  data.navigation.categories[0].children[0].sites[0].description='<script>alert("x")</script>';
+  assert.equal((await app.req('/api/admin/data','PUT',data)).status,200);
+  const changed=await fetch(app.base+'/',{headers:{'If-None-Match':etag}});
+  assert.equal(changed.status,200);
+  assert.notEqual(changed.headers.get('etag'),etag);
+  for(const route of ['/','/directory.html']){
+    const body=await fetch(app.base+route).then(r=>r.text());
+    assert.doesNotMatch(body,/one.example.com/);
+    assert.match(body,/&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
+    assert.doesNotMatch(body,/<script>alert/);
+  }
+  const head=await fetch(app.base+'/directory.html',{method:'HEAD'});
+  assert.equal(head.status,200);assert.equal(await head.text(),'');
+  const sitemap=await fetch(app.base+'/sitemap.xml').then(r=>r.text());
+  for(const route of ['directory.html','music-wall.html','together.html','newsstand.html'])assert.ok(sitemap.includes('/'+route));
+});

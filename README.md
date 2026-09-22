@@ -262,3 +262,13 @@ node --test tests/music-source-selection.test.js tests/listening-controls.test.j
 - 页面不再请求或展示背景图片。旧素材 `assets/art/newsstand-scene.png` 仅保留存档。架上封面使用书名与作者排版，不表示实际出版物封面。
 - 搜索切换和关闭会取消旧请求并丢弃迟到结果；目录去重，每次显示 120 章；目录及正文失败可重试。移除后可在 8 秒内撤销；阅读保存章节内滚动比例，并记住字号。筛选无结果时可清除筛选。
 - 交互回归：`node --test tests/newsstand-interactions.test.js tests/newsstand.test.js tests/newsstand-search.test.js tests/legado.test.js`，共 19 项通过；全项目检查仍存在原有弹球 drain 测试失败。
+
+## Google 搜索与 GEO
+
+首页首屏目录及 `/directory.html` 完整目录由 Node 服务读取当前公开数据生成，普通访客与爬虫收到相同 HTML。完整目录包含分类锚点、真实链接、简介及使用说明，不依赖 JavaScript；后台隐藏的网站不会输出。HTML 使用内容哈希校验缓存，目录修改后不会继续返回旧的 304。首页与完整目录包含 WebSite / CollectionPage JSON-LD；不虚构评分、作者资质或访问排名。
+
+站点地图覆盖首页、完整目录及六个公开体验页面；规范地址沿用 `https://nav.tcmiku.cc.cd`。更换正式域名时，需同步修改页面 canonical、Open Graph、`server/search-pages.js` 和 robots/sitemap。必须使用 Node 服务部署，直接托管 public 目录不会生成目录内容。
+
+上线后在 Google Search Console 验证该域名，提交 `/sitemap.xml`，使用网址检查验证首页与完整目录的实时抓取及索引状态，并检查 Search generative AI 的站点参与设置。Search Console 的验证与提交需站点所有者账号，本次代码修改不包含账号操作。收录、排名与 AI 引用由 Google 决定，不能保证。
+
+依据：[Google 官方生成式搜索优化指南](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)。Google 不使用 llms.txt 提升搜索可见性，因此此处重点维护可抓取的真实内容、页面元信息和内部链接。
