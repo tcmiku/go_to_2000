@@ -276,7 +276,7 @@ test('listening room and isolated source runtime are served with scoped CSP',asy
     if(route==='/lx-sandbox.html'){assert.match(csp,/sandbox allow-scripts/);assert.match(csp,/connect-src 'none'/);assert.doesNotMatch(csp,/allow-same-origin/);}
     if(route==='/listening-room.html'){assert.match(csp,/media-src 'self' blob: https: http:/);assert.doesNotMatch(csp,/unsafe-eval/);}
   }
-  const root=await fetch(app.base);assert.doesNotMatch(root.headers.get('content-security-policy'),/media-src.*https:/);
+  const root=await fetch(app.base);assert.doesNotMatch(root.headers.get('content-security-policy'),/media-src[^;]*https:/);
   assert.equal((await fetch(app.base+'/listening-service.js')).status,404);
   const catalog=await app.req('/api/listening/sources');assert.equal(catalog.status,200);assert.equal(catalog.data.sources.length,8);
   assert.equal((await app.req('/api/listening/request','POST',{url:'http://127.0.0.1/api/admin/data'})).status,403);

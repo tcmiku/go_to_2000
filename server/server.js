@@ -153,6 +153,10 @@ export async function createApp({dataDir = path.join(root,'data'), secureCookie 
       if(route==='/listening-room.html' || route==='/listening-room' || route==='/together.html' || route==='/together' || route==='/music-wall.html' || route==='/music-wall') {
         res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; media-src 'self' blob: https: http:; connect-src 'self'; frame-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
       }
+      // AdSense is loaded only on the homepage; keep other pages on their existing policy.
+      if(route==='/' || route==='/index.html') {
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://www.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; media-src 'self' blob:; connect-src 'self' https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; frame-src https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
+      }
       if(route==='/lx-sandbox.html') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src blob:; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; sandbox allow-scripts");
       }
